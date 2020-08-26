@@ -1,26 +1,61 @@
 # This Python file uses the following encoding: utf-8
 import sys
 import os
-import time
 import requests
-import datetime
+
+import time
 import json
 import mysql.connector
-import numpy as np
-
-from PySide2.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem
-from PySide2.QtCore import QFile
-from PySide2.QtUiTools import QUiLoader
 import threading
+
+import numpy as np
+import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates
+# import matplotlib.ticker as mticker
+# import matplotlib.mlab as mlab
+# import matplotlib.pyplot as plt
+# import matplotlib.font_manager as font_manager
+
+
+# import matplotlib.ticker as ticker
+
+# from PySide2.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem
+# from PySide2.QtCore import QFile
+# from PySide2.QtUiTools import QUiLoader
+# from mpl_finance import candlestick_ohlc
+
+# from PySide2.QtCore import QDateTime, Qt, QAbstractTableModel
+# from PySide2.QtGui import QPainter
+# from PySide2.QtWidgets import (QWidget, QHeaderView, QHBoxLayout, QTableView,
+#                                QSizePolicy)
+# from PySide2.QtCharts import QtCharts
+
+# from table_model import CustomTableModel
+
+
+from PyQt5.QtWidgets import*
+from PyQt5.uic import loadUi
+
+# import plotly.graph_objects as go
+
+import pandas as pd
+from datetime import datetime
+
+# from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as NavigationToolbar)
+
+# import random
+
 
 
 class ais_db():
     aisdb = ""
     cursor = ""
+    row_count = 0
     host = "sql132.main-hosting.eu"
     user = "u826803502_AIS1"
     password = "+1zZJqwQ"
     database = "u826803502_ArtIntSol"
+    column_names = ""
 
     # def __init__(self):
     #     self.oppen()
@@ -43,12 +78,14 @@ class ais_db():
         self.aisdb.close()
 
     def execute_base(self, sqlstr, multiple=False):
+        main_widget.progress_action()
         # print(sqlstr)
-        print("minden ok?",self.aisdb.is_connected())
+        # print("minden ok?",self.aisdb.is_connected())
         if self.aisdb.is_connected():
             try:
                 self.cursor.execute(sqlstr, multiple)
-                print(self.cursor.rowcount, "inserted row")
+                if self.cursor.rowcount > 0:
+                    main_widget.add_Log("inserted rows: " + str(self.cursor.rowcount))
                 self.setcursor()
             except mysql.connector.Error as err:
                 print("Something went wrong: {}".format(err))
@@ -56,14 +93,52 @@ class ais_db():
             self.open()
             self.cursor.execute(sqlstr, multiple)
             self.setcursor()
-            print(self.cursor.rowcount, "inserted row")
+            if self.cursor.rowcount > 0:
+                main_widget.add_Log("inserted rows: " + str(self.cursor.rowcount))
         return
 
     def execute_fetchall(self, sqlstr):
-        print(sqlstr)
-        self.cursor.execute(sqlstr)
-        self.setcursor()
-        return self.cursor.fetchall()
+        if not self.aisdb.is_connected():
+            self.open()
+
+        try:
+            # print(sqlstr)
+            self.cursor.execute(sqlstr)
+            self.column_names = self.cursor.column_names
+            # self.setcursor()
+            # self.aisdb.commit()
+            if self.cursor.rowcount > 0:
+                main_widget.add_Log("rows: " + str(self.cursor.rowcount))
+                self.row_count = self.cursor.rowcount
+                i_result = self.cursor.fetchall()
+                self.setcursor()
+            else:
+                self.row_count = 0
+                i_result = self.cursor.fetchall()
+                self.setcursor()
+                # i_result = []
+
+        except mysql.connector.Error as err:
+            print("Something went wrong: {}".format(err))
+            i_result = []
+        return i_result
+
+    def is_timeframe_exist(self, isymbol, fromdt, todt):
+        # print("is_time", isymbol,fromdt,todt)
+        i_sql_string_from = "SELECT * FROM `" + isymbol + "` WHERE `datetime` = '" + fromdt + "'"
+        i_sql_string_to = "SELECT * FROM `" + isymbol + "` WHERE `datetime` = '" + todt + "'"
+        # print("from",i_sql_string_from)
+        # print("to",i_sql_string_to)
+        i_result_from = self.execute_fetchall(i_sql_string_from)
+        # print(i_result_from)
+        i_result_to = self.execute_fetchall(i_sql_string_to)
+        return len(i_result_from) > 0 and len(i_result_to) > 0
+
+    def get_timeframe(self, isymbol, fromdt, todt):
+        # print ("get_timeframe")
+        i_sql_string = "SELECT * FROM `" + isymbol + "` WHERE `datetime`>='" + fromdt + "' AND `datetime`<='" + todt + "'"
+        return self.execute_fetchall(i_sql_string)
+
 
     def add_instrument(self, instrument):
         i_sql_command = "CREATE TABLE IF NOT EXISTS`" + self.database + "`.`" + instrument + \
@@ -104,11 +179,11 @@ class ais_db():
         return
 
     def add_instrument_value_multi(self, instrument, dt_array, prop, val_array):
-        print("ins", instrument,"----------------------------------------------")
-        print(dt_array)
-        print(prop)
-        print(val_array)
-        print("add")
+        # print("ins", instrument,"----------------------------------------------")
+        # print("dt_array", dt_array[2])
+        # print("prop", prop)
+        # print("val_array", val_array)
+        # print("add")
         self.add_instrument(instrument)
         self.add_instrument_float_property(instrument, prop)
         i_dt_array_len = len(dt_array)
@@ -116,12 +191,22 @@ class ais_db():
 
         # beszúrom az üreseket, ha még nincsenek és utána minden módosítom
         i_sql_elements_array = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size))]
+        # print(len(i_sql_elements_array))
 
         for i_i in range(i_dt_array_len):
+            # print(i_i)
             i_pos = int(i_i / i_elemet_block_size)
-            i_sql_elements_array[i_pos] = i_sql_elements_array[i_pos] + "('" + dt_array[i_i] + "', '"+ str(val_array[i_i]) +"'), "
+            # print(i_pos)
+            # i_sql_elements_array[0] = " "+ i_sql_elements_array[i_pos]
+            # print(i_sql_elements_array)
+
+            i_sql_elements_array[i_pos] = i_sql_elements_array[i_pos] + "('" + dt_array[i_i] + "', '" + str(val_array[i_i]) + "'), "
+            # print(i_sql_elements_array[i_pos])
+
+        # print('2')
 
         for i_i in range(len(i_sql_elements_array)):
+            # print('3')
             i_sql_str = "INSERT INTO `" +instrument + "` "+\
                     "(`datetime` , `" + prop + "` ) VALUES " +\
                     i_sql_elements_array[i_i][:-2] +\
@@ -198,11 +283,14 @@ class prices():
     to_hour = 10
     to_minute = 10
     to_secound = 0
-    close, c = [], []
-    heigh, h = [], []
-    low, l = [], []
-    open, o = [], []
-    time, t = [], []
+    c = []
+    h = []
+    l = []
+    o = []
+    t = []
+    t = []
+    v = []
+    df = ""
 
     def set_dt(self,fort,y,mo,d,h,mi,sec):
         if fort == "from":
@@ -214,19 +302,19 @@ class prices():
         return
 
     def convert_to_unix_dt(self, cyear, cmonth, cday, chour, cminute, csecound):
-        dt = datetime.datetime(cyear, cmonth, cday, chour, cminute, csecound)
+        dt = datetime(cyear, cmonth, cday, chour, cminute, csecound)
         return str(int(time.mktime(dt.timetuple())))
 
     def convert_to_db_dt(self, unix_datetime):
-        i_value = datetime.datetime.fromtimestamp(unix_datetime)
-        return (f"{i_value:%Y-%m-%d %H:%M:%S}")
+        # print("datetime", unix_datetime)
+        return str(datetime.fromtimestamp(int(unix_datetime)).strftime('%Y-%m-%d %H:%M:%S'))
 
     def convert_to_db_dt_multi(self, unix_datetime_array):
 
         i_result_array = []
 
         for i_i in range(len(unix_datetime_array)):
-            i_value = (datetime.datetime.fromtimestamp(unix_datetime_array[i_i]))
+            i_value = (datetime.fromtimestamp(int(unix_datetime_array[i_i])))
             i_result_array.append("")
             i_result_array[i_i] = str(i_value.strftime('%Y-%m-%d %H:%M:%S'))
         return (i_result_array)
@@ -239,61 +327,118 @@ class prices():
             return self.convert_to_unix_dt(self.to_year, self.to_month, self.to_day,
                                     self.to_hour, self.to_minute, self.to_secound)
 
-    def get_stock_candle(self):
-        i_request_url = 'https://finnhub.io/api/v1/stock/candle?symbol='+self.symbol+'&resolution=1&from='+self.get_unix_dt("from")+'&to='+self.get_unix_dt("to")+'&token=bs9c9lvrh5rahoaofmt0'
-        i_r = requests.get(i_request_url)
-        i_json_data = json.loads(i_r.text)
-        if i_json_data["s"] == "ok":
-            self.close = i_json_data["c"]
-            self.c = self.close
-            self.open = i_json_data["o"]
-            self.o = self.open
-            self.low = i_json_data["l"]
-            self.l = self.low
-            self.high = i_json_data["h"]
-            self.h = self.high
-            self.time = self.convert_to_db_dt_multi(i_json_data["t"])
-            self.t = self.time
+    def get_df_column(self, col):
+        return self.df[col].to_numpy().tolist()
 
-        return i_r.json()
+    def get_stock_candle(self):
+        print("get_stock_cande")
+
+        i_db_dt_from = self.convert_to_db_dt(self.get_unix_dt("from"))
+        i_db_dt_to = self.convert_to_db_dt(self.get_unix_dt("to"))
+
+        # print("bbbbb", aisdb.is_timeframe_exist("MSFT", "2020-08-03 00:00:00", "2021-08-03 12:00:00"))
+        # print(self.symbol,i_db_dt_from,i_db_dt_to)
+        i_exist_time_frame = aisdb.is_timeframe_exist(self.symbol, i_db_dt_from, i_db_dt_to)
+        # print(i_exist_time_frame)
+        # print(self.symbol, self.convert_to_db_dt(self.get_unix_dt("from")), self.convert_to_db_dt(self.get_unix_dt("to")))
+        if i_exist_time_frame:
+            print("van tf")
+            i_res = aisdb.get_timeframe(self.symbol, i_db_dt_from, i_db_dt_to)
+            print(i_res)
+            from pandas import DataFrame
+            df = pd.DataFrame(i_res)
+            df.columns = aisdb.column_names
+            df.set_index('datetime')
+            self.df = df
+            print(df)
+            print("df_v", self.get_df_column("v"))
+            print("df_c", self.get_df_column("c"))
+            # array_v = df['v'].to_numpy()
+            # print('array_v', array_v)
+            sys.exit()
+            # df.columns = resoverall.keys()
+        else:
+            print("nincs tf")
+            i_request_url = 'https://finnhub.io/api/v1/stock/candle?symbol='+self.symbol+'&resolution=1&from='+self.get_unix_dt("from")+'&to='+self.get_unix_dt("to")+'&token=bs9c9lvrh5rahoaofmt0'
+            print(i_request_url)
+            i_r = requests.get(i_request_url)
+            i_json_data = json.loads(i_r.text)
+            df2 = pd.DataFrame(i_json_data)
+            df2['datetime'] = self.convert_to_db_dt_multi(i_json_data["t"])
+            df2 = df2.drop('s', 1)
+            df2.set_index('datetime')
+            print(df2)
+            self.df = df2
+            # print("df_v", self.get_df_column("v"))
+            # print("df_c", self.get_df_column("c"))
+            i_converted_t = self.convert_to_db_dt_multi(self.get_df_column("t"))
+            aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "c", self.get_df_column("c"))
+            aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "o", self.get_df_column("o"))
+            aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "h", self.get_df_column("h"))
+            aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "l", self.get_df_column("l"))
+            aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "v", self.get_df_column("v"))
+
+            sys.exit()
+            if i_json_data["s"] == "ok":
+                self.c = i_json_data["c"]
+                self.o = i_json_data["o"]
+                self.l = i_json_data["l"]
+                self.h = i_json_data["h"]
+                self.v = i_json_data["v"]
+                print(self.v)
+                self.t = self.convert_to_db_dt_multi(i_json_data["t"])
+                i_result = i_r.json()
+
+        return i_result
 
 
 class iphoenix100(QWidget):
+    log_Text = ""
+    progress_count = 0
+
     def __init__(self):
         super(iphoenix100, self).__init__()
         self.load_ui()
-        self.ui.Logs_Browser.setText("")
+        self.Logs_Browser.setText("")
         self.setWindowTitle("iPhoenix100")
 
         watchlist_obj=watchlist()
-        self.ui.Watch_list.setRowCount(watchlist_obj.wl_rows)
-        self.ui.Watch_list.setColumnCount(watchlist_obj.wl_column)
+        self.Watch_list.setRowCount(watchlist_obj.wl_rows)
+        self.Watch_list.setColumnCount(watchlist_obj.wl_column)
         watchlist_obj=watchlist()
         wlqitems=watchlist_obj.getQItems()
         for x2 in range(watchlist_obj.wl_rows):
             for y2 in range(watchlist_obj.wl_column):
-                self.ui.Watch_list.setItem(x2,y2,wlqitems[x2][y2])
+                self.Watch_list.setItem(x2,y2,wlqitems[x2][y2])
 
-    log_Text = ""
+
+
+
 
     def load_ui(self):
-        loader = QUiLoader()
-        path = os.path.join(os.path.dirname(__file__), "C:/Users/honis.ivan/Documents/IPhoneix120/form.ui")
-        ui_file = QFile(path)
-        ui_file.open(QFile.ReadOnly)
-        self.ui = loader.load(ui_file, self)
+        # loader = QUiLoader()
+        # path = os.path.join(os.path.dirname(__file__), "C:/Users/honis.ivan/Documents/IPhoneix120/form.ui")
+        # ui_file = QFile(path)
+        # ui_file.open(QFile.ReadOnly)
+        # self.ui = loader.load(ui_file, self)
+        loadUi("C:/Users/honis.ivan/Documents/IPhoneix120/form.ui", self)
 
         # hozzárendelések
-        self.ui.Run_Button.clicked.connect(self.Run_Button_Action)
-        self.ui.Command_Line.returnPressed.connect(self.Run_Button_Action)
-        self.ui.Command_Line.textChanged.connect(self.Command_Line_Changed)
-        ui_file.close()
+        self.Run_Button.clicked.connect(self.Run_Button_Action)
+        self.Command_Line.returnPressed.connect(self.Run_Button_Action)
+        self.Command_Line.textChanged.connect(self.Command_Line_Changed)
+        self.WL_btn2.clicked.connect(Run_WL_btn2)
+        # ui_file.close()
 
-    def getUi(self):
-        return self.ui
+    def progress_action(self):
+        self.progress_count = self.progress_count + 1
+        if self.progress_count > 100:
+            self.progress_count = 0
+        self.Progress_Bar.setValue(self.progress_count)
+
 
     def Run_Button_Action(self):
-        command_text = self.ui.Command_Line.text()
+        command_text = self.Command_Line.text()
         command_partitioned = command_text.partition(" ")
         command_text_first_word = command_partitioned[0]
         if len(command_partitioned) == 3:
@@ -307,7 +452,7 @@ class iphoenix100(QWidget):
             param3 = command_partitioned[6]
 
         self.add_Log("call "+command_text)
-        self.ui.Command_Line.setText("")
+        self.Command_Line.setText("")
 
         if command_text_first_word == "getprice" or command_text_first_word == "getPrice":
             getprice_program(param1)
@@ -316,7 +461,7 @@ class iphoenix100(QWidget):
             test_program('test')
 
         if command_text_first_word == "chart":
-            chart_program('')
+            chart_program(param1)
 
         if command_text_first_word == "close":
             self.close()
@@ -324,24 +469,24 @@ class iphoenix100(QWidget):
         if command_text_first_word == "exit":
             self.close()
 
-    def Command_Line_Changed( self ):
-        self.ui.Command_Hint.setText( "" )
-        command_text= self.ui.Command_Line.text()
+    def Command_Line_Changed(self):
+        self.Command_Hint.setText("")
+        command_text = self.Command_Line.text()
         command_text_first_word = command_text.partition(' ')[0]
 
         if command_text_first_word == "test":
-            self.ui.Command_Hint.setText("test")
+            self.Command_Hint.setText("test")
 
         if command_text_first_word == "chart":
-            self.ui.Command_Hint.setText("chart stock")
+            self.Command_Hint.setText("chart stock")
 
         if command_text_first_word == "getPrice" or command_text_first_word == "getprice":
-            self.ui.Command_Hint.setText("getPrice")
+            self.Command_Hint.setText("getPrice")
 
 
     def add_Log( self,add_text ):
-        self.log_Text=time.strftime( "%d %B, %Y %H:%M:%S" )+" > "+add_text + " \r" + self.log_Text
-        self.ui.Logs_Browser.setText( self.log_Text )
+        self.log_Text = time.strftime( "%d %B, %Y %H:%M:%S" )+" > "+add_text + " \r" + self.log_Text
+        self.Logs_Browser.setText(self.log_Text)
 
 
 def getprice_program(isymbol):
@@ -350,68 +495,129 @@ def getprice_program(isymbol):
     selected_stock = prices()
     selected_stock.symbol = isymbol
 
-    selected_stock.from_year = int(main_widget.ui.From_DT.dateTime().toString("yyyy"))
-    selected_stock.from_month = int(main_widget.ui.From_DT.dateTime().toString("MM"))
-    selected_stock.from_day = int(main_widget.ui.From_DT.dateTime().toString("dd"))
-    selected_stock.from_hour = int(main_widget.ui.From_DT.dateTime().toString("hh"))
-    selected_stock.from_minute = int(main_widget.ui.From_DT.dateTime().toString("mm"))
-    selected_stock.from_secound = int(main_widget.ui.From_DT.dateTime().toString("mm"))
+    selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
+    selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
+    selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
+    selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
+    selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
+    selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("ss"))
 
-    selected_stock.to_year = int(main_widget.ui.To_DT.dateTime().toString("yyyy"))
-    selected_stock.to_month = int(main_widget.ui.To_DT.dateTime().toString("MM"))
-    selected_stock.to_day = int(main_widget.ui.To_DT.dateTime().toString("dd"))
-    selected_stock.to_hour = int(main_widget.ui.To_DT.dateTime().toString("hh"))
-    selected_stock.to_minute = int(main_widget.ui.To_DT.dateTime().toString("mm"))
-    selected_stock.to_secound = int(main_widget.ui.To_DT.dateTime().toString("mm"))
+    selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
+    selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
+    selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
+    selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
+    selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
+    selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("ss"))
     selected_stock.get_stock_candle()
-    aisdb.add_instrument_value_multi(isymbol, selected_stock.t, "c", selected_stock.c)
-    aisdb.add_instrument_value_multi(isymbol, selected_stock.t, "o", selected_stock.o)
-    aisdb.add_instrument_value_multi(isymbol, selected_stock.t, "h", selected_stock.h)
-    aisdb.add_instrument_value_multi(isymbol, selected_stock.t, "l", selected_stock.h)
+
+    # main_widget.update_graph(selected_stock.t,selected_stock.o,selected_stock.c)
+    main_widget.add_Log("getPrice - Ready")
 
 def test_program():
     main_widget.add_Log("run test_program")
     print("test")
 
-def chart_program():
-    main_widget.add_Log("run chart_program")
-    import numpy as np
-    import matplotlib.pyplot as plt
+
+def Run_WL_btn2():
+    isymbol = "MSFT"
+    print("itt", isymbol)
+    main_widget.add_Log("run chart "+isymbol)
+
+    selected_stock = prices()
+    selected_stock.symbol = isymbol
+
+    selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
+    selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
+    selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
+    selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
+    selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
+    selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("mm"))
+
+    selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
+    selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
+    selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
+    selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
+    selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
+    selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("mm"))
+    print("itt2")
+    selected_stock.get_stock_candle()
+
+    main_widget.MplWidget.ax1_1.clear()
+    main_widget.MplWidget.ax2_1.clear()
+    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.l)
+    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.h)
+    main_widget.MplWidget.ax1_1.fill_between(selected_stock.t, selected_stock.l, selected_stock.h, alpha=0.25)
+    main_widget.MplWidget.ax2_1.bar(selected_stock.t, selected_stock.v, label='Volume')
+    main_widget.MplWidget.ax1_1.margins(x=0)
+    main_widget.MplWidget.ax2_1.margins(x=0)
+
+    # main_widget.MplWidget.plot(selected_stock.t[10], selected_stock.o[10], 'o', color='r')
+
+    for xtick in main_widget.MplWidget.ax1_1.get_xticklabels():
+        xtick.set_color('none')
+
+    main_widget.MplWidget.ax2_1.set_xticklabels(selected_stock.t, rotation=270, alpha=0.5)
+    main_widget.MplWidget.ax1_1.autoscale()
+    main_widget.MplWidget.ax2_1.autoscale()
+
+    import matplotlib.dates as mdates
+    myfmt = mdates.DateFormatter('%H:%M')
+    main_widget.MplWidget.ax1_1.xaxis.set_major_formatter(myfmt)
+
+    main_widget.MplWidget.canvas.draw_idle()
+    main_widget.add_Log("chart - Ready")
 
 
-    fig, (ax1, ax2) = plt.subplots(2, 1)
-    # make a little extra space between the subplots
-    fig.subplots_adjust(hspace=0.5)
+def chart_program(isymbol):
 
-    dt = 0.01
-    t = np.arange(0, 30, dt)
+    main_widget.add_Log("run chart "+isymbol)
 
-    # Fixing random state for reproducibility
-    np.random.seed(19680801)
+    selected_stock = prices()
+    selected_stock.symbol = isymbol
 
+    selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
+    selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
+    selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
+    selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
+    selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
+    selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("mm"))
 
-    nse1 = np.random.randn(len(t))                 # white noise 1
-    nse2 = np.random.randn(len(t))                 # white noise 2
-    r = np.exp(-t / 0.05)
+    selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
+    selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
+    selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
+    selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
+    selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
+    selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("mm"))
+    selected_stock.get_stock_candle()
 
-    cnse1 = np.convolve(nse1, r, mode='same') * dt   # colored noise 1
-    cnse2 = np.convolve(nse2, r, mode='same') * dt   # colored noise 2
+    main_widget.MplWidget.ax1_1.clear()
+    main_widget.MplWidget.ax2_1.clear()
+    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.l)
+    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.h)
+    main_widget.MplWidget.ax1_1.fill_between(selected_stock.t, selected_stock.l, selected_stock.h, alpha=0.25)
+    main_widget.MplWidget.ax2_1.bar(selected_stock.t, selected_stock.v, label='Volume')
+    main_widget.MplWidget.ax1_1.margins(x=0)
+    main_widget.MplWidget.ax2_1.margins(x=0)
 
-    # two signals with a coherent part and a random part
-    s1 = 0.01 * np.sin(2 * np.pi * 10 * t) + cnse1
-    s2 = 0.01 * np.sin(2 * np.pi * 10 * t) + cnse2
+    # main_widget.MplWidget.plot(selected_stock.t[10], selected_stock.o[10], 'o', color='r')
 
-    ax1.plot(t, s1, t, s2)
-    ax1.set_xlim(0, 5)
-    ax1.set_xlabel('time')
-    ax1.set_ylabel('s1 and s2')
-    ax1.grid(True)
+    for xtick in main_widget.MplWidget.ax1_1.get_xticklabels():
+        xtick.set_color('none')
 
-    cxy, f = ax2.csd(s1, s2, 256, 1. / dt)
-    ax2.set_ylabel('CSD (db)')
-    plt.show()
+    main_widget.MplWidget.ax2_1.set_xticklabels(selected_stock.t, rotation=270, alpha=0.5)
+    main_widget.MplWidget.ax1_1.autoscale()
+    main_widget.MplWidget.ax1_1.autoscale()
+
+    import matplotlib.dates as mdates
+    myfmt = mdates.DateFormatter('%H:%M')
+    main_widget.MplWidget.ax1_1.xaxis.set_major_formatter(myfmt)
+
+    main_widget.MplWidget.canvas.draw()
+    main_widget.add_Log("chart - Ready")
 
 # időzítő
+
+
 class back_processes(object):
     def __init__(self, interval=60):
         self.interval = interval
@@ -422,18 +628,27 @@ class back_processes(object):
     def run(self):
         while True:
             # More statements comes here
-            print(datetime.datetime.now().__str__() + ' : Start task in the background')
+            print(datetime.now().__str__() + ' : Start task in the background')
             time.sleep(self.interval)
 
 if __name__ == "__main__":
-    aisdb = ais_db() # Art Int Sol adatbázis kapcsolat létrehozása
+    print(
+        datetime.fromtimestamp(
+            int("1284105682")
+        ).strftime('%Y-%m-%d %H:%M:%S')
+    )
+    aisdb = ais_db()# Art Int Sol adatbázis kapcsolat létrehozása
     aisdb.open()
-    aisdb.close()
-    aisdb.open()
-    bp = back_processes() # háttér cron job szerű futásindítás 60 másodpercenkénti futás
-    app = QApplication([])
 
+
+    bp = back_processes() # háttér cron job szerű futásindítás 60 másodpercenkénti futás
+
+    app = QApplication([])
     main_widget = iphoenix100()
+    print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:30:00", "2020-08-03 15:32:00"))
+    print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:33:00", "2021-08-03 00:00:00"))
+    print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 00:00:00", "2021-08-03 12:00:00"))
+
     #main_widget.showFullScreen()
 
     # teszt dolgok ide jönnek
@@ -451,7 +666,7 @@ if __name__ == "__main__":
     # aisdb.add_instrument_float_property("AAPL","h")
     # aisdb.add_instrument_float_property("AAPL","l")
     # aisdb.add_instrument_string_property("AAPL", "note", 256)
-    print("start")
+    # print("start")
     # aisdb.add_instrument_value("MSFT", "2020-08-12 16:47:00", "c", 123456)
     # aisdb.add_instrument_value("MSFT", "2020-08-12 16:47:00", "c", 12345.78)
     # aisdb.add_instrument_value("MSFT", "2020-08-12 16:48:00", "c", 12345.12345)
@@ -461,7 +676,7 @@ if __name__ == "__main__":
     # aisdb.add_instrument_value("AAPL", "2020-08-12 16:48:00", "l", 123456.123456)
     # aisdb.add_instrument_value("AAPL", "2020-08-12 16:48:00", "note", "note")
     # aisdb.add_instrument_value("AAPL", "2020-08-12 16:49:00", "note", 1245)
-    print("stop")
+    # print("stop")
     # -------------------------
 
     main_widget.show()
