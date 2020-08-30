@@ -7,6 +7,8 @@ import time
 import json
 import mysql.connector
 import threading
+import random
+import pandas as pd
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -243,6 +245,26 @@ class watchlist():
     wl_column = 5
     saved_items = []
 
+    def get_wl_df(self):
+        print('wl itt')
+        i_df = pd.read_csv('wl.csv', sep=';')
+        i_df.set_index('symbol')
+        print(i_df.loc[i_df['symbol'] == 'MSFT',['name']])
+        print(i_df.iloc[:, 0])
+        for index, row in i_df.iterrows():
+            print(row['name'], row['profil'])
+
+        new_row = {'symbol': 'Geo', 'name': 'GEO corp', 'profil': 'geoprofil', 'last_price': 97}
+        # append row to the dataframe
+        i_df = i_df.append(new_row, ignore_index=True)
+        print(i_df)
+        i_df.to_csv('wl.csv', sep=';', index=False)
+        i_df.drop(i_df.loc[i_df['symbol'] == 'Geo'].index, inplace=True)
+        datetime_series = pd.date_range(start='2020-08-10 00:00', periods=12, freq='-1M', closed=None)
+        for i_i in range(len(datetime_series)-1):
+            print(datetime_series[i_i], " ", datetime_series[i_i+1])
+        return i_df
+
     def __init__(self):
         self.saved_items.append(["MSFT", self.getCompanyProfile2("MSFT"), "113.25", "10:25", "sell"])
         self.saved_items.append(["APA", self.getCompanyProfile2("APA"), "113.25", "10:25", "hold"])
@@ -271,6 +293,7 @@ class watchlist():
 
 class prices():
     symbol = 'AAPL'
+
     from_year = 2019
     from_month = 10
     from_day = 27
@@ -291,6 +314,21 @@ class prices():
     t = []
     v = []
     df = ""
+
+    def set_date_time_frame(self):
+        self.from_year = int(main_widget.From_D.selectedDate().toString("yyyy"))
+        self.from_month = int(main_widget.From_D.selectedDate().toString("MM"))
+        self.from_day = int(main_widget.From_D.selectedDate().toString("dd"))
+        self.from_hour = int(main_widget.From_T.dateTime().toString("hh"))
+        self.from_minute = int(main_widget.From_T.dateTime().toString("mm"))
+        self.from_secound = int(main_widget.From_T.dateTime().toString("ss"))
+
+        self.to_year = int(main_widget.To_D.selectedDate().toString("yyyy"))
+        self.to_month = int(main_widget.To_D.selectedDate().toString("MM"))
+        self.to_day = int(main_widget.To_D.selectedDate().toString("dd"))
+        self.to_hour = int(main_widget.To_T.dateTime().toString("hh"))
+        self.to_minute = int(main_widget.To_T.dateTime().toString("mm"))
+        self.to_secound = int(main_widget.To_T.dateTime().toString("ss"))
 
     def set_dt(self,fort,y,mo,d,h,mi,sec):
         if fort == "from":
@@ -332,7 +370,7 @@ class prices():
 
     def get_stock_candle(self):
         print("get_stock_cande")
-
+        self.set_date_time_frame()
         i_db_dt_from = self.convert_to_db_dt(self.get_unix_dt("from"))
         i_db_dt_to = self.convert_to_db_dt(self.get_unix_dt("to"))
 
@@ -344,18 +382,18 @@ class prices():
         if i_exist_time_frame:
             print("van tf")
             i_res = aisdb.get_timeframe(self.symbol, i_db_dt_from, i_db_dt_to)
-            print(i_res)
-            from pandas import DataFrame
+            # print(i_res)
+            # from pandas import DataFrame
             df = pd.DataFrame(i_res)
             df.columns = aisdb.column_names
             df.set_index('datetime')
             self.df = df
-            print(df)
-            print("df_v", self.get_df_column("v"))
-            print("df_c", self.get_df_column("c"))
+            # print(df)
+            # print("df_v", self.get_df_column("v"))
+            # print("df_c", self.get_df_column("c"))
             # array_v = df['v'].to_numpy()
             # print('array_v', array_v)
-            sys.exit()
+            # sys.exit()
             # df.columns = resoverall.keys()
         else:
             print("nincs tf")
@@ -377,19 +415,19 @@ class prices():
             aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "h", self.get_df_column("h"))
             aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "l", self.get_df_column("l"))
             aisdb.add_instrument_value_multi(self.symbol, i_converted_t, "v", self.get_df_column("v"))
+            print("kiírtam")
+            # sys.exit()
+            # if i_json_data["s"] == "ok":
+            #     self.c = i_json_data["c"]
+            #     self.o = i_json_data["o"]
+            #     self.l = i_json_data["l"]
+            #     self.h = i_json_data["h"]
+            #     self.v = i_json_data["v"]
+            #     print(self.v)
+            #     self.t = self.convert_to_db_dt_multi(i_json_data["t"])
+            #     i_result = i_r.json()
 
-            sys.exit()
-            if i_json_data["s"] == "ok":
-                self.c = i_json_data["c"]
-                self.o = i_json_data["o"]
-                self.l = i_json_data["l"]
-                self.h = i_json_data["h"]
-                self.v = i_json_data["v"]
-                print(self.v)
-                self.t = self.convert_to_db_dt_multi(i_json_data["t"])
-                i_result = i_r.json()
-
-        return i_result
+        return
 
 
 class iphoenix100(QWidget):
@@ -411,10 +449,6 @@ class iphoenix100(QWidget):
             for y2 in range(watchlist_obj.wl_column):
                 self.Watch_list.setItem(x2,y2,wlqitems[x2][y2])
 
-
-
-
-
     def load_ui(self):
         # loader = QUiLoader()
         # path = os.path.join(os.path.dirname(__file__), "C:/Users/honis.ivan/Documents/IPhoneix120/form.ui")
@@ -427,15 +461,14 @@ class iphoenix100(QWidget):
         self.Run_Button.clicked.connect(self.Run_Button_Action)
         self.Command_Line.returnPressed.connect(self.Run_Button_Action)
         self.Command_Line.textChanged.connect(self.Command_Line_Changed)
-        self.WL_btn2.clicked.connect(Run_WL_btn2)
+        self.WL_Btn.clicked.connect(Run_WL_btn2)
         # ui_file.close()
 
     def progress_action(self):
-        self.progress_count = self.progress_count + 1
-        if self.progress_count > 100:
-            self.progress_count = 0
-        self.Progress_Bar.setValue(self.progress_count)
-
+        # self.progress_count = self.progress_count + 5
+        # if self.progress_count > 100:
+        #     self.progress_count = 0
+        self.Progress_Bar.setValue(random.randint(0, 100))
 
     def Run_Button_Action(self):
         command_text = self.Command_Line.text()
@@ -458,10 +491,13 @@ class iphoenix100(QWidget):
             getprice_program(param1)
 
         if command_text_first_word == "test":
-            test_program('test')
+            self.progress_action()
 
         if command_text_first_word == "chart":
             chart_program(param1)
+
+        if command_text_first_word == "addwl":
+            add_wl_program(param1)
 
         if command_text_first_word == "close":
             self.close()
@@ -478,10 +514,13 @@ class iphoenix100(QWidget):
             self.Command_Hint.setText("test")
 
         if command_text_first_word == "chart":
-            self.Command_Hint.setText("chart stock")
+            self.Command_Hint.setText("chart symbol")
 
-        if command_text_first_word == "getPrice" or command_text_first_word == "getprice":
-            self.Command_Hint.setText("getPrice")
+        if command_text_first_word == "getprice":
+            self.Command_Hint.setText("getprice symbol")
+
+        if command_text_first_word == "addwl":
+            self.Command_Hint.setText("addwl sybol")
 
 
     def add_Log( self,add_text ):
@@ -489,25 +528,17 @@ class iphoenix100(QWidget):
         self.Logs_Browser.setText(self.log_Text)
 
 
+def add_wl_program(isymbol=""):
+    main_widget.add_Log("run addwl "+isymbol)
+    wl = watchlist()
+    print(wl.get_wl_df())
+    main_widget.add_Log("addwl - Ready")
+
 def getprice_program(isymbol):
     main_widget.add_Log( "run getPrice "+isymbol )
 
     selected_stock = prices()
     selected_stock.symbol = isymbol
-
-    selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
-    selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
-    selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
-    selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
-    selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
-    selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("ss"))
-
-    selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
-    selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
-    selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
-    selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
-    selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
-    selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("ss"))
     selected_stock.get_stock_candle()
 
     # main_widget.update_graph(selected_stock.t,selected_stock.o,selected_stock.c)
@@ -526,45 +557,70 @@ def Run_WL_btn2():
     selected_stock = prices()
     selected_stock.symbol = isymbol
 
-    selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
-    selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
-    selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
-    selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
-    selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
-    selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("mm"))
+    # selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
+    # selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
+    # selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
+    # selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
+    # selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
+    # selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("mm"))
+    #
+    # selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
+    # selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
+    # selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
+    # selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
+    # selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
+    # selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("mm"))
+    import pandas as pd
+    import mplfinance as mpf
+    df = pd.read_csv(
+         'C:/Users/honis.ivan/PycharmProjects/plotchart/mplfinance-master/examples/data/yahoofinance-SPY-20080101-20180101.csv',
+         index_col=0,
+         parse_dates=True)
+    df.shape
+    df.head(3)
+    df.tail(3)
 
-    selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
-    selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
-    selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
-    selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
-    selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
-    selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("mm"))
-    print("itt2")
-    selected_stock.get_stock_candle()
+    print(df)
 
-    main_widget.MplWidget.ax1_1.clear()
-    main_widget.MplWidget.ax2_1.clear()
-    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.l)
-    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.h)
-    main_widget.MplWidget.ax1_1.fill_between(selected_stock.t, selected_stock.l, selected_stock.h, alpha=0.25)
-    main_widget.MplWidget.ax2_1.bar(selected_stock.t, selected_stock.v, label='Volume')
-    main_widget.MplWidget.ax1_1.margins(x=0)
-    main_widget.MplWidget.ax2_1.margins(x=0)
 
-    # main_widget.MplWidget.plot(selected_stock.t[10], selected_stock.o[10], 'o', color='r')
+    mpf.plot(df, ax=main_widget.MplWidget.ax1, volume=main_widget.MplWidget.ax2)
 
-    for xtick in main_widget.MplWidget.ax1_1.get_xticklabels():
-        xtick.set_color('none')
-
-    main_widget.MplWidget.ax2_1.set_xticklabels(selected_stock.t, rotation=270, alpha=0.5)
-    main_widget.MplWidget.ax1_1.autoscale()
-    main_widget.MplWidget.ax2_1.autoscale()
-
-    import matplotlib.dates as mdates
-    myfmt = mdates.DateFormatter('%H:%M')
-    main_widget.MplWidget.ax1_1.xaxis.set_major_formatter(myfmt)
-
-    main_widget.MplWidget.canvas.draw_idle()
+    # print("itt2")
+    # selected_stock.get_stock_candle()
+    # print("itt3")
+    # main_widget.MplWidget.ax1_1.clear()
+    # # main_widget.MplWidget.ax2_1.clear()
+    # main_widget.MplWidget.ax1_1.plot(selected_stock.get_df_column("datetime"), selected_stock.get_df_column("l"))
+    # # main_widget.MplWidget.ax1_1.plot(selected_stock.get_df_column("t"), selected_stock.get_df_column("h"))
+    # # main_widget.MplWidget.ax1_1.fill_between(selected_stock.get_df_column("t"), selected_stock.get_df_column("l"), selected_stock.get_df_column("h"), alpha=0.25)
+    # main_widget.MplWidget.ax2_1.bar(selected_stock.get_df_column("datetime"), selected_stock.get_df_column("v"), label='Volume')
+    # main_widget.MplWidget.ax1_1.margins(x=0)
+    # # main_widget.MplWidget.ax2_1.margins(x=0)
+    #
+    # # main_widget.MplWidget.plot(selected_stock.t[10], selected_stock.o[10], 'o', color='r')
+    #
+    # for xtick in main_widget.MplWidget.ax1_1.get_xticklabels():
+    #     xtick.set_color('none')
+    #
+    # # import matplotlib.dates as mdates
+    # # locator = mdates.AutoDateLocator()
+    # # formatter = mdates.ConciseDateFormatter(locator)
+    # # formatter.formats = ['', '%M', '%H:%M']
+    #
+    # main_widget.MplWidget.ax1_1.set_xticklabels(selected_stock.get_df_column("datetime"), rotation=270, alpha=0.5)
+    # # main_widget.MplWidget.ax1_1.xaxis.set_major_formatter(formatter)
+    #
+    # main_widget.MplWidget.ax2_1.set_xticklabels(selected_stock.get_df_column("datetime"), rotation=270, alpha=0.5)
+    # # main_widget.MplWidget.ax2_1.xaxis.set_major_formatter(formatter)
+    # # main_widget.MplWidget.ax1_1.autoscale()
+    # # main_widget.MplWidget.ax2_1.autoscale()
+    #
+    # # import matplotlib.dates as mdates
+    # # myfmt = mdates.DateFormatter('%M:%S')
+    # # main_widget.MplWidget.ax2_1.xaxis.set_major_formatter(myfmt)
+    # #
+    # # main_widget.MplWidget.canvas.draw_idle()
+    main_widget.MplWidget.canvas.draw()
     main_widget.add_Log("chart - Ready")
 
 
@@ -574,20 +630,6 @@ def chart_program(isymbol):
 
     selected_stock = prices()
     selected_stock.symbol = isymbol
-
-    selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
-    selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
-    selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
-    selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
-    selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
-    selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("mm"))
-
-    selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
-    selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
-    selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
-    selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
-    selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
-    selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("mm"))
     selected_stock.get_stock_candle()
 
     main_widget.MplWidget.ax1_1.clear()
@@ -632,26 +674,30 @@ class back_processes(object):
             time.sleep(self.interval)
 
 if __name__ == "__main__":
-    print(
-        datetime.fromtimestamp(
-            int("1284105682")
-        ).strftime('%Y-%m-%d %H:%M:%S')
-    )
-    aisdb = ais_db()# Art Int Sol adatbázis kapcsolat létrehozása
+    # print(
+    #     datetime.fromtimestamp(
+    #         int("1284105682")
+    #     ).strftime('%Y-%m-%d %H:%M:%S')
+    # )
+
+    # 1. Art Int Sol adatbázis kapcsolat létrehozása
+    aisdb = ais_db()
     aisdb.open()
 
+    # 2. háttér futásindítás 60 másodpercenkénti futás
+    # bp = back_processes()
 
-    bp = back_processes() # háttér cron job szerű futásindítás 60 másodpercenkénti futás
-
+    # 3. UI indítás
     app = QApplication([])
     main_widget = iphoenix100()
-    print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:30:00", "2020-08-03 15:32:00"))
-    print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:33:00", "2021-08-03 00:00:00"))
-    print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 00:00:00", "2021-08-03 12:00:00"))
-
     #main_widget.showFullScreen()
 
     # teszt dolgok ide jönnek
+    # print(int(main_widget.From_T.dateTime().toString("hh")))
+    # print(int(main_widget.To_T.dateTime().toString("hh")))
+    # print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:30:00", "2020-08-03 15:32:00"))
+    # print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:33:00", "2021-08-03 00:00:00"))
+    # print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 00:00:00", "2021-08-03 12:00:00"))
     # aisdb.del_instrument("MSFT")
     # aisdb.del_instrument("AAPL")
     # aisdb.add_instrument("SHELL")
