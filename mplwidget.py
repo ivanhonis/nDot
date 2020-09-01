@@ -63,15 +63,33 @@ class MplWidget(QWidget):
     def __init__(self, parent = None):
 
         QWidget.__init__(self, parent)
+        #
+        # df = pd.read_csv('C:/Users/honis.ivan/PycharmProjects/plotchart/mplfinance-master/examples/data/yahoofinance-SPY-20080101-20180101.csv', index_col=0,
+        #                  parse_dates=True)
+        # df.shape
+        # df.head(3)
+        # df.tail(3)
+        #
+        # fig = mpf.figure(style='binance')
+        # self.ax1 = fig.add_subplot(2, 1, 1)
+        # self.ax2 = fig.add_subplot(2, 1, 2, sharex=self.ax1)
+        # self.ax1.autoscale()
+        # self.ax2.autoscale()
+        # fig.subplots_adjust(hspace=0)
+        #
+        # for xtick in self.ax1.get_xticklabels():
+        #     xtick.set_color('none')
+        #
+        # mpf.plot(df, ax=self.ax1, volume=self.ax2, tight_layout=True)
+        # self.canvas = FigureCanvas(fig)
+        # vertical_layout = QVBoxLayout()
+        # vertical_layout.addWidget(self.canvas)
+        # self.toolbar = NavigationToolbar(self.canvas, self, coordinates=False)
+        # vertical_layout.addWidget(self.toolbar)
+        # self.setLayout(vertical_layout)
+        # self.canvas.draw()
 
-        df = pd.read_csv('C:/Users/honis.ivan/PycharmProjects/plotchart/mplfinance-master/examples/data/yahoofinance-SPY-20080101-20180101.csv', index_col=0,
-                         parse_dates=True)
-        df.shape
-        df.head(3)
-        df.tail(3)
-
-
-
+        # ---------------------------------------------------------------
 
         # plt.rc('axes', grid=True)
         # plt.rc('grid', color='#aaaaaa', linestyle=':', linewidth=0.5)
@@ -97,26 +115,12 @@ class MplWidget(QWidget):
 
 
         # fig = mpf.figure(style='classic', constrained_layout=True)
-        fig = mpf.figure(style='binance')
-        self.ax1 = fig.add_subplot(2, 1, 1)
-        self.ax2 = fig.add_subplot(2, 1, 2, sharex=self.ax1)
-        self.ax1.autoscale()
-        self.ax2.autoscale()
-        fig.subplots_adjust(hspace=0)
 
-        for xtick in self.ax1.get_xticklabels():
-            xtick.set_color('none')
         # mpf.plot(df, ax=self.ax1, volume=self.ax2)
         # fig, axlist = mpf.plot(df[700:850], type='line', volume=True, mav=(40, 60), returnfig=True)
 
         # self.fig = Figure(constrained_layout=True)
-        mpf.plot(df, ax=self.ax1, volume=self.ax2, tight_layout=True)
-        self.canvas = FigureCanvas(fig)
-        vertical_layout = QVBoxLayout()
-        vertical_layout.addWidget(self.canvas)
-        self.toolbar = NavigationToolbar(self.canvas, self, coordinates=False)
-        vertical_layout.addWidget(self.toolbar)
-        self.setLayout(vertical_layout)
+
         # chartlayout.addWidget(canvas)
 
         # from PyQt5 import QtGui, QtCore
@@ -128,7 +132,6 @@ class MplWidget(QWidget):
         # # since I find Blank cursor very confusing, I will use a better one:
         # self.canvas.setCursor(QtGui.QCursor(QtCore.Qt.SizeAllCursor))
 
-        self.canvas.draw()
 
 
 

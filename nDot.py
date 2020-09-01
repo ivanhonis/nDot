@@ -9,44 +9,18 @@ import mysql.connector
 import threading
 import random
 import pandas as pd
+import finnhub
 
-import numpy as np
-import matplotlib.pyplot as plt
-# import matplotlib.dates as mdates
-# import matplotlib.ticker as mticker
-# import matplotlib.mlab as mlab
-# import matplotlib.pyplot as plt
-# import matplotlib.font_manager as font_manager
-
-
-# import matplotlib.ticker as ticker
-
-# from PySide2.QtWidgets import QApplication, QWidget, QTableWidget, QTableWidgetItem
-# from PySide2.QtCore import QFile
-# from PySide2.QtUiTools import QUiLoader
-# from mpl_finance import candlestick_ohlc
-
-# from PySide2.QtCore import QDateTime, Qt, QAbstractTableModel
-# from PySide2.QtGui import QPainter
-# from PySide2.QtWidgets import (QWidget, QHeaderView, QHBoxLayout, QTableView,
-#                                QSizePolicy)
-# from PySide2.QtCharts import QtCharts
-
-# from table_model import CustomTableModel
-
-
+from datetime import datetime
+from datetime import timedelta
 from PyQt5.QtWidgets import*
 from PyQt5.uic import loadUi
+import mplfinance as mpf
+import numpy as np
+import matplotlib.animation as animation
+import matplotlib.dates as mdates
 
-# import plotly.graph_objects as go
-
-import pandas as pd
-from datetime import datetime
-
-# from matplotlib.backends.backend_qt5agg import (NavigationToolbar2QT as NavigationToolbar)
-
-# import random
-
+import matplotlib.pyplot as plt
 
 
 class ais_db():
@@ -59,10 +33,8 @@ class ais_db():
     database = "u826803502_ArtIntSol"
     column_names = ""
 
-    # def __init__(self):
-    #     self.oppen()
-
     def open(self):
+        s("nDot db open")
         self.aisdb = mysql.connector.connect(
          host=self.host,
          user=self.user,
@@ -71,32 +43,39 @@ class ais_db():
          connect_timeout=10000
         )
         self.setcursor()
+        return
 
     def setcursor(self):
         self.cursor = self.aisdb.cursor(buffered=False)
+        return
 
     def close(self):
-        self.aisdb.commit()
+        # self.aisdb.commit()
+        s("nDot db close")
         self.aisdb.close()
+        return
 
     def execute_base(self, sqlstr, multiple=False):
         main_widget.progress_action()
-        # print(sqlstr)
-        # print("minden ok?",self.aisdb.is_connected())
+        aisdb.open()
+        s("db execute: " + sqlstr[:200])
+
         if self.aisdb.is_connected():
             try:
                 self.cursor.execute(sqlstr, multiple)
                 if self.cursor.rowcount > 0:
-                    main_widget.add_Log("inserted rows: " + str(self.cursor.rowcount))
-                self.setcursor()
+                    main_widget.add_log("  inserted rows: " + str(self.cursor.rowcount))
+                    self.setcursor()
+                aisdb.close()
             except mysql.connector.Error as err:
                 print("Something went wrong: {}".format(err))
         else:
             self.open()
             self.cursor.execute(sqlstr, multiple)
-            self.setcursor()
             if self.cursor.rowcount > 0:
-                main_widget.add_Log("inserted rows: " + str(self.cursor.rowcount))
+                main_widget.add_log("  inserted rows: " + str(self.cursor.rowcount))
+                self.setcursor()
+            aisdb.close()
         return
 
     def execute_fetchall(self, sqlstr):
@@ -110,7 +89,7 @@ class ais_db():
             # self.setcursor()
             # self.aisdb.commit()
             if self.cursor.rowcount > 0:
-                main_widget.add_Log("rows: " + str(self.cursor.rowcount))
+                main_widget.add_log("rows: " + str(self.cursor.rowcount))
                 self.row_count = self.cursor.rowcount
                 i_result = self.cursor.fetchall()
                 self.setcursor()
@@ -141,30 +120,37 @@ class ais_db():
         i_sql_string = "SELECT * FROM `" + isymbol + "` WHERE `datetime`>='" + fromdt + "' AND `datetime`<='" + todt + "'"
         return self.execute_fetchall(i_sql_string)
 
-
-    def add_instrument(self, instrument):
-        i_sql_command = "CREATE TABLE IF NOT EXISTS`" + self.database + "`.`" + instrument + \
+    def add_instrument(self, symbol):
+        s("add symbol to db: " + symbol)
+        i_sql_command = "CREATE TABLE IF NOT EXISTS`" + self.database + "`.`" + symbol + \
                         "` ( `i` INT NOT NULL AUTO_INCREMENT , `datetime` DATETIME NOT NULL , " + \
                         "PRIMARY KEY (`i`), UNIQUE `datetime_i` (`datetime`)) ENGINE = InnoDB"
         self.execute_base(i_sql_command)
-        self.aisdb.commit()
+        # main_widget.progress_action()
         return
 
-    def del_instrument(self, instrument):
-        i_sql_command = "DROP TABLE IF EXISTS`"+self.database+"`.`"+instrument+"`"
+    def del_instrument(self, symbol):
+        s("del symbol from db: " + symbol)
+        i_sql_command = "DROP TABLE IF EXISTS`"+self.database+"`.`" + symbol + "`"
+        s(i_sql_command)
         self.execute_base(i_sql_command)
+        # main_widget.progress_action()
         return
 
-    def add_instrument_float_property(self, instrument, prope):
-        i_sql_command = "ALTER TABLE `" + instrument + "` ADD IF NOT EXISTS`" + prope + \
-                        "` DECIMAL(13,6) NULL DEFAULT NULL AFTER `datetime`"
+    def add_instrument_float_property(self, symbol, prop):
+        s("add db " + symbol + " float prop: " + prop)
+        i_sql_command = "ALTER TABLE `" + symbol + "` ADD IF NOT EXISTS`" + prop + \
+                        "` DECIMAL(16,6) NULL DEFAULT NULL AFTER `datetime`"
         self.execute_base(i_sql_command)
+        # main_widget.progress_action()
         return
 
-    def add_instrument_string_property(self, instrument, prope, plength):
-        i_sql_command = "ALTER TABLE `" + instrument + "` ADD IF NOT EXISTS`" + prope + \
+    def add_instrument_string_property(self, symbol, prop, plength):
+        s("add db " + symbol + " string prop: " + prop)
+        i_sql_command = "ALTER TABLE `" + symbol + "` ADD IF NOT EXISTS`" + prop + \
                         "` VARCHAR(" + str(plength) +") NULL DEFAULT NULL AFTER `datetime`"
         self.execute_base(i_sql_command)
+        main_widget.progress_action()
         return
 
     def add_instrument_value(self, instrument, dt, prop, val):
@@ -181,11 +167,7 @@ class ais_db():
         return
 
     def add_instrument_value_multi(self, instrument, dt_array, prop, val_array):
-        # print("ins", instrument,"----------------------------------------------")
-        # print("dt_array", dt_array[2])
-        # print("prop", prop)
-        # print("val_array", val_array)
-        # print("add")
+        s("write to db "+instrument+" - "+prop)
         self.add_instrument(instrument)
         self.add_instrument_float_property(instrument, prop)
         i_dt_array_len = len(dt_array)
@@ -193,29 +175,17 @@ class ais_db():
 
         # beszúrom az üreseket, ha még nincsenek és utána minden módosítom
         i_sql_elements_array = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size))]
-        # print(len(i_sql_elements_array))
 
         for i_i in range(i_dt_array_len):
-            # print(i_i)
             i_pos = int(i_i / i_elemet_block_size)
-            # print(i_pos)
-            # i_sql_elements_array[0] = " "+ i_sql_elements_array[i_pos]
-            # print(i_sql_elements_array)
-
             i_sql_elements_array[i_pos] = i_sql_elements_array[i_pos] + "('" + dt_array[i_i] + "', '" + str(val_array[i_i]) + "'), "
-            # print(i_sql_elements_array[i_pos])
-
-        # print('2')
 
         for i_i in range(len(i_sql_elements_array)):
-            # print('3')
             i_sql_str = "INSERT INTO `" +instrument + "` "+\
                     "(`datetime` , `" + prop + "` ) VALUES " +\
                     i_sql_elements_array[i_i][:-2] +\
                     " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
-            # print(i_sql_str)
             self.execute_base(i_sql_str, True)
-        self.aisdb.commit()
 
         # minden sort lemódosítok
         i_elemet_block_size2 = 32000
@@ -230,65 +200,167 @@ class ais_db():
             i_sql_elements_array3[i_pos2] = i_sql_elements_array3[i_pos2] +\
                                           "'" + dt_array[i_i2] + "',"
 
-
+        main_widget.progress_action()
         for i_i3 in range(len(i_sql_elements_array2)):
             i_sql_str2 = "UPDATE " + instrument + " SET `" + prop + "` = CASE " +\
                     i_sql_elements_array2[i_i3] +\
                     " END WHERE `datetime` IN ("+ i_sql_elements_array3[i_i3][:-1] + ")"
-            # print(i_sql_str2)
             self.execute_base(i_sql_str2)
-        self.aisdb.commit()
         return
 
-class watchlist():
-    wl_rows = 3
-    wl_column = 5
-    saved_items = []
 
-    def get_wl_df(self):
-        print('wl itt')
-        i_df = pd.read_csv('wl.csv', sep=';')
-        i_df.set_index('symbol')
-        print(i_df.loc[i_df['symbol'] == 'MSFT',['name']])
-        print(i_df.iloc[:, 0])
-        for index, row in i_df.iterrows():
-            print(row['name'], row['profil'])
-
-        new_row = {'symbol': 'Geo', 'name': 'GEO corp', 'profil': 'geoprofil', 'last_price': 97}
-        # append row to the dataframe
-        i_df = i_df.append(new_row, ignore_index=True)
-        print(i_df)
-        i_df.to_csv('wl.csv', sep=';', index=False)
-        i_df.drop(i_df.loc[i_df['symbol'] == 'Geo'].index, inplace=True)
-        datetime_series = pd.date_range(start='2020-08-10 00:00', periods=12, freq='-1M', closed=None)
-        for i_i in range(len(datetime_series)-1):
-            print(datetime_series[i_i], " ", datetime_series[i_i+1])
-        return i_df
+class wl:
+    df = ""
 
     def __init__(self):
-        self.saved_items.append(["MSFT", self.getCompanyProfile2("MSFT"), "113.25", "10:25", "sell"])
-        self.saved_items.append(["APA", self.getCompanyProfile2("APA"), "113.25", "10:25", "hold"])
-        self.saved_items.append(["AAPL", self.getCompanyProfile2("AAPL"), "113.25", "10:25", "hold"])
+        self.df = self.read()
+        self.refresh_close()
+        self.refresh_news_sentiment()
 
-    def getWLItems(self):
-        return self.saved_items
+    def read(self):
+        return pd.read_csv('wl.csv', sep=';')
 
-    def getCompanyProfile2(self, symbol):
-        # request_url = 'https://finnhub.io/api/v1/stock/profile2?symbol='+symbol+'&token=bs9c9lvrh5rahoaofmt0'
-        # print(request_url)
-        # r = requests.get(request_url)
-        # json_data = json.loads(r.text)
-        # print(json_data)
-        name = "a" # json_data["name"]
-        logo = "a" # json_data["logo"]
-        return name
+    def write(self):
+        self.df.to_csv('wl.csv', sep=';', index=False)
+        return
 
-    def getQItems(self):
-       ritems = [[0 for x in range(self.wl_column)] for y in range(self.wl_rows)]
-       for x2 in range(self.wl_rows):
-           for y2 in range(self.wl_column):
-               ritems[x2][y2]=QTableWidgetItem(self.saved_items[x2][y2])
-       return ritems
+    def refresh_close(self):
+        s("Refresh Wl close prices")
+        i_md = market_data()
+        for index, row in self.df.iterrows():
+            i_symbol = row['symbol']
+            i_quote = i_md.quote(i_symbol)
+            self.df.loc[self.df['symbol'] == i_symbol, 'c'] = i_quote['c']
+            self.df.loc[self.df['symbol'] == i_symbol, 'pc'] = i_quote['pc']
+        self.write()
+        return
+
+    def refresh_data(self):
+        s("Refresh Wl Data")
+        i_md = market_data()
+        for index, row in self.df.iterrows():
+            i_symbol = row['symbol']
+            i_company_profile = i_md.company_profile(i_symbol)
+            self.df.loc[self.df['symbol'] == i_symbol, 'name'] = i_company_profile['name']
+            self.df.loc[self.df['symbol'] == i_symbol, 'profil'] = "Description: " + i_company_profile['description']
+        self.write()
+        return
+
+    def refresh_news_sentiment(self):
+        s("Refresh Wl sentiment")
+        i_md = market_data()
+        for index, row in self.df.iterrows():
+            i_symbol = row['symbol']
+            i_news_sentiment = i_md.news_sentiment(i_symbol)
+            self.df.loc[self.df['symbol'] == i_symbol, 'snt_bearish'] = i_news_sentiment['sentiment']['bearishPercent']
+        self.write()
+        return
+
+    def add(self, symbol):
+        self.remove(symbol)
+        new_row = {'symbol': symbol}
+        self.df = self. df.append(new_row, ignore_index=True)
+        self.refresh_data()
+        self.refresh_close()
+        self.refresh_news_sentiment()
+        self.write()
+        self.save_prices(symbol)
+        return
+
+    def remove(self, symbol):
+        self.df.drop(self.df.loc[self.df['symbol'] == symbol].index, inplace=True)
+        self.write()
+        return
+
+    def save_prices(self, symbol):
+        s("Save prices - " + symbol)
+        i_now = datetime.now() + timedelta(days=1)
+        i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+        i_datetime_series = pd.date_range(start=i_now, periods=5, freq='-93d')
+        for i_i in range(len(i_datetime_series)-1):
+            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i]))
+            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
+            s("get data "+symbol)
+            i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
+            i_datetime = tools.get_df_column(i_df_stock, "datetime")
+            aisdb.add_instrument_value_multi(symbol, i_datetime, "t", tools.get_df_column(i_df_stock, "t"))
+            aisdb.add_instrument_value_multi(symbol, i_datetime, "o", tools.get_df_column(i_df_stock, "o"))
+            aisdb.add_instrument_value_multi(symbol, i_datetime, "h", tools.get_df_column(i_df_stock, "h"))
+            aisdb.add_instrument_value_multi(symbol, i_datetime, "c", tools.get_df_column(i_df_stock, "c"))
+            aisdb.add_instrument_value_multi(symbol, i_datetime, "l", tools.get_df_column(i_df_stock, "l"))
+            aisdb.add_instrument_value_multi(symbol, i_datetime, "ohlc4", tools.get_df_column(i_df_stock, "ohlc4"))
+            aisdb.add_instrument_value_multi(symbol, i_datetime, "v", tools.get_df_column(i_df_stock, "v"))
+        return
+
+    def referesh_ui(self):
+        a = np.ndarray(shape=(5), dtype=object, order='F')
+        b = np.ndarray(shape=(5), dtype=object, order='F')
+
+
+        a[0] = main_widget.WL_frame
+        a[1] = main_widget.WL_frame_2
+        a[2] = main_widget.WL_frame_3
+        a[3] = main_widget.WL_frame_4
+        a[4] = main_widget.WL_frame_5
+
+        b[0] = main_widget.WL_symbol
+        b[1] = main_widget.WL_symbol_2
+        b[2] = main_widget.WL_symbol_3
+        b[3] = main_widget.WL_symbol_4
+        b[4] = main_widget.WL_symbol_5
+
+        a[0].hide()
+        a[1].hide()
+        a[2].hide()
+        a[3].hide()
+        a[4].hide()
+
+        a[0].show()
+
+        b[0].setText("APPL")
+        main_widget.WL_c.setText("215.40")
+        main_widget.WL_arrow.setText("▼")
+        main_widget.WL_arrow.setStyleSheet("color: red; background: #ffffff;")
+        main_widget.WL_nn_long.setText("L:25%")
+        main_widget.WL_nn_neutral.setText("N:30%")
+        main_widget.WL_nn_short.setText("S:40%")
+        main_widget.WL_bull.setValue(90)
+        main_widget.WL_bear.setValue(90)
+
+
+class market_data():
+    api_key_finnhubio1 = "bs9c9lvrh5rahoaofmt0"
+    finnhub_client = finnhub.Client(api_key=api_key_finnhubio1)
+
+    def get_stock_candles(self, symbol, dt_frame, from_dt, to_dt):
+        i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, dt_frame, from_dt, to_dt))
+        i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+        i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
+        i_df['ohlc4'] = ((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4)
+        i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
+        i_df.set_index('datetime')
+        # return pandas df o h c l v t datetime ohcl4
+        return i_df
+
+    def company_profile(self, symbol):
+        return self.finnhub_client.company_profile(symbol=symbol)
+
+    def news_sentiment(self, symbol):
+        return self.finnhub_client.news_sentiment(symbol=symbol)
+
+    def quote(self, symbol):
+        return self.finnhub_client.quote(symbol)
+
+
+class tools():
+
+    def get_df_column(self, df, col):
+        return df[col].to_numpy().tolist()
+
+    def dbdt_to_unixdt(self, datestring):
+        dt = datetime.strptime(datestring, '%Y-%m-%d %H:%M:%S')
+        dt2 = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+        return str(int(time.mktime(dt2.timetuple())))
 
 
 class prices():
@@ -438,16 +510,7 @@ class iphoenix100(QWidget):
         super(iphoenix100, self).__init__()
         self.load_ui()
         self.Logs_Browser.setText("")
-        self.setWindowTitle("iPhoenix100")
-
-        watchlist_obj=watchlist()
-        self.Watch_list.setRowCount(watchlist_obj.wl_rows)
-        self.Watch_list.setColumnCount(watchlist_obj.wl_column)
-        watchlist_obj=watchlist()
-        wlqitems=watchlist_obj.getQItems()
-        for x2 in range(watchlist_obj.wl_rows):
-            for y2 in range(watchlist_obj.wl_column):
-                self.Watch_list.setItem(x2,y2,wlqitems[x2][y2])
+        self.setWindowTitle("nDot")
 
     def load_ui(self):
         # loader = QUiLoader()
@@ -458,10 +521,10 @@ class iphoenix100(QWidget):
         loadUi("C:/Users/honis.ivan/Documents/IPhoneix120/form.ui", self)
 
         # hozzárendelések
-        self.Run_Button.clicked.connect(self.Run_Button_Action)
-        self.Command_Line.returnPressed.connect(self.Run_Button_Action)
-        self.Command_Line.textChanged.connect(self.Command_Line_Changed)
-        self.WL_Btn.clicked.connect(Run_WL_btn2)
+        self.Run_Button.clicked.connect(self.run_button_action)
+        self.Command_Line.returnPressed.connect(self.run_button_action)
+        self.Command_Line.textChanged.connect(self.command_line_changed)
+        self.WL_btn.clicked.connect(Run_WL_btn)
         # ui_file.close()
 
     def progress_action(self):
@@ -470,163 +533,156 @@ class iphoenix100(QWidget):
         #     self.progress_count = 0
         self.Progress_Bar.setValue(random.randint(0, 100))
 
-    def Run_Button_Action(self):
+    def run_button_action(self):
+        s("Run button pressed")
         command_text = self.Command_Line.text()
         command_partitioned = command_text.partition(" ")
-        command_text_first_word = command_partitioned[0]
-        if len(command_partitioned) == 3:
-            param1 = command_partitioned[2]
-        if len(command_partitioned) == 5:
-            param1 = command_partitioned[2]
-            param2 = command_partitioned[4]
-        if len(command_text.partition(' ')) == 7:
-            param1 = command_partitioned[2]
-            param2 = command_partitioned[4]
-            param3 = command_partitioned[6]
+        command_text_first_word = str.lower(command_partitioned[0])
+        param1 = command_partitioned[2]
+        # if len(command_partitioned) == 3:
+        #     param1 = command_partitioned[2]
+        # if len(command_partitioned) == 5:
+        #     param1 = command_partitioned[2]
+        #     param2 = command_partitioned[4]
+        # if len(command_text.partition(' ')) == 7:
+        #     param1 = command_partitioned[2]
+        #     param2 = command_partitioned[4]
+        #     param3 = command_partitioned[6]
 
-        self.add_Log("call "+command_text)
         self.Command_Line.setText("")
 
-        if command_text_first_word == "getprice" or command_text_first_word == "getPrice":
-            getprice_program(param1)
+        d = {
+            'getprice': 'getprice_program',
+            'chart': 'chart_program',
+            'addwl': 'add_wl_program',
+            'removewl': 'remove_wl_program',
+            'removewldata': 'remove_wl_data_program',
+            'test': 'test_program',
+            'exit': 'exit_program'
+            }
 
-        if command_text_first_word == "test":
-            self.progress_action()
+        df = pd.Series(d)
+        if command_text_first_word in df.index:
+            self.add_log("call: " + df[command_text_first_word])
+            method = eval(df[command_text_first_word])
+            args = [param1]
+            kwargs = {}
+            method(*args, **kwargs)
+        return
 
-        if command_text_first_word == "chart":
-            chart_program(param1)
-
-        if command_text_first_word == "addwl":
-            add_wl_program(param1)
-
-        if command_text_first_word == "close":
-            self.close()
-
-        if command_text_first_word == "exit":
-            self.close()
-
-    def Command_Line_Changed(self):
+    def command_line_changed(self):
         self.Command_Hint.setText("")
         command_text = self.Command_Line.text()
         command_text_first_word = command_text.partition(' ')[0]
 
-        if command_text_first_word == "test":
-            self.Command_Hint.setText("test")
+        d2 = {
+            'getprice': 'getprice_program',
+            'chart': 'chart_program',
+            'addwl': 'addwl symbol - add new symbol to watchlist',
+            'removewl': 'removewl symbol - remove symbol from watchlist',
+            'removewldata': 'removewldata sybol - remove symbol from nDot data server',
+            'test': 'run test_program param',
+            'exit': 'exit'
+        }
 
-        if command_text_first_word == "chart":
-            self.Command_Hint.setText("chart symbol")
+        df = pd.Series(d2)
+        if command_text_first_word in df.index:
+            self.Command_Hint.setText(df[command_text_first_word])
+        return
 
-        if command_text_first_word == "getprice":
-            self.Command_Hint.setText("getprice symbol")
-
-        if command_text_first_word == "addwl":
-            self.Command_Hint.setText("addwl sybol")
-
-
-    def add_Log( self,add_text ):
-        self.log_Text = time.strftime( "%d %B, %Y %H:%M:%S" )+" > "+add_text + " \r" + self.log_Text
+    def add_log(self, add_text):
+        self.log_Text = time.strftime("%d %B, %Y %H:%M:%S")+" > "+add_text + " \r" + self.log_Text
         self.Logs_Browser.setText(self.log_Text)
+        main_widget.update()
+        return
+
+
+def s(msg_str):
+    main_widget.Status.setText("Status: "+msg_str)
+    print("Status: "+msg_str)
+    main_widget.update()
+    main_widget.repaint()
+    return
+
+
+def test_program(param=""):
+    s("TEST........ " + param)
+    return
+
+
+def exit_program(param=""):
+    main_widget.close()
+    return
 
 
 def add_wl_program(isymbol=""):
-    main_widget.add_Log("run addwl "+isymbol)
-    wl = watchlist()
-    print(wl.get_wl_df())
-    main_widget.add_Log("addwl - Ready")
+    main_widget.add_log("run addwl " + isymbol)
+    wl.add(isymbol)
+    main_widget.add_log("addwl - Ready")
+
+
+def remove_wl_program(isymbol=""):
+    main_widget.add_log("run removewl " + isymbol)
+    wl.remove(isymbol)
+    main_widget.add_log("removewl - Ready")
+
+
+def remove_wl_data_program(isymbol=""):
+    main_widget.add_log("run removewldata " + isymbol)
+    aisdb.del_instrument(isymbol)
+    main_widget.add_log("removewldata - Ready")
+
 
 def getprice_program(isymbol):
-    main_widget.add_Log( "run getPrice "+isymbol )
+    main_widget.add_log("run getPrice " + isymbol)
 
     selected_stock = prices()
     selected_stock.symbol = isymbol
     selected_stock.get_stock_candle()
 
     # main_widget.update_graph(selected_stock.t,selected_stock.o,selected_stock.c)
-    main_widget.add_Log("getPrice - Ready")
-
-def test_program():
-    main_widget.add_Log("run test_program")
-    print("test")
+    main_widget.add_log("getPrice - Ready")
 
 
-def Run_WL_btn2():
-    isymbol = "MSFT"
-    print("itt", isymbol)
-    main_widget.add_Log("run chart "+isymbol)
+def Run_WL_btn():
+    print("Run_WL_btn")
+    main_widget.add_log("run Run_WL_btn")
 
-    selected_stock = prices()
-    selected_stock.symbol = isymbol
+    idf = pd.read_csv(
+        'C:/Users/honis.ivan/PycharmProjects/plotchart/mplfinance-master/examples/data/SPY_20110701_20120630_Bollinger.csv',
+        index_col=0, parse_dates=True)
 
-    # selected_stock.from_year = int(main_widget.From_DT.dateTime().toString("yyyy"))
-    # selected_stock.from_month = int(main_widget.From_DT.dateTime().toString("MM"))
-    # selected_stock.from_day = int(main_widget.From_DT.dateTime().toString("dd"))
-    # selected_stock.from_hour = int(main_widget.From_DT.dateTime().toString("hh"))
-    # selected_stock.from_minute = int(main_widget.From_DT.dateTime().toString("mm"))
-    # selected_stock.from_secound = int(main_widget.From_DT.dateTime().toString("mm"))
-    #
-    # selected_stock.to_year = int(main_widget.To_DT.dateTime().toString("yyyy"))
-    # selected_stock.to_month = int(main_widget.To_DT.dateTime().toString("MM"))
-    # selected_stock.to_day = int(main_widget.To_DT.dateTime().toString("dd"))
-    # selected_stock.to_hour = int(main_widget.To_DT.dateTime().toString("hh"))
-    # selected_stock.to_minute = int(main_widget.To_DT.dateTime().toString("mm"))
-    # selected_stock.to_secound = int(main_widget.To_DT.dateTime().toString("mm"))
-    import pandas as pd
-    import mplfinance as mpf
-    df = pd.read_csv(
-         'C:/Users/honis.ivan/PycharmProjects/plotchart/mplfinance-master/examples/data/yahoofinance-SPY-20080101-20180101.csv',
-         index_col=0,
-         parse_dates=True)
-    df.shape
-    df.head(3)
-    df.tail(3)
+    df = idf.loc['2011-07-01':'2011-12-30', :]
 
-    print(df)
+    pkwargs = dict(type='candle', mav=(10, 20))
 
+    fig, axes = mpf.plot(df.iloc[0:20], returnfig=True, volume=True,
+                         figsize=(11, 8), panel_ratios=(2, 1),
+                         title='\n\nS&P 500 ETF', **pkwargs)
+    ax1 = axes[0]
+    ax2 = axes[2]
 
-    mpf.plot(df, ax=main_widget.MplWidget.ax1, volume=main_widget.MplWidget.ax2)
+    def animate(ival):
+        if (20 + ival) > len(df):
+            print('no more data to plot')
+            ani.event_source.interval *= 3
+            if ani.event_source.interval > 12000:
+                exit()
+            return
+        data = df.iloc[0:(20 + ival)]
+        ax1.clear()
+        ax2.clear()
+        mpf.plot(data, ax=ax1, volume=ax2, **pkwargs)
 
-    # print("itt2")
-    # selected_stock.get_stock_candle()
-    # print("itt3")
-    # main_widget.MplWidget.ax1_1.clear()
-    # # main_widget.MplWidget.ax2_1.clear()
-    # main_widget.MplWidget.ax1_1.plot(selected_stock.get_df_column("datetime"), selected_stock.get_df_column("l"))
-    # # main_widget.MplWidget.ax1_1.plot(selected_stock.get_df_column("t"), selected_stock.get_df_column("h"))
-    # # main_widget.MplWidget.ax1_1.fill_between(selected_stock.get_df_column("t"), selected_stock.get_df_column("l"), selected_stock.get_df_column("h"), alpha=0.25)
-    # main_widget.MplWidget.ax2_1.bar(selected_stock.get_df_column("datetime"), selected_stock.get_df_column("v"), label='Volume')
-    # main_widget.MplWidget.ax1_1.margins(x=0)
-    # # main_widget.MplWidget.ax2_1.margins(x=0)
-    #
-    # # main_widget.MplWidget.plot(selected_stock.t[10], selected_stock.o[10], 'o', color='r')
-    #
-    # for xtick in main_widget.MplWidget.ax1_1.get_xticklabels():
-    #     xtick.set_color('none')
-    #
-    # # import matplotlib.dates as mdates
-    # # locator = mdates.AutoDateLocator()
-    # # formatter = mdates.ConciseDateFormatter(locator)
-    # # formatter.formats = ['', '%M', '%H:%M']
-    #
-    # main_widget.MplWidget.ax1_1.set_xticklabels(selected_stock.get_df_column("datetime"), rotation=270, alpha=0.5)
-    # # main_widget.MplWidget.ax1_1.xaxis.set_major_formatter(formatter)
-    #
-    # main_widget.MplWidget.ax2_1.set_xticklabels(selected_stock.get_df_column("datetime"), rotation=270, alpha=0.5)
-    # # main_widget.MplWidget.ax2_1.xaxis.set_major_formatter(formatter)
-    # # main_widget.MplWidget.ax1_1.autoscale()
-    # # main_widget.MplWidget.ax2_1.autoscale()
-    #
-    # # import matplotlib.dates as mdates
-    # # myfmt = mdates.DateFormatter('%M:%S')
-    # # main_widget.MplWidget.ax2_1.xaxis.set_major_formatter(myfmt)
-    # #
-    # # main_widget.MplWidget.canvas.draw_idle()
-    main_widget.MplWidget.canvas.draw()
-    main_widget.add_Log("chart - Ready")
+    ani = animation.FuncAnimation(fig, animate, interval=2000)
+
+    mpf.show()
+    return
 
 
 def chart_program(isymbol):
 
-    main_widget.add_Log("run chart "+isymbol)
+    main_widget.add_log("run chart " + isymbol)
 
     selected_stock = prices()
     selected_stock.symbol = isymbol
@@ -650,12 +706,12 @@ def chart_program(isymbol):
     main_widget.MplWidget.ax1_1.autoscale()
     main_widget.MplWidget.ax1_1.autoscale()
 
-    import matplotlib.dates as mdates
+
     myfmt = mdates.DateFormatter('%H:%M')
     main_widget.MplWidget.ax1_1.xaxis.set_major_formatter(myfmt)
 
     main_widget.MplWidget.canvas.draw()
-    main_widget.add_Log("chart - Ready")
+    main_widget.add_log("chart - Ready")
 
 # időzítő
 
@@ -674,59 +730,26 @@ class back_processes(object):
             time.sleep(self.interval)
 
 if __name__ == "__main__":
-    # print(
-    #     datetime.fromtimestamp(
-    #         int("1284105682")
-    #     ).strftime('%Y-%m-%d %H:%M:%S')
-    # )
 
-    # 1. Art Int Sol adatbázis kapcsolat létrehozása
-    aisdb = ais_db()
-    aisdb.open()
-
-    # 2. háttér futásindítás 60 másodpercenkénti futás
-    # bp = back_processes()
-
-    # 3. UI indítás
+    # 1.
+    print("Status: Load GUI")
     app = QApplication([])
     main_widget = iphoenix100()
-    #main_widget.showFullScreen()
-
-    # teszt dolgok ide jönnek
-    # print(int(main_widget.From_T.dateTime().toString("hh")))
-    # print(int(main_widget.To_T.dateTime().toString("hh")))
-    # print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:30:00", "2020-08-03 15:32:00"))
-    # print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 15:33:00", "2021-08-03 00:00:00"))
-    # print("nAAAAAAAa", aisdb.is_timeframe_exist("MSFT", "2020-08-03 00:00:00", "2021-08-03 12:00:00"))
-    # aisdb.del_instrument("MSFT")
-    # aisdb.del_instrument("AAPL")
-    # aisdb.add_instrument("SHELL")
-    # aisdb.add_instrument("AAPL")
-    # aisdb.add_instrument_float_property("MSFT","c")
-    # aisdb.add_instrument_float_property("MSFT","o")
-    # aisdb.add_instrument_float_property("MSFT","h")
-    # aisdb.add_instrument_float_property("MSFT","l")
-    # aisdb.add_instrument_float_property("AAPL","c")
-    # aisdb.execute_base("INSERT INTO `MSFT` (`datetime`) VALUES ('2020-08-04 23:59:00') ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)")
-    # aisdb.add_instrument_float_property("AAPL","o")
-    # aisdb.add_instrument_float_property("AAPL","h")
-    # aisdb.add_instrument_float_property("AAPL","l")
-    # aisdb.add_instrument_string_property("AAPL", "note", 256)
-    # print("start")
-    # aisdb.add_instrument_value("MSFT", "2020-08-12 16:47:00", "c", 123456)
-    # aisdb.add_instrument_value("MSFT", "2020-08-12 16:47:00", "c", 12345.78)
-    # aisdb.add_instrument_value("MSFT", "2020-08-12 16:48:00", "c", 12345.12345)
-    # aisdb.add_instrument_value("MSFT", "2020-08-12 16:48:00", "c", 12345.88)
-    # aisdb.add_instrument_value("MSFT", "2020-08-12 16:48:00", "o", 12345.88)
-    # aisdb.add_instrument_value("MSFT", "2020-08-12 16:48:00", "h", 12345.88)
-    # aisdb.add_instrument_value("AAPL", "2020-08-12 16:48:00", "l", 123456.123456)
-    # aisdb.add_instrument_value("AAPL", "2020-08-12 16:48:00", "note", "note")
-    # aisdb.add_instrument_value("AAPL", "2020-08-12 16:49:00", "note", 1245)
-    # print("stop")
-    # -------------------------
-
     main_widget.show()
-    aisdb.close()
+    #main_widget.showFullScreen()
+    print("Status: GUI Ready")
+
+    #2.
+    aisdb = ais_db()
+    wl = wl()
+    # wl.referesh_ui()
+    md = market_data()
+    tools = tools()
+
+    # 3. háttér futásindítás 60 másodpercenkénti futás
+    # bp = back_processes()
+
+    s("ok")
     sys.exit(app.exec_())
 
 
@@ -897,3 +920,5 @@ if __name__ == "__main__":
 #     plt.subplot(1,2,2)
 #     plot_value_array(i, predictions[0],  test_labels)
 #     plt.show()
+
+
