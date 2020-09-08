@@ -779,11 +779,10 @@ def chart_program(symbol):
     i_chart_df.to_csv(su, index=False)
     quote = pd.read_csv(StringIO(su.getvalue()), sep=",", index_col=0, parse_dates=True)
     mpf.available_styles()
-    mpf.plot(quote, type='candle', volume=True, style='binance', figratio=(20, 10), figscale=.9, tight_layout=True)
+    mpf.plot(quote, type='candle', volume=True, style='binance', figratio=(19, 10), figscale=.9, tight_layout=True)
     mpf.show()
     main_widget.add_log("chart - Ready")
     return
-
 
 # időzítő
 class back_processes(object):
