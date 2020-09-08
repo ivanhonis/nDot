@@ -1,10 +1,10 @@
 # This Python file uses the following encoding: utf-8
 import sys
-import os
-import requests
+# import os
+# import requests
 
 import time
-import json
+# import json
 import mysql.connector
 # import sqlite3
 import threading
@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 
 
 class ais_db():
-
+    open_close = True
     config = {
         'host': 'sql132.main-hosting.eu',
         'user': 'u826803502_AIS1',
@@ -49,39 +49,55 @@ class ais_db():
     column_names = ""
 
     def open(self):
-        s("nDot db open")
+        # s("nDot db open")
         self.cnx = mysql.connector.connect(**self.config)
-        self.cursor = self.cnx.cursor()
+        self.cursor = self.cnx.cursor(buffered=True)
         return
 
     def setcursor(self):
-        self.cursor = self.cnx.cursor()
+        self.cursor = self.cnx.cursor(buffered=True)
         return
 
     def close(self):
-        s("nDot db close")
+        # s("nDot db close")
         self.cnx.commit()
         self.cursor.close()
         self.cnx.close()
         return
 
+    def execute_simply(self, sqlstr, multiple=False):
+        s("db execute simply: " + sqlstr[:150])
+        if self.open_close:
+            self.open()
+
+        self.cursor.execute(sqlstr)
+
+        if self.open_close:
+            self.close()
+        return
+
     def execute_base(self, sqlstr, multiple=False):
         main_widget.progress_action()
-        s("db execute: " + sqlstr[:200])
-        self.open()
+        s("db execute: " + sqlstr[:150])
+        if self.open_close:
+            self.open()
+
         try:
-            self.cursor.execute(sqlstr, multiple)
+            self.cursor.execute(sqlstr)
         except mysql.connector.Error as err:
             s("Something went wrong: {}".format(err))
         else:
             if self.cursor.rowcount > 0:
                 main_widget.add_log("  inserted rows: " + str(self.cursor.rowcount))
-        self.close()
+        # self.setcursor()
+        if self.open_close:
+            self.close()
         return
 
     def execute_fetchall(self, sqlstr):
         s("execute_fetchall")
-        self.open()
+        if self.open_close:
+            self.open()
         try:
             self.cursor.execute(sqlstr)
         except mysql.connector.Error as err:
@@ -96,7 +112,8 @@ class ais_db():
             else:
                 self.row_count = 0
                 i_result = []
-        self.close()
+        if self.open_close:
+            self.close()
         return i_result
 
     def is_timeframe_exist(self, isymbol, fromdt, todt):
@@ -165,6 +182,8 @@ class ais_db():
 
     def add_instrument_value_multi(self, instrument, dt_array, prop, val_array):
         s("write to db "+instrument+" - "+prop)
+
+
         self.add_instrument(instrument)
         self.add_instrument_float_property(instrument, prop)
         i_dt_array_len = len(dt_array)
@@ -182,13 +201,17 @@ class ais_db():
                     "(`datetime` , `" + prop + "` ) VALUES " +\
                     i_sql_elements_array[i_i][:-2] +\
                     " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
-            self.execute_base(i_sql_str, True)
+            self.execute_base(i_sql_str)
+
+
+
 
         # minden sort lemódosítok
         i_elemet_block_size2 = 32000
         i_sql_elements_array2 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
         i_sql_elements_array3 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
         # s("Update create 1")
+        # for i_i2 in range(1):
         for i_i2 in range(i_dt_array_len):
             i_pos2 = int(i_i2 / i_elemet_block_size2)
             i_sql_elements_array2[i_pos2] = i_sql_elements_array2[i_pos2] +\
@@ -199,12 +222,17 @@ class ais_db():
                                           "'" + dt_array[i_i2] + "',"
         # s("Update create 2")
         for i_i3 in range(len(i_sql_elements_array2)):
+
             i_sql_str2 = "UPDATE " + instrument + " SET `" + prop + "` = CASE " +\
                     i_sql_elements_array2[i_i3] +\
-                    " END WHERE `datetime` IN ("+ i_sql_elements_array3[i_i3][:-1] + ")"
-            # s("Update create execute start")
-            self.execute_base(i_sql_str2, True)
-            # s("Update create execute stop")
+                    " END WHERE `datetime` IN (" + i_sql_elements_array3[i_i3][:-1] + ")"
+            self.execute_simply(i_sql_str2)
+        #     print("na")
+        #
+        # if prop == "o":
+        #     self.open()
+        #     self.cursor.execute(i_sql_str2)
+        #     self.close()
         return
 
 
@@ -299,7 +327,7 @@ class wl:
         s("Save prices - " + symbol)
         i_now = datetime.now() + timedelta(days=1)
         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-62d')
+        i_datetime_series = pd.date_range(start=i_now, periods=13, freq='-31d')
         for i_i in range(len(i_datetime_series)-1):
             i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i]))
             i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
@@ -307,32 +335,48 @@ class wl:
             i_df_stock = pd.DataFrame(None)
             i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
             i_datetime = tools.get_df_column(i_df_stock, "datetime")
-            aisdb.add_instrument_value_multi(symbol, i_datetime, "t", tools.get_df_column(i_df_stock, "t"))
 
-            ci = tools.get_df_column(i_df_stock, "o")
-            t = threading.Thread(target=aisdb.add_instrument_value_multi, args=(symbol, i_datetime, "o", ci))
-            t.start()
+            db_act1 = ais_db()
+            ci1 = tools.get_df_column(i_df_stock, "t")
+            db_act1.add_instrument_value_multi(symbol, i_datetime, "t", ci1)
 
-            ci = tools.get_df_column(i_df_stock, "h")
-            t = threading.Thread(target=aisdb.add_instrument_value_multi, args=(symbol, i_datetime, "h", ci))
-            t.start()
+            db_act2 = ais_db()
+            ci2 = tools.get_df_column(i_df_stock, "o")
+            t2 = threading.Thread(target=db_act2.add_instrument_value_multi, args=(symbol, i_datetime, "o", ci2))
 
-            ci = tools.get_df_column(i_df_stock, "c")
-            t = threading.Thread(target=aisdb.add_instrument_value_multi, args=(symbol, i_datetime, "c", ci))
-            t.start()
+            db_act3 = ais_db()
+            ci3 = tools.get_df_column(i_df_stock, "h")
+            t3 = threading.Thread(target=db_act3.add_instrument_value_multi, args=(symbol, i_datetime, "h", ci3))
 
-            ci = tools.get_df_column(i_df_stock, "l")
-            t = threading.Thread(target=aisdb.add_instrument_value_multi, args=(symbol, i_datetime, "l", ci))
-            t.start()
+            db_act4 = ais_db()
+            ci4 = tools.get_df_column(i_df_stock, "c")
+            t4 = threading.Thread(target=db_act4.add_instrument_value_multi, args=(symbol, i_datetime, "c", ci4))
 
-            ci = tools.get_df_column(i_df_stock, "ohlc4")
-            t = threading.Thread(target=aisdb.add_instrument_value_multi, args=(symbol, i_datetime, "ohlc4", ci))
-            t.start()
+            db_act5 = ais_db()
+            ci5 = tools.get_df_column(i_df_stock, "l")
+            t5 = threading.Thread(target=db_act5.add_instrument_value_multi, args=(symbol, i_datetime, "l", ci5))
 
-            ci = tools.get_df_column(i_df_stock, "v")
-            t = threading.Thread(target=aisdb.add_instrument_value_multi, args=(symbol, i_datetime, "v", ci))
-            t.start()
+            db_act6 = ais_db()
+            ci6 = tools.get_df_column(i_df_stock, "ohlc4")
+            t6 = threading.Thread(target=db_act6.add_instrument_value_multi, args=(symbol, i_datetime, "ohlc4", ci6))
 
+            db_act7 = ais_db()
+            ci7 = tools.get_df_column(i_df_stock, "v")
+            t7 = threading.Thread(target=db_act7.add_instrument_value_multi, args=(symbol, i_datetime, "v", ci7))
+
+            t2.start()
+            t3.start()
+            t4.start()
+            t5.start()
+            t6.start()
+            t7.start()
+
+            t2.join()
+            t3.join()
+            t4.join()
+            t5.join()
+            t6.join()
+            t7.join()
         return
 
 
@@ -381,7 +425,7 @@ class market_data():
         i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, dt_frame, from_dt, to_dt))
         i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
         i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
-        i_df['ohlc4'] = ((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4)
+        i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
         i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
         i_df.set_index('datetime')
         # return pandas df o h c l v t datetime ohcl4
@@ -723,7 +767,7 @@ def chart_program(symbol):
     stock = prices()
     stock.symbol = symbol
     stock.get_stock_candle()
-    print(stock.df)
+    # print(stock.df)
     i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"}, errors="raise")
     # i_chart_df = i_chart_df.drop(['i', 't', 'ohlc4'], axis=1)
     #
@@ -734,7 +778,8 @@ def chart_program(symbol):
     su = io.StringIO()
     i_chart_df.to_csv(su, index=False)
     quote = pd.read_csv(StringIO(su.getvalue()), sep=",", index_col=0, parse_dates=True)
-    mpf.plot(quote, type='candle', volume=True, style='binance', figratio=(28, 10), figscale=1.2)
+    mpf.available_styles()
+    mpf.plot(quote, type='candle', volume=True, style='binance', figratio=(20, 10), figscale=.9, tight_layout=True)
     mpf.show()
     main_widget.add_log("chart - Ready")
     return
