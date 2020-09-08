@@ -203,3 +203,31 @@ class watchlist():
 # for x2 in range(watchlist_obj.wl_rows):
 #     for y2 in range(watchlist_obj.wl_column):
 #         self.Watch_list.setItem(x2,y2,wlqitems[x2][y2])
+
+
+
+
+
+    main_widget.MplWidget.ax1_1.clear()
+    main_widget.MplWidget.ax2_1.clear()
+    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.l)
+    main_widget.MplWidget.ax1_1.plot(selected_stock.t, selected_stock.h)
+    main_widget.MplWidget.ax1_1.fill_between(selected_stock.t, selected_stock.l, selected_stock.h, alpha=0.25)
+    main_widget.MplWidget.ax2_1.bar(selected_stock.t, selected_stock.v, label='Volume')
+    main_widget.MplWidget.ax1_1.margins(x=0)
+    main_widget.MplWidget.ax2_1.margins(x=0)
+
+    # main_widget.MplWidget.plot(selected_stock.t[10], selected_stock.o[10], 'o', color='r')
+
+    for xtick in main_widget.MplWidget.ax1_1.get_xticklabels():
+        xtick.set_color('none')
+
+    main_widget.MplWidget.ax2_1.set_xticklabels(selected_stock.t, rotation=270, alpha=0.5)
+    main_widget.MplWidget.ax1_1.autoscale()
+    main_widget.MplWidget.ax1_1.autoscale()
+
+    myfmt = mdates.DateFormatter('%H:%M')
+    main_widget.MplWidget.ax1_1.xaxis.set_major_formatter(myfmt)
+
+    main_widget.MplWidget.canvas.draw()
+    main_widget.add_log("chart - Ready")
