@@ -78,17 +78,18 @@ class ais_db():
 
     def execute_base(self, sqlstr, multiple=False):
         main_widget.progress_action()
-        s("db execute: " + sqlstr[:150])
+        s("db execute: " + sqlstr[:100])
         if self.open_close:
             self.open()
 
         try:
             self.cursor.execute(sqlstr)
         except mysql.connector.Error as err:
-            s("Something went wrong: {}".format(err))
+            s("Something went wrong: {}".format(err)+" SQL: "+sqlstr[:150])
         else:
             if self.cursor.rowcount > 0:
                 main_widget.add_log("  inserted rows: " + str(self.cursor.rowcount))
+                s("Inserted rows: " + str(self.cursor.rowcount))
         # self.setcursor()
         if self.open_close:
             self.close()
@@ -203,9 +204,6 @@ class ais_db():
                     " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
             self.execute_base(i_sql_str)
 
-
-
-
         # minden sort lemódosítok
         i_elemet_block_size2 = 32000
         i_sql_elements_array2 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
@@ -222,7 +220,6 @@ class ais_db():
                                           "'" + dt_array[i_i2] + "',"
         # s("Update create 2")
         for i_i3 in range(len(i_sql_elements_array2)):
-
             i_sql_str2 = "UPDATE " + instrument + " SET `" + prop + "` = CASE " +\
                     i_sql_elements_array2[i_i3] +\
                     " END WHERE `datetime` IN (" + i_sql_elements_array3[i_i3][:-1] + ")"
@@ -233,6 +230,103 @@ class ais_db():
         #     self.open()
         #     self.cursor.execute(i_sql_str2)
         #     self.close()
+        return
+
+
+
+    def add_instrument_value_multi_tchk2(self, instrument, df):
+
+        i_dt_array_len = df.shape[0]
+        s("write to db "+instrument+" Rows:" + str(i_dt_array_len))
+        i_elemet_block_size = 10000
+
+        # beszúrom az üreseket, ha még nincsenek és utána minden módosítom
+        i_sql_elements_array = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size))]
+        for i_i in range(i_dt_array_len):
+            i_pos = int(i_i / i_elemet_block_size)
+            i_sql_elements_array[i_pos] = i_sql_elements_array[i_pos] + "('" + df.iloc[i_i]['datetime'] +\
+                                          "', '" + str(df.iloc[i_i]['v']) +\
+                                          "', '" + str(df.iloc[i_i]['ohlc4']) +\
+                                          "', '" + str(df.iloc[i_i]['o']) +\
+                                          "', '" + str(df.iloc[i_i]['h']) +\
+                                          "','" + str(df.iloc[i_i]['l']) +\
+                                          "','" + str(df.iloc[i_i]['c']) +\
+                                          "','" + str(df.iloc[i_i]['t']) + "'), "
+        for i_i in range(len(i_sql_elements_array)):
+            i_sql_str = "INSERT INTO `" + instrument + "` " +\
+                    "(`datetime` , `v`, `ohlc4`, `o`, `h`, `l`, `c`, `t`  ) VALUES " +\
+                    i_sql_elements_array[i_i][:-2] +\
+                    " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
+            self.execute_base(i_sql_str)
+        # else:
+        #     # minden sort lemódosítok
+        #     self.add_instrument_float_property(instrument, prop)
+        #     i_elemet_block_size2 = 32000
+        #     i_sql_elements_array2 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
+        #     i_sql_elements_array3 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
+        #     # s("Update create 1")
+        #     # for i_i2 in range(1):
+        #     for i_i2 in range(i_dt_array_len):
+        #         i_pos2 = int(i_i2 / i_elemet_block_size2)
+        #         i_sql_elements_array2[i_pos2] = i_sql_elements_array2[i_pos2] +\
+        #                                       "WHEN `datetime` = '" + dt_array[i_i2] +\
+        #                                         "' THEN '" + str(val_array[i_i2]) + "' "
+        #
+        #         i_sql_elements_array3[i_pos2] = i_sql_elements_array3[i_pos2] +\
+        #                                       "'" + dt_array[i_i2] + "',"
+        #     # s("Update create 2")
+        #     for i_i3 in range(len(i_sql_elements_array2)):
+        #         i_sql_str2 = "UPDATE " + instrument + " SET `" + prop + "` = CASE " +\
+        #                 i_sql_elements_array2[i_i3] +\
+        #                 " END WHERE `datetime` IN (" + i_sql_elements_array3[i_i3][:-1] + ")"
+        #         self.execute_simply(i_sql_str2)
+        return
+
+
+    def add_instrument_value_multi_tchk(self, instrument, dt_array, prop, val_array):
+        s("write to db "+instrument+" - "+prop)
+        i_dt_array_len = len(dt_array)
+
+        if prop == "t":
+            self.add_instrument(instrument)
+            self.add_instrument_float_property(instrument, prop)
+            i_elemet_block_size = 32000
+
+            # beszúrom az üreseket, ha még nincsenek és utána minden módosítom
+            i_sql_elements_array = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size))]
+
+            for i_i in range(i_dt_array_len):
+                i_pos = int(i_i / i_elemet_block_size)
+                i_sql_elements_array[i_pos] = i_sql_elements_array[i_pos] + "('" + dt_array[i_i] + "', '" + str(val_array[i_i]) + "'), "
+
+            for i_i in range(len(i_sql_elements_array)):
+                i_sql_str = "INSERT INTO `" + instrument + "` " +\
+                        "(`datetime` , `" + prop + "` ) VALUES " +\
+                        i_sql_elements_array[i_i][:-2] +\
+                        " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
+                self.execute_base(i_sql_str)
+        else:
+            # minden sort lemódosítok
+            self.add_instrument_float_property(instrument, prop)
+            i_elemet_block_size2 = 32000
+            i_sql_elements_array2 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
+            i_sql_elements_array3 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
+            # s("Update create 1")
+            # for i_i2 in range(1):
+            for i_i2 in range(i_dt_array_len):
+                i_pos2 = int(i_i2 / i_elemet_block_size2)
+                i_sql_elements_array2[i_pos2] = i_sql_elements_array2[i_pos2] +\
+                                              "WHEN `datetime` = '" + dt_array[i_i2] +\
+                                                "' THEN '" + str(val_array[i_i2]) + "' "
+
+                i_sql_elements_array3[i_pos2] = i_sql_elements_array3[i_pos2] +\
+                                              "'" + dt_array[i_i2] + "',"
+            # s("Update create 2")
+            for i_i3 in range(len(i_sql_elements_array2)):
+                i_sql_str2 = "UPDATE " + instrument + " SET `" + prop + "` = CASE " +\
+                        i_sql_elements_array2[i_i3] +\
+                        " END WHERE `datetime` IN (" + i_sql_elements_array3[i_i3][:-1] + ")"
+                self.execute_simply(i_sql_str2)
         return
 
 
@@ -327,57 +421,143 @@ class wl:
         s("Save prices - " + symbol)
         i_now = datetime.now() + timedelta(days=1)
         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-        i_datetime_series = pd.date_range(start=i_now, periods=13, freq='-31d')
+        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
+        db_act1 = ais_db()
+        db_act1.add_instrument(symbol)
+        db_act1.add_instrument_float_property(symbol, "v")
+        db_act1.add_instrument_float_property(symbol, "ohlc4")
+        db_act1.add_instrument_float_property(symbol, "o")
+        db_act1.add_instrument_float_property(symbol, "h")
+        db_act1.add_instrument_float_property(symbol, "l")
+        db_act1.add_instrument_float_property(symbol, "c")
+        db_act1.add_instrument_float_property(symbol, "t")
         for i_i in range(len(i_datetime_series)-1):
-            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i]))
+            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
             i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-            s("get data " + symbol + " - " + str(i_datetime_series[i_i]) + " - " + str(i_datetime_series[i_i+1]))
+            s("get data " + symbol + " - " + str(i_datetime_series[i_i] + timedelta(days=4)) + " - " + str(i_datetime_series[i_i+1]))
             i_df_stock = pd.DataFrame(None)
             i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
-            i_datetime = tools.get_df_column(i_df_stock, "datetime")
-
-            db_act1 = ais_db()
-            ci1 = tools.get_df_column(i_df_stock, "t")
-            db_act1.add_instrument_value_multi(symbol, i_datetime, "t", ci1)
-
-            db_act2 = ais_db()
-            ci2 = tools.get_df_column(i_df_stock, "o")
-            t2 = threading.Thread(target=db_act2.add_instrument_value_multi, args=(symbol, i_datetime, "o", ci2))
-
-            db_act3 = ais_db()
-            ci3 = tools.get_df_column(i_df_stock, "h")
-            t3 = threading.Thread(target=db_act3.add_instrument_value_multi, args=(symbol, i_datetime, "h", ci3))
-
-            db_act4 = ais_db()
-            ci4 = tools.get_df_column(i_df_stock, "c")
-            t4 = threading.Thread(target=db_act4.add_instrument_value_multi, args=(symbol, i_datetime, "c", ci4))
-
-            db_act5 = ais_db()
-            ci5 = tools.get_df_column(i_df_stock, "l")
-            t5 = threading.Thread(target=db_act5.add_instrument_value_multi, args=(symbol, i_datetime, "l", ci5))
-
-            db_act6 = ais_db()
-            ci6 = tools.get_df_column(i_df_stock, "ohlc4")
-            t6 = threading.Thread(target=db_act6.add_instrument_value_multi, args=(symbol, i_datetime, "ohlc4", ci6))
-
-            db_act7 = ais_db()
-            ci7 = tools.get_df_column(i_df_stock, "v")
-            t7 = threading.Thread(target=db_act7.add_instrument_value_multi, args=(symbol, i_datetime, "v", ci7))
-
-            t2.start()
-            t3.start()
-            t4.start()
-            t5.start()
-            t6.start()
-            t7.start()
-
-            t2.join()
-            t3.join()
-            t4.join()
-            t5.join()
-            t6.join()
-            t7.join()
+            db_act1.add_instrument_value_multi_tchk2(symbol, i_df_stock)
         return
+
+        # i_now = datetime.now() + timedelta(days=1)
+        # i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+        # i_datetime_series = pd.date_range(start=i_now, periods=13, freq='-33d')
+        # for i_i in range(len(i_datetime_series)-1):
+        #     i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=2)))
+        #     i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
+        #     s("get data " + symbol + " - " + str(i_datetime_series[i_i] + timedelta(days=2)) + " - " + str(i_datetime_series[i_i+1]))
+        #     i_df_stock = pd.DataFrame(None)
+        #     i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
+        #     i_datetime = tools.get_df_column(i_df_stock, "datetime")
+        #
+        #     db_act1 = ais_db()
+        #     ci1 = tools.get_df_column(i_df_stock, "t")
+        #     db_act1.add_instrument_value_multi_tchk(symbol, i_datetime, "t", ci1)
+        #
+        #     db_act2 = ais_db()
+        #     ci2 = tools.get_df_column(i_df_stock, "o")
+        #     t2 = threading.Thread(target=db_act2.add_instrument_value_multi_tchk, args=(symbol, i_datetime, "o", ci2))
+        #
+        #     db_act3 = ais_db()
+        #     ci3 = tools.get_df_column(i_df_stock, "h")
+        #     t3 = threading.Thread(target=db_act3.add_instrument_value_multi_tchk, args=(symbol, i_datetime, "h", ci3))
+        #
+        #     db_act4 = ais_db()
+        #     ci4 = tools.get_df_column(i_df_stock, "c")
+        #     t4 = threading.Thread(target=db_act4.add_instrument_value_multi_tchk, args=(symbol, i_datetime, "c", ci4))
+        #
+        #     db_act5 = ais_db()
+        #     ci5 = tools.get_df_column(i_df_stock, "l")
+        #     t5 = threading.Thread(target=db_act5.add_instrument_value_multi_tchk, args=(symbol, i_datetime, "l", ci5))
+        #
+        #     db_act6 = ais_db()
+        #     ci6 = tools.get_df_column(i_df_stock, "ohlc4")
+        #     t6 = threading.Thread(target=db_act6.add_instrument_value_multi_tchk, args=(symbol, i_datetime, "ohlc4", ci6))
+        #
+        #     db_act7 = ais_db()
+        #     ci7 = tools.get_df_column(i_df_stock, "v")
+        #     t7 = threading.Thread(target=db_act7.add_instrument_value_multi_tchk, args=(symbol, i_datetime, "v", ci7))
+        #
+        #     t2.start()
+        #     time.sleep(1)
+        #     t3.start()
+        #     time.sleep(1)
+        #     t4.start()
+        #     time.sleep(1)
+        #     t5.start()
+        #     time.sleep(1)
+        #     t6.start()
+        #     time.sleep(1)
+        #     t7.start()
+        #
+        #     t2.join()
+        #     t3.join()
+        #     t4.join()
+        #     t5.join()
+        #     t6.join()
+        #     t7.join()
+        #
+        #     # "SELECT * FROM `APA` WHERE `v` is null or `ohlc4` is null or `l` is null or `c` is null or `h` is null or `o` is null"
+
+        return
+
+    def save_prices_block(self, symbol, fromdt, todt):
+        s("Save prices block - " + symbol)
+
+        # i_tounix = tools.dbdt_to_unixdt(str(fromdt))
+        # i_fromunix = tools.dbdt_to_unixdt(str(todt))
+        s("get data " + symbol + " - " + str(fromdt) + " - " + str(todt))
+        i_df_stock = md.get_stock_candles(symbol, "1", fromdt, todt)
+        print(i_df_stock)
+        i_df_rsi = md.technical_indicator_rsi(symbol, "1", fromdt, todt)
+        print(i_df_rsi)
+        i_datetime = tools.get_df_column(i_df_stock, "datetime")
+
+        db_act1 = ais_db()
+        ci1 = tools.get_df_column(i_df_stock, "t")
+        db_act1.add_instrument_value_multi(symbol, i_datetime, "t", ci1)
+
+        db_act2 = ais_db()
+        ci2 = tools.get_df_column(i_df_stock, "o")
+        t2 = threading.Thread(target=db_act2.add_instrument_value_multi, args=(symbol, i_datetime, "o", ci2))
+
+        db_act3 = ais_db()
+        ci3 = tools.get_df_column(i_df_stock, "h")
+        t3 = threading.Thread(target=db_act3.add_instrument_value_multi, args=(symbol, i_datetime, "h", ci3))
+
+        db_act4 = ais_db()
+        ci4 = tools.get_df_column(i_df_stock, "c")
+        t4 = threading.Thread(target=db_act4.add_instrument_value_multi, args=(symbol, i_datetime, "c", ci4))
+
+        db_act5 = ais_db()
+        ci5 = tools.get_df_column(i_df_stock, "l")
+        t5 = threading.Thread(target=db_act5.add_instrument_value_multi, args=(symbol, i_datetime, "l", ci5))
+
+        db_act6 = ais_db()
+        ci6 = tools.get_df_column(i_df_stock, "ohlc4")
+        t6 = threading.Thread(target=db_act6.add_instrument_value_multi, args=(symbol, i_datetime, "ohlc4", ci6))
+
+        db_act7 = ais_db()
+        ci7 = tools.get_df_column(i_df_stock, "v")
+        t7 = threading.Thread(target=db_act7.add_instrument_value_multi, args=(symbol, i_datetime, "v", ci7))
+
+        t2.start()
+        t3.start()
+        t4.start()
+        t5.start()
+        t6.start()
+        t7.start()
+
+        t2.join()
+        t3.join()
+        t4.join()
+        t5.join()
+        t6.join()
+        t7.join()
+        return
+
+
 
 
     def referesh_ui(self):
@@ -420,13 +600,17 @@ class wl:
 class market_data():
     api_key_finnhubio1 = "bs9c9lvrh5rahoaofmt0"
     finnhub_client = finnhub.Client(api_key=api_key_finnhubio1)
+    finnhub_client.DEFAULT_TIMEOUT = 100
 
-    def get_stock_candles(self, symbol, dt_frame, from_dt, to_dt):
-        i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, dt_frame, from_dt, to_dt))
+    def get_stock_candles(self, symbol, resolution, from_dt, to_dt):
+        i_df = pd.DataFrame(self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3}))
+
+        # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
         i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
         i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
         i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
         i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
+        i_df = i_df.round({'t': 6, 'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6})
         i_df.set_index('datetime')
         # return pandas df o h c l v t datetime ohcl4
         return i_df
@@ -440,6 +624,37 @@ class market_data():
     def quote(self, symbol):
         return self.finnhub_client.quote(symbol)
 
+    def technical_indicator_rsi(self, symbol, resolution, from_dt, to_dt):
+        i_df = pd.DataFrame(self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3}))
+        i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+        i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
+        i_df = i_df[['datetime', 't', 'rsi']]
+        i_df = i_df.round({'rsi': 6})
+        i_df.set_index('datetime')
+        return i_df
+
+class strategy():
+    n = ""
+
+    def add_rsi(self, symbol):
+        s("add RSI - " + symbol)
+        i_now = datetime.now() + timedelta(days=1)
+        i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
+        for i_i in range(len(i_datetime_series)-1):
+            i_tounix = tools.dbdt_to_unixdt(str((i_datetime_series[i_i] + timedelta(days=4))))
+            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
+            s("get data RSI " + symbol + " - " + str(i_datetime_series[i_i] + timedelta(days=4)) + " - " + str(i_datetime_series[i_i+1]))
+            i_df_stock = pd.DataFrame(None)
+            i_df_stock = md.technical_indicator_rsi(symbol, "1", i_fromunix, i_tounix)
+            i_datetime = tools.get_df_column(i_df_stock, "datetime")
+
+            db_act1 = ais_db()
+            ci1 = tools.get_df_column(i_df_stock, "rsi")
+            db_act1.add_instrument_value_multi(symbol, i_datetime, "rsi", ci1)
+        return
+
+
 
 class tools():
 
@@ -450,6 +665,35 @@ class tools():
         dt = datetime.strptime(datestring, '%Y-%m-%d %H:%M:%S')
         dt2 = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
         return str(int(time.mktime(dt2.timetuple())))
+
+    def get_ui_date_unix(self, fort):
+
+        def convert_to_unix_dt(cyear, cmonth, cday, chour, cminute, csecound):
+            dt = datetime(cyear, cmonth, cday, chour, cminute, csecound)
+            return str(int(time.mktime(dt.timetuple())))
+
+        s("set_date_time_frame")
+        i_from_year = int(main_widget.From_D.selectedDate().toString("yyyy"))
+        i_from_month = int(main_widget.From_D.selectedDate().toString("MM"))
+        i_from_day = int(main_widget.From_D.selectedDate().toString("dd"))
+        i_from_hour = int(main_widget.From_T.dateTime().toString("hh"))
+        i_from_minute = int(main_widget.From_T.dateTime().toString("mm"))
+        i_from_secound = int(main_widget.From_T.dateTime().toString("ss"))
+
+        i_to_year = int(main_widget.To_D.selectedDate().toString("yyyy"))
+        i_to_month = int(main_widget.To_D.selectedDate().toString("MM"))
+        i_to_day = int(main_widget.To_D.selectedDate().toString("dd"))
+        i_to_hour = int(main_widget.To_T.dateTime().toString("hh"))
+        i_to_minute = int(main_widget.To_T.dateTime().toString("mm"))
+        i_to_secound = int(main_widget.To_T.dateTime().toString("ss"))
+        if fort == "from":
+            i_return = convert_to_unix_dt(i_from_year, i_from_month, i_from_day,
+                                           i_from_hour, i_from_minute, i_from_secound)
+        else:
+            i_return = convert_to_unix_dt(i_to_year, i_to_month, i_to_day,
+                                           i_to_hour, i_to_minute, i_to_secound)
+        return i_return
+
 
 
 class prices():
@@ -615,12 +859,11 @@ class iphoenix100(QWidget):
         command_text = self.Command_Line.text()
         command_partitioned = command_text.partition(" ")
         command_text_first_word = str.lower(command_partitioned[0])
-        param1 = command_partitioned[2]
-        # if len(command_partitioned) == 3:
-        #     param1 = command_partitioned[2]
-        # if len(command_partitioned) == 5:
-        #     param1 = command_partitioned[2]
-        #     param2 = command_partitioned[4]
+        if len(command_partitioned) == 3:
+            param1 = command_partitioned[2]
+        if len(command_partitioned) == 5:
+            param1 = command_partitioned[2]
+            param2 = command_partitioned[4]
         # if len(command_text.partition(' ')) == 7:
         #     param1 = command_partitioned[2]
         #     param2 = command_partitioned[4]
@@ -639,6 +882,11 @@ class iphoenix100(QWidget):
             'wl.add': 'add_wl_program',
             'wl.remove': 'remove_wl_program',
             'wl.remove.data': 'remove_wl_data_program',
+            'wl.refresh': 'refresh_wl_data_program',
+            'wl.refresh.all': '...',
+            'wl.refresh.last': '...',
+            'srg.refresh': '...',
+            'srg.refresh.all': '...',
             'exit': 'exit_program'
             }
 
@@ -665,6 +913,7 @@ class iphoenix100(QWidget):
             'price.get': 'getprice_program',
             'wl.add': 'addwl symbol - add new symbol to watchlist',
             'wl.remove': 'removewl symbol - remove symbol from watchlist',
+            'wl.refresh': 'wl.refresh symbol - refresh candle datas symbol from to',
             'wl.remove.data': 'removewldata sybol - remove symbol from nDot data server',
             'test': 'run test_program param',
             'exit': 'exit'
@@ -761,6 +1010,12 @@ def Run_WL_btn():
     mpf.show()
     return
 
+def refresh_wl_data_program(isymbol=""):
+    main_widget.add_log("run refresh_wl_data_program " + isymbol)
+    i_from_unix = tools.get_ui_date_unix("from")
+    i_to_unix = tools.get_ui_date_unix("to")
+    wl.save_prices_block(isymbol, i_from_unix, i_to_unix)
+    main_widget.add_log("refresh_wl_data_program - Ready")
 
 def chart_program(symbol):
     main_widget.add_log("run chart " + symbol)
@@ -768,7 +1023,7 @@ def chart_program(symbol):
     stock.symbol = symbol
     stock.get_stock_candle()
     # print(stock.df)
-    i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"}, errors="raise")
+    i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "rsi": "Volume"}, errors="raise")
     # i_chart_df = i_chart_df.drop(['i', 't', 'ohlc4'], axis=1)
     #
     # # i_chart_df['Adj Close'] = i_chart_df['Close']
@@ -778,8 +1033,18 @@ def chart_program(symbol):
     su = io.StringIO()
     i_chart_df.to_csv(su, index=False)
     quote = pd.read_csv(StringIO(su.getvalue()), sep=",", index_col=0, parse_dates=True)
-    mpf.available_styles()
-    mpf.plot(quote, type='candle', volume=True, style='binance', figratio=(19, 10), figscale=.9, tight_layout=True)
+    # mpf.available_styles()
+    # mpf.plot(quote, type='candle', volume=True, style='binance', figratio=(19, 10), figscale=.9, tight_layout=True)
+
+    fig = mpf.figure(style='yahoo', figsize=(14, 7))
+    ax1 = fig.add_subplot(4, 1, (1, 3))
+    ax2 = fig.add_subplot(4, 1, 4, sharex = ax1)
+    plt.subplots_adjust(hspace=.001)
+    mpf.plot(quote, ax=ax1, volume=ax2)
+    # mngr = plt.get_current_fig_manager()
+    # to put it into the upper left corner for example:
+    # mngr.window.setGeometry(10, 10, 640, 545)
+
     mpf.show()
     main_widget.add_log("chart - Ready")
     return
@@ -804,6 +1069,7 @@ if __name__ == "__main__":
     print("Status: Load GUI")
     app = QApplication([])
     main_widget = iphoenix100()
+    # main_widget.setGeometry(0, 0)
     main_widget.show()
     # main_widget.showFullScreen()
     print("Status: GUI Ready")
@@ -814,6 +1080,10 @@ if __name__ == "__main__":
     wl.referesh_ui()
     md = market_data()
     tools = tools()
+    # srg = strategy()
+    # srg.add_rsi("APA")
+
+
 
     # 3. háttér futásindítás 60 másodpercenkénti futás
     # bp = back_processes()
