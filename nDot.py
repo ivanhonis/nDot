@@ -2,7 +2,7 @@
 import sys
 # import os
 # import requests
-
+import websocket
 import time
 # import json
 import mysql.connector
@@ -32,6 +32,13 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from pandasgui import show
 from pandasgui.datasets import pokemon, titanic, all_datasets
+
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+
+import time
+import traceback, sys
 
 class n_system:
     print_console = False
@@ -395,7 +402,7 @@ class n_date_frame():
 
     def add(self, symbol):
         log("ndf-> add " + symbol)
-        bp.stop()
+        # bp.stop()
         i_now = datetime.now() + timedelta(days=1)
         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
         i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
@@ -413,7 +420,7 @@ class n_date_frame():
             i_df_stock = pd.DataFrame(None)
             i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
             db.add_symbol_values(symbol, i_df_stock)
-        bp.start()
+        # bp.start()
         return
 
     def get_last_m(self, symbol, xm):
@@ -610,6 +617,7 @@ class tools():
 class gui(QWidget):
     progress_count = 0
     commands = ""
+    sx = datetime.now()
 
     def __init__(self):
         super(gui, self).__init__()
@@ -621,6 +629,9 @@ class gui(QWidget):
         self.To_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
         self.From_T.setTime(QTime(i_now.hour, i_now.minute))
         self.To_T.setTime(QTime(i_now.hour, i_now.minute))
+
+        self.thread = ListenWebsocket()
+        self.thread.start()
         return
 
     def load_commands(self):
@@ -641,6 +652,8 @@ class gui(QWidget):
             ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol, numbers (optional)> ', 1],
             ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol, numbers (optional)> ', 1],
             ['md.check', 'md_check', 'md.check <symbol> ', 1],
+            ['bp.start', 'bp_start', 'bp.start <> ', 0],
+            ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
             ['exit', 'exit', 'exit <> ', 0]
         ]
         self.commands = pd.DataFrame(c)
@@ -676,6 +689,7 @@ class gui(QWidget):
         self.WL_btn_6.clicked.connect(partial(wl_btn, 6))
         self.WL_btn_7.clicked.connect(partial(wl_btn, 7))
         self.WL_btn_8.clicked.connect(partial(wl_btn, 8))
+        self.WL_refresh.clicked.connect(wl_refresh_close)
         self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
         self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
         self.Datetime_mod3.clicked.connect(partial(self.date_modifier, "days", 2))
@@ -686,6 +700,7 @@ class gui(QWidget):
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
+            print("Status: GUI Closed")
             self.close()
 
     def refresh_ui(self):
@@ -770,7 +785,6 @@ class gui(QWidget):
             self.Command_Line.setText("")
         else:
             if i_found and i_params > len(command_partitioned):
-                print("param missing")
                 self.Command_Hint.setText(self.Command_Hint.text() + " Missing parameter(s)!")
             self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' +\
                                             'border-top-left-radius: 15px;' +\
@@ -804,7 +818,6 @@ class gui(QWidget):
 
 
 def do(p1="", p2="", p3=""):
-    # show(commands=gui.commands, settings={'block': True})
     return
 
 
@@ -932,7 +945,17 @@ def ndf_show_last(symbol="", xminute="60", p3=""):
     stock = n_date_frame()
     stock.get_last_m(symbol, xminute)
     if db.row_count > 0:
-        show(symbol=stock.df)
+        i_df_s = pd.DataFrame(None)
+        i_df_s['datetime'] = stock.df['datetime']
+        i_df_s['o'] = stock.df['o'].astype(float)
+        i_df_s['h'] = stock.df['h'].astype(float)
+        i_df_s['l'] = stock.df['l'].astype(float)
+        i_df_s['c'] = stock.df['c'].astype(float)
+        i_df_s['ohlc4'] = stock.df['ohlc4'].astype(float)
+        i_df_s['v'] = stock.df['v'].astype(int)
+        # i_df = i_df.round({'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6, 'v': 0})
+        i_df_s.set_index('datetime')
+        show(symbol=i_df_s)
     else:
         log("no data found in df")
     return
@@ -981,22 +1004,35 @@ def wl_refresh_sentiment(p1="", p2="", p3=""):
     return
 
 
+def bp_start(p1="", p2="", p3=""):
+    # bp.start()
+    return
+
+
+def bp_stop(p1="", p2="", p3=""):
+    # bp.stop()
+    return
+
+
 # PROGRAMS fo wl buttons----------------------------------------------------------------------------
 
 
 def wl_btn(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
+    log("start: Go " + symbol, True, False)
     ndf_chart_last(symbol)
+    log("ready.", False, False)
     return
 
 
-# időzítő
+# Back_processes -----------------------------------------------------
 
 
 class back_processes(object):
     def __init__(self, interval=60):
         self.interval = interval
         self.kill = False
+        self.runnig = False
         self.start()
 
     def stop(self):
@@ -1004,11 +1040,16 @@ class back_processes(object):
         log("bp-> stopped")
 
     def start(self):
-        log("bp-> started")
-        self.kill = False
-        thread = threading.Thread(target=self.run, args=())
-        thread.daemon = True
-        thread.start()
+        if self.runnig:
+            log("bp-> already running...")
+        else:
+            log("bp-> started")
+            self.kill = False
+            thread = threading.Thread(target=self.run, args=())
+            thread.daemon = True
+            self.runnig = True
+            thread.start()
+        return
 
     def run(self):
         while True:
@@ -1018,13 +1059,63 @@ class back_processes(object):
             gui.refresh_ui()
             time.sleep(self.interval)
             if self.kill:
+                self.runnig = False
                 break
+
+# Socket ----------------------------------------------------
+
+class ListenWebsocket(QtCore.QThread):
+    def __init__(self, parent=None):
+        super(ListenWebsocket, self).__init__(parent)
+        websocket.enableTrace(False)
+        self.ws = websocket.WebSocketApp("wss://ws.finnhub.io?token=bs9c9lvrh5rahoaofmt0",
+                                        on_message=self.on_message,
+                                        on_error=self.on_error,
+                                        on_close=self.on_close
+                                        )
+
+    def on_message(self, message):
+        now = datetime.now()
+        duration = now - gui.sx
+        duration_in_s = duration.total_seconds()
+        if duration_in_s > 30:
+            s("message: " + message)
+            gui.sx = datetime.now()
+        return
+
+    def on_error(self, error):
+        print("error" + error)
+        return
+
+    def on_close(self):
+        print("### closed ###")
+        return
+
+    def on_open(self):
+        print("1")
+        # ws.send('{"type":"subscribe","symbol":"AAPL"}')
+        # ws.send('{"type":"subscribe","symbol":"AMZN"}')
+        self.ws.send('{"type":"subscribe","symbol":"BINANCE:BTCUSDT"}')
+        # ws.send('{"type":"subscribe","symbol":"IC MARKETS:1"}')
+
+    def run(self):
+        print("th run")
+        self.ws.on_open = self.on_open
+        self.ws.run_forever()
+
+
+
+
+
 
 
 if __name__ == "__main__":
 
+
+
+
     # 1.
-    print("Status: Load GUI")
+    print("Status: GUI Load")
     app = QApplication([])
     gui = gui()
 
@@ -1041,12 +1132,21 @@ if __name__ == "__main__":
 
     # gui.show()
     gui.showFullScreen()
-    print("Status: GUI Ready")
+    print("Status: GUI Running")
+    # ws.on_open = on_open
+    # ws.run_forever()
+    # threadpool = QThreadPool()
+    # worker = ws.run_forever
+    # threadpool.start(worker)
 
+
+    # wst = threading.Thread(worker)
+    # wst.daemon = True
+    # wst.start()
     # 3. háttér futásindítás 60 másodpercenkénti futás
-    bp = back_processes()
-    sys.exit(app.exec_())
+    # bp = back_processes()
 
+    sys.exit(app.exec_())
 # # TensorFlow CNN model training example
 # # based on https://www.tensorflow.org/tutorials/images/cnn
 # from __future__ import absolute_import, division, print_function, unicode_literals
