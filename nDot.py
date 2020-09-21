@@ -1,44 +1,34 @@
 # This Python file uses the following encoding: utf-8
+from datetime import datetime, timedelta
 import sys
-# import os
-# import requests
 import websocket
 import time
-# import json
 import mysql.connector
 from mysql.connector import Error
-# import sqlite3
-import threading
 import random
 import pandas as pd
 import finnhub
-from finnhub import FinnhubAPIException
 import threading
-
-from datetime import datetime, timedelta
-# from datetime import timedelta
-from PyQt5.QtWidgets import*
-from PyQt5.uic import loadUi
-from PyQt5.QtCore import QTime, QDate
-from PyQt5 import QtGui, QtCore
-from PyQt5 import QtWidgets
-import mplfinance as mpf
 import numpy as np
-import io
-from io import StringIO
 from functools import partial
-import matplotlib.animation as animation
-import matplotlib.dates as mdates
-import matplotlib.pyplot as plt
-from pandasgui import show
-from pandasgui.datasets import pokemon, titanic, all_datasets
+from tkinter import *
+# import matplotlib.animation as animation
+# import matplotlib.dates as mdates
 
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+# from pandasgui.datasets import pokemon, titanic, all_datasets
 
-import time
-import traceback, sys
+# from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QProgressBar
+# from PyQt5.QtCore import *
+# from datetime import timedelta
+# from PyQt5.QtWidgets import*
+from PyQt5.uic import loadUi
+from PyQt5 import QtGui, QtCore, QtWebEngineWidgets
+from PyQt5.QtCore import QTime, QDate
+# from PyQt5 import QtGui
+# from PyQt5 import
+
+
 
 class n_system:
     print_console = False
@@ -55,7 +45,6 @@ class data_base():
         'raise_on_warnings': True,
         'use_pure': False
     }
-    database = config['database']
     cnx = ""
     cursor = ""
     row_count = 0
@@ -103,9 +92,13 @@ class data_base():
 
     def execute_simply(self, sqlstr, multiple=False):
         # log("db-> execute_simply: " + sqlstr[:150])
+        print(datetime.now(), "sql length", len(sqlstr))
         if self.open_close:
             self.open()
         self.cursor.execute(sqlstr)
+        print(datetime.now(), "close")
+        if self.cursor.rowcount > 0:
+            log("db-> execute_simply row(s) affected: " + str(self.cursor.rowcount))
         if self.open_close:
             self.close()
         return
@@ -121,7 +114,7 @@ class data_base():
             log("db-> execute_base EXCEPT: {}".format(err)+" SQL: "+sqlstr[:150])
         else:
             if self.cursor.rowcount > 0:
-                log("db-> execute_base inserted rows: " + str(self.cursor.rowcount))
+                log("db-> execute_base row(s) affected: " + str(self.cursor.rowcount))
         # self.setcursor()
         if self.open_close:
             self.close()
@@ -149,39 +142,40 @@ class data_base():
             self.close()
         return i_result
 
-    # def is_timeframe_exist(self, isymbol, fromdt, todt):
-    #     # print("is_time", isymbol,fromdt,todt)
-    #     i_sql_string_from = "SELECT * FROM `" + isymbol + "` WHERE `datetime` = '" + fromdt + "'"
-    #     i_sql_string_to = "SELECT * FROM `" + isymbol + "` WHERE `datetime` = '" + todt + "'"
-    #     # print("from",i_sql_string_from)
-    #     # print("to",i_sql_string_to)
-    #     i_result_from = self.execute_fetchall(i_sql_string_from)
-    #     # print(i_result_from)
-    #     i_result_to = self.execute_fetchall(i_sql_string_to)
-    #     return len(i_result_from) > 0 and len(i_result_to) > 0
-
     def get_timeframe(self, symbol, fromdt, todt):
-        log("db-> get_timeframe" + symbol + " " + fromdt + " - " + todt)
+        log("db-> get_timeframe " + symbol + " " + str(fromdt) + " - " + str(todt))
         i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `datetime`>='" +\
-                       fromdt + "' AND `datetime`<='" + todt + "'"
+                       str(fromdt) + "' AND `datetime`<='" + str(todt) + "'"
+        return self.execute_fetchall(i_sql_string)
+
+    def get_timeframe_desc(self, symbol, fromdt, todt):
+        log("db-> get_timeframe_desc " + symbol + " " + str(fromdt) + " - " + str(todt))
+        i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `datetime`>='" +\
+                       str(fromdt) + "' AND `datetime`<='" + str(todt) + "' ORDER BY `datetime` DESC"
+        return self.execute_fetchall(i_sql_string)
+
+    def get_first_m(self, symbol, elem_no):
+        log("db-> get_first_m: " + symbol + " "+str(elem_no))
+        i_sql_string = "SELECT * FROM `" + symbol + "` ORDER BY `datetime` ASC LIMIT " +str(elem_no)
         return self.execute_fetchall(i_sql_string)
 
     def get_last_m(self, symbol, elem_no):
-        log("db-> get_last_m: " + symbol + " "+elem_no )
+        log("db-> get_last_m: " + symbol + " "+str(elem_no))
         i_sql_string = "SELECT * FROM `" + symbol + "` ORDER BY `datetime` DESC LIMIT " +str(elem_no)
         return self.execute_fetchall(i_sql_string)
 
     def add_symbol(self, symbol):
         log("db-> add_symbol " + symbol)
-        i_sql_command = "CREATE TABLE IF NOT EXISTS`" + self.database + "`.`" + symbol + \
-                        "` ( `i` INT NOT NULL AUTO_INCREMENT , `datetime` DATETIME NOT NULL , " + \
-                        "PRIMARY KEY (`i`), UNIQUE `datetime_i` (`datetime`)) ENGINE = InnoDB"
+        i_sql_command = "CREATE TABLE IF NOT EXISTS`" + self.config['database'] + "`.`" + symbol + \
+                        "` ( `datetime` DATETIME NOT NULL , UNIQUE `datetime_i` (`datetime`)) ENGINE = InnoDB"
+        self.execute_base(i_sql_command)
+        i_sql_command = "ALTER TABLE `" + symbol + "` ADD INDEX(`datetime`)"
         self.execute_base(i_sql_command)
         return
 
     def remove_symbol(self, symbol):
         log("db-> remove_symbol " + symbol)
-        i_sql_command = "DROP TABLE IF EXISTS`"+self.database+"`.`" + symbol + "`"
+        i_sql_command = "DROP TABLE IF EXISTS`"+self.config['database']+"`.`" + symbol + "`"
         self.execute_base(i_sql_command)
         return
 
@@ -212,57 +206,27 @@ class data_base():
     #         self.execute_base(i_sql_command)
     #     return
 
-    def add_symbol_value_multi(self, instrument, dt_array, prop, val_array):
-        log("db-> write to db "+instrument+" - "+prop)
-        self.add_symbol(instrument)
-        self.add_symbol_float_property(instrument, prop)
-        i_dt_array_len = len(dt_array)
-        i_elemet_block_size = 32000
-
-        # beszúrom az üreseket, ha még nincsenek és utána minden módosítom
-        i_sql_elements_array = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size))]
-
-        for i_i in range(i_dt_array_len):
-            i_pos = int(i_i / i_elemet_block_size)
-            i_sql_elements_array[i_pos] = i_sql_elements_array[i_pos] + "('" + dt_array[i_i] + "', '" + str(val_array[i_i]) + "'), "
-
-        for i_i in range(len(i_sql_elements_array)):
-            i_sql_str = "INSERT INTO `" + instrument + "` " +\
-                    "(`datetime` , `" + prop + "` ) VALUES " +\
-                    i_sql_elements_array[i_i][:-2] +\
-                    " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
-            self.execute_base(i_sql_str)
-
-        # minden sort lemódosítok
-        i_elemet_block_size2 = 32000
-        i_sql_elements_array2 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
-        i_sql_elements_array3 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
-        # s("Update create 1")
-        # for i_i2 in range(1):
-        for i_i2 in range(i_dt_array_len):
-            i_pos2 = int(i_i2 / i_elemet_block_size2)
-            i_sql_elements_array2[i_pos2] = i_sql_elements_array2[i_pos2] +\
-                                          "WHEN `datetime` = '" + dt_array[i_i2] +\
-                                            "' THEN '" + str(val_array[i_i2]) + "' "
-
-            i_sql_elements_array3[i_pos2] = i_sql_elements_array3[i_pos2] +\
-                                          "'" + dt_array[i_i2] + "',"
-        # s("Update create 2")
-        for i_i3 in range(len(i_sql_elements_array2)):
-            i_sql_str2 = "UPDATE " + instrument + " SET `" + prop + "` = CASE " +\
-                    i_sql_elements_array2[i_i3] +\
-                    " END WHERE `datetime` IN (" + i_sql_elements_array3[i_i3][:-1] + ")"
-            self.execute_simply(i_sql_str2)
-        #     print("na")
-        #
-        # if prop == "o":
-        #     self.open()
-        #     self.cursor.execute(i_sql_str2)
-        #     self.close()
-        return
+    def add_symbol_value_multi(self, symbol, dt_array, prop, val_array):
+        log("db-> write to db "+symbol+" - "+prop +" estimated rows:" + str(len(dt_array)))
+        sql_text = pd.DataFrame()
+        sql_text["datetime"] = dt_array
+        sql_text["val"] = val_array
+        sql_text["val"] = sql_text["val"].apply(str)
+        sql_text["when"] = "WHEN `datetime` = '"
+        sql_text["then"] = "' THEN '"
+        sql_text["then_end"] = "'"
+        sql_text["sql_slice"] = sql_text["when"] + sql_text["datetime"] + sql_text["then"] + sql_text["val"] + sql_text["then_end"]
+        # sql_text = sql_text.head()
+        i_sql_when = ' '.join(sql_text["sql_slice"])
+        i_sql_datetime = "','".join(sql_text["datetime"])
+        i_sql_datetime = "'" + i_sql_datetime + "'"
+        i_full_sql_text = "UPDATE " + symbol + " SET `" + prop + "` = CASE " +\
+                    i_sql_when +\
+                    " END WHERE `datetime` IN (" +i_sql_datetime + ")"
+        self.execute_simply(i_full_sql_text)
 
     def add_symbol_values(self, instrument, df):
-        i_elemet_block_size = 10000
+        i_elemet_block_size = 30000
         i_dt_rows = df.shape[0]
         log("db-> add_symbol_values: "+instrument+" estimated rows:" + str(i_dt_rows))
         i_dt_array_len = int(i_dt_rows / i_elemet_block_size)+1
@@ -281,7 +245,6 @@ class data_base():
                     i_sql_elements_array[i_i] +\
                     " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
             self.execute_base(i_sql_str)
-        return
 
     def qcheck(self, symbol):
         log("db-> qcheck: "+symbol)
@@ -292,7 +255,6 @@ class data_base():
         self.execute_fetchall(i_sql_string)
         zero_count = self.row_count
         self.row_count = null_count + zero_count
-        return
 
     # def add_instrument_value_multi_tchk(self, instrument, dt_array, prop, val_array):
     #     s("write to db "+instrument+" - "+prop)
@@ -397,12 +359,12 @@ class market_data():
         i_df.set_index('datetime')
         return i_df
 
+
 class n_date_frame():
     df = pd.DataFrame(None)
 
     def add(self, symbol):
         log("ndf-> add " + symbol)
-        # bp.stop()
         i_now = datetime.now() + timedelta(days=1)
         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
         i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
@@ -420,14 +382,77 @@ class n_date_frame():
             i_df_stock = pd.DataFrame(None)
             i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
             db.add_symbol_values(symbol, i_df_stock)
-        # bp.start()
+        return
+
+    def add_sma(self, symbol, window_size):
+
+        def sma(i_df, window_size):
+            i_c1_name = "SMA_" + str(window_size)
+            i_df[i_c1_name] = i_df.iloc[:, i_df.columns.get_loc("ohlc4")].rolling(window=int(window_size)).mean()
+            i_df[i_c1_name] = i_df[i_c1_name].fillna(0.123456)
+            i_df[i_c1_name] = round(i_df[i_c1_name], 6)
+            i_df['datetime'] = i_df["datetime"].astype(str)
+            i_prop_array = [i_c1_name]
+            return i_prop_array, i_df
+
+        log("ndf-> add_rsi " + symbol + " - " + str(window_size))
+        i_res = db.get_last_m(symbol, 1)
+        i_df = pd.DataFrame(i_res)
+        i_df.columns = db.column_names
+        last_dbdt = str(i_df.iloc[0]['datetime'])
+
+        i_res = db.get_first_m(symbol, 1)
+        i_df = pd.DataFrame(i_res)
+        i_df.columns = db.column_names
+        first_dbdt = str(i_df.iloc[0]['datetime'])
+
+        i_datetime_series = pd.DataFrame(pd.date_range(start=last_dbdt, end=first_dbdt, freq='-65d'))
+        new_row = {0: first_dbdt}
+        i_datetime_series = i_datetime_series.append(new_row, ignore_index=True)
+
+        for i_i in range(len(i_datetime_series[0])-1):
+            i_select_from = i_datetime_series.loc[i_i+1][0]
+            i_select_to = i_datetime_series.loc[i_i][0] + timedelta(days=3)
+            i_df = pd.DataFrame(None)
+            i_df = pd.DataFrame(db.get_timeframe_desc(symbol, i_select_from, i_select_to))
+            i_df = i_df.iloc[::-1]
+            i_df.columns = db.column_names
+            # print(db.column_names)
+            # if "t" in db.column_names:
+            #     print("t benne van")
+            # if "SMA_70" in db.column_names:
+            #     print("SMA_70 benne van")
+            # else:
+            #     print("SMA_70 NINCS benne")
+            i_new_prop_array, i_df = sma(i_df, window_size)
+            # print("prop array", i_new_prop_array)
+            # print(i_df.head())
+            for i_new_prop in i_new_prop_array:
+                # print(i_new_prop)
+                i_datetime = tools.get_df_column(i_df, "datetime")
+                i_values = tools.get_df_column(i_df, i_new_prop)
+                if i_new_prop not in db.column_names:
+                    db.add_symbol_float_property(symbol, i_new_prop)
+                db.add_symbol_value_multi(symbol, i_datetime, i_new_prop, i_values)
+        return
+
+    def refresh(self, symbol):
+        log("ndf-> refresh " + symbol)
+        to_dbdt = datetime.now() + timedelta(days=1)
+        to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
+        i_res = db.get_last_m(symbol, 1)
+        i_df = pd.DataFrame(i_res)
+        i_df.columns = db.column_names
+        from_dbdt = str(i_df.iloc[0]['datetime'])
+        i_tounix = tools.dbdt_to_unixdt(to_dbdt)
+        i_fromunix = tools.dbdt_to_unixdt(from_dbdt)
+        i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
+        db.add_symbol_values(symbol, i_df_stock)
         return
 
     def get_last_m(self, symbol, xm):
         log("ndf-> get " + symbol + " last " + xm + " minutes")
-
         i_res = db.get_last_m(symbol, xm)
-        # from pandas import DataFrame
         if db.row_count > 0:
             df = pd.DataFrame(i_res)
             df.columns = db.column_names
@@ -450,7 +475,7 @@ class n_date_frame():
         return
 
     def check(self, symbol):
-        log("ndf-> qcheck " + symbol)
+        log("ndf-> check " + symbol)
         db.qcheck(symbol)
         if db.row_count > 0:
             log("  Data quality ERROR: " + symbol)
@@ -459,26 +484,26 @@ class n_date_frame():
         return
 
 
-class n_strategy():
-    n = ""
-
-    def add_rsi(self, symbol):
-        s("add RSI - " + symbol)
-        i_now = datetime.now() + timedelta(days=1)
-        i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
-        for i_i in range(len(i_datetime_series)-1):
-            i_tounix = tools.dbdt_to_unixdt(str((i_datetime_series[i_i] + timedelta(days=4))))
-            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-            s("get data RSI " + symbol + " - " + str(i_datetime_series[i_i] + timedelta(days=4)) + " - " + str(i_datetime_series[i_i+1]))
-            i_df_stock = pd.DataFrame(None)
-            i_df_stock = md.technical_indicator_rsi(symbol, "1", i_fromunix, i_tounix)
-            i_datetime = tools.get_df_column(i_df_stock, "datetime")
-
-            db_act1 = data_base()
-            ci1 = tools.get_df_column(i_df_stock, "rsi")
-            db_act1.add_symbol_value_multi(symbol, i_datetime, "rsi", ci1)
-        return
+# class n_strategy():
+#     n = ""
+#
+#     def add_rsi(self, symbol):
+#         s("add RSI - " + symbol)
+#         i_now = datetime.now() + timedelta(days=1)
+#         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+#         i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
+#         for i_i in range(len(i_datetime_series)-1):
+#             i_tounix = tools.dbdt_to_unixdt(str((i_datetime_series[i_i] + timedelta(days=4))))
+#             i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
+#             s("get data RSI " + symbol + " - " + str(i_datetime_series[i_i] + timedelta(days=4)) + " - " + str(i_datetime_series[i_i+1]))
+#             i_df_stock = pd.DataFrame(None)
+#             i_df_stock = md.technical_indicator_rsi(symbol, "1", i_fromunix, i_tounix)
+#             i_datetime = tools.get_df_column(i_df_stock, "datetime")
+#
+#             db_act1 = data_base()
+#             ci1 = tools.get_df_column(i_df_stock, "rsi")
+#             db_act1.add_symbol_value_multi(symbol, i_datetime, "rsi", ci1)
+#         return
 
 
 class watch_list:
@@ -486,7 +511,7 @@ class watch_list:
 
     def __init__(self):
         self.df = self.read()
-        self.refresh_close()
+        # self.refresh_close()
         self.refresh_sentiment()
 
     def read(self):
@@ -539,7 +564,7 @@ class watch_list:
     def add(self, symbol):
         self.remove(symbol)
         new_row = {'symbol': symbol}
-        self.df = self. df.append(new_row, ignore_index=True)
+        self.df = self.df.append(new_row, ignore_index=True)
         self.refresh_profile()
         self.refresh_close()
         self.refresh_sentiment()
@@ -562,7 +587,9 @@ class tools():
     def dbdt_to_unixdt(self, datestring):
         dt = datetime.strptime(datestring, '%Y-%m-%d %H:%M:%S')
         dt2 = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-        return str(int(time.mktime(dt2.timetuple())))
+        # print(dt2)
+        i_return = str(int(time.mktime(dt2.timetuple())))
+        return i_return
 
     def unixdt_to_dbdt(self, unix_datetime):
         # print("datetime", unix_datetime)
@@ -608,6 +635,8 @@ class tools():
         return i_return
 
     def convert_df_to_csvdf(self, i_df):
+        import io
+        from io import StringIO
         su = io.StringIO()
         i_df.to_csv(su, index=False)
         i_return = pd.read_csv(StringIO(su.getvalue()), sep=",", index_col=0, parse_dates=True)
@@ -623,15 +652,8 @@ class gui(QWidget):
         super(gui, self).__init__()
         self.load_ui()
         self.load_commands()
-        self.setWindowTitle("nDot")
-        i_now = datetime.now()
-        self.From_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
-        self.To_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
-        self.From_T.setTime(QTime(i_now.hour, i_now.minute))
-        self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-
-        self.thread = ListenWebsocket()
-        self.thread.start()
+        # self.thread = ListenWebsocket()
+        # self.thread.start()
         return
 
     def load_commands(self):
@@ -641,19 +663,21 @@ class gui(QWidget):
             ['sys.print', 'sys_print', 'sys.print <True/False> ', 1],
             ['wl.add', 'wl_add', 'wl.add <symbol> ', 1],
             ['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
-            ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
+            # ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
             ['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile <> ', 0],
             ['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment <> ', 0],
             # ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
             ['ndf.add', 'ndf_add', 'ndf.add <symbol> ', 1],
+            ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol> ', 1],
             ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol> ', 1],
             ['ndf.check', 'ndf_check', 'ndf.check <symbol> ', 1],
             ['ndf.chart', 'ndf_chart', 'ndf.chart <symbol> ui date time', 1],
             ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol, numbers (optional)> ', 1],
             ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol, numbers (optional)> ', 1],
+            ['ndf.add.sma', 'ndf_add_sma', 'ndf.add.sma <symbol, window_size> ', 1],
             ['md.check', 'md_check', 'md.check <symbol> ', 1],
-            ['bp.start', 'bp_start', 'bp.start <> ', 0],
-            ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
+            # ['bp.start', 'bp_start', 'bp.start <> ', 0],
+            # ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
             ['exit', 'exit', 'exit <> ', 0]
         ]
         self.commands = pd.DataFrame(c)
@@ -676,19 +700,36 @@ class gui(QWidget):
         return i_found, i_program, i_hint, i_params
 
     def load_ui(self):
-        loadUi("C:/Users/honis.ivan/Documents/IPhoneix120/form.ui", self)
+        loadUi("./qt_ui/form.ui", self)
         # hozzárendelések ------------------------------------------------------------------
+        self.Command_Line.setText("ndf.add.sma PENN")
         self.Run_Button.clicked.connect(self.run_button_action)
         self.Command_Line.returnPressed.connect(self.run_button_action)
         self.Command_Line.textChanged.connect(self.command_line_changed)
-        self.WL_btn.clicked.connect(partial(wl_btn, 1))
-        self.WL_btn_2.clicked.connect(partial(wl_btn, 2))
-        self.WL_btn_3.clicked.connect(partial(wl_btn, 3))
-        self.WL_btn_4.clicked.connect(partial(wl_btn, 4))
-        self.WL_btn_5.clicked.connect(partial(wl_btn, 5))
-        self.WL_btn_6.clicked.connect(partial(wl_btn, 6))
-        self.WL_btn_7.clicked.connect(partial(wl_btn, 7))
-        self.WL_btn_8.clicked.connect(partial(wl_btn, 8))
+        self.WL_btn_chart.clicked.connect(partial(wl_btn_chart, 1))
+        self.WL_btn_chart_2.clicked.connect(partial(wl_btn_chart, 2))
+        self.WL_btn_chart_3.clicked.connect(partial(wl_btn_chart, 3))
+        self.WL_btn_chart_4.clicked.connect(partial(wl_btn_chart, 4))
+        self.WL_btn_chart_5.clicked.connect(partial(wl_btn_chart, 5))
+        self.WL_btn_chart_6.clicked.connect(partial(wl_btn_chart, 6))
+        self.WL_btn_chart_7.clicked.connect(partial(wl_btn_chart, 7))
+        self.WL_btn_chart_8.clicked.connect(partial(wl_btn_chart, 8))
+        self.WL_btn_chart_9.clicked.connect(partial(wl_btn_chart, 9))
+        self.WL_btn_chart_10.clicked.connect(partial(wl_btn_chart, 10))
+        self.WL_btn_chart_11.clicked.connect(partial(wl_btn_chart, 11))
+        self.WL_btn_chart_12.clicked.connect(partial(wl_btn_chart, 12))
+        self.WL_btn_show.clicked.connect(partial(wl_btn_show, 1))
+        self.WL_btn_show_2.clicked.connect(partial(wl_btn_show, 2))
+        self.WL_btn_show_3.clicked.connect(partial(wl_btn_show, 3))
+        self.WL_btn_show_4.clicked.connect(partial(wl_btn_show, 4))
+        self.WL_btn_show_5.clicked.connect(partial(wl_btn_show, 5))
+        self.WL_btn_show_6.clicked.connect(partial(wl_btn_show, 6))
+        self.WL_btn_show_7.clicked.connect(partial(wl_btn_show, 7))
+        self.WL_btn_show_8.clicked.connect(partial(wl_btn_show, 8))
+        self.WL_btn_show_9.clicked.connect(partial(wl_btn_show, 9))
+        self.WL_btn_show_10.clicked.connect(partial(wl_btn_show, 10))
+        self.WL_btn_show_11.clicked.connect(partial(wl_btn_show, 11))
+        self.WL_btn_show_12.clicked.connect(partial(wl_btn_show, 12))
         self.WL_refresh.clicked.connect(wl_refresh_close)
         self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
         self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
@@ -696,15 +737,26 @@ class gui(QWidget):
         self.Datetime_mod4.clicked.connect(partial(self.date_modifier, "days", 4))
         self.Datetime_mod5.clicked.connect(partial(self.date_modifier, "days", 30))
         self.Datetime_now.clicked.connect(self.date_now)
+        # induló értékek ------------------------------------------------------------------
+        self.setWindowTitle("nDot")
+        app_icon = QtGui.QIcon()
+        app_icon.addFile('./images/ndot_icon_x.png', QtCore.QSize(16, 16))
+        app.setWindowIcon(app_icon)
+        i_now = datetime.now()
+        self.From_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
+        self.To_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
+        self.From_T.setTime(QTime(i_now.hour, i_now.minute))
+        self.To_T.setTime(QTime(i_now.hour, i_now.minute))
         return
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
             print("Status: GUI Closed")
+            # self.thread.ws.close()
             self.close()
 
     def refresh_ui(self):
-        i_wl_frame_object = np.ndarray(8, dtype=object, order='F')
+        i_wl_frame_object = np.ndarray(12, dtype=object, order='F')
         i_wl_frame_object[0] = gui.WL_frame
         i_wl_frame_object[1] = gui.WL_frame_2
         i_wl_frame_object[2] = gui.WL_frame_3
@@ -713,8 +765,13 @@ class gui(QWidget):
         i_wl_frame_object[5] = gui.WL_frame_6
         i_wl_frame_object[6] = gui.WL_frame_7
         i_wl_frame_object[7] = gui.WL_frame_8
+        i_wl_frame_object[8] = gui.WL_frame_9
+        i_wl_frame_object[9] = gui.WL_frame_10
+        i_wl_frame_object[10] = gui.WL_frame_11
+        i_wl_frame_object[11] = gui.WL_frame_12
 
-        i_noid = np.array(['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9'])
+
+        i_noid = np.array(['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12'])
 
         for i_obj in i_wl_frame_object:
             i_obj.hide()
@@ -813,20 +870,20 @@ class gui(QWidget):
         return
 
 
-
 # PROGRAMS ----------------------------------------------------------------------------
 
 
-def do(p1="", p2="", p3=""):
+def do(symbol="", p2="", p3=""):
+    # stock = n_date_frame()
+    # stock.add_last(symbol, 1)
     return
 
 
 def s(msg_str):
     gui.Status.setText("Status: " + msg_str)
+    QApplication.processEvents()
     if nsys.print_console:
         print(time.strftime("%m-%d %H:%M:%S")+" > "+"Status: "+msg_str)
-    gui.update()
-    gui.repaint()
     return
 
 
@@ -842,8 +899,7 @@ def log(add_text, line=False, indent=True):
     i_log_text = gui.Logs_Browser.toPlainText() + time.strftime("%m-%d %H:%M:%S") + " > " + i_ind + add_text + " \r"
     gui.Logs_Browser.setText(i_log_text)
     gui.Logs_Browser.moveCursor(QtGui.QTextCursor.End)
-    gui.update()
-    gui.repaint()
+    QApplication.processEvents()
     return
 
 
@@ -882,13 +938,21 @@ def exit_program(p1="", p2="", p3=""):
     return
 
 
-# ndf programs
+# ndf programs  ----------------------------------------------------------------------------
 
 
 def ndf_add(symbol="", p2="", p3=""):
     ndf.add(symbol)
     ndf.check(symbol)
-    gui.refresh_ui()
+    return
+
+def ndf_add_sma(symbol, window_size=60, p3=""):
+    ndf.add_sma(symbol, window_size)
+
+def ndf_refresh(symbol="", p2="", p3=""):
+    ndf.refresh(symbol)
+    # ndf.check(symbol)
+    # gui.refresh_ui()
     return
 
 
@@ -910,6 +974,8 @@ def ndf_chart(symbol, p2="", p3=""):
         i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close",
                                                 "v": "Volume"},errors="raise")
         quote = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
+        import matplotlib.pyplot as plt
+        import mplfinance as mpf
         fig = mpf.figure(style='yahoo', figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', tight_layout=True,
                          num=symbol)
         ax1 = fig.add_subplot(4, 1, (1, 3))
@@ -929,6 +995,8 @@ def ndf_chart_last(symbol="", xminute="60", p3=""):
         log("ndf_chart_last-> plot chart")
         i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"},errors="raise")
         quote = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
+        import matplotlib.pyplot as plt
+        import mplfinance as mpf
         fig = mpf.figure(style='yahoo', figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', tight_layout=True,
                          num=symbol)
         ax1 = fig.add_subplot(4, 1, (1, 3))
@@ -945,20 +1013,58 @@ def ndf_show_last(symbol="", xminute="60", p3=""):
     stock = n_date_frame()
     stock.get_last_m(symbol, xminute)
     if db.row_count > 0:
-        i_df_s = pd.DataFrame(None)
-        i_df_s['datetime'] = stock.df['datetime']
-        i_df_s['o'] = stock.df['o'].astype(float)
-        i_df_s['h'] = stock.df['h'].astype(float)
-        i_df_s['l'] = stock.df['l'].astype(float)
-        i_df_s['c'] = stock.df['c'].astype(float)
-        i_df_s['ohlc4'] = stock.df['ohlc4'].astype(float)
-        i_df_s['v'] = stock.df['v'].astype(int)
-        # i_df = i_df.round({'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6, 'v': 0})
-        i_df_s.set_index('datetime')
-        show(symbol=i_df_s)
+        # i_df_s = pd.DataFrame(None)
+        # stock.df['o'] = stock.df['o'].astype(float)
+        # stock.df['h'] = stock.df['h'].astype(float)
+        # stock.df['l'] = stock.df['l'].astype(float)
+        # stock.df['c'] = stock.df['c'].astype(float)
+        # i_df_s['ohlc4'] = stock.df['ohlc4'].astype(float)
+        # i_df_s['v'] = stock.df['v'].astype(int)
+        # # i_df = i_df.round({'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6, 'v': 0})
+        # i_df_s.set_index('datetime')
+
+
+        from pandastable import Table, TableModel, config
+
+        class TestApp(Frame):
+            """Basic test frame for the table"""
+
+            def __init__(self, parent=None):
+                self.parent = parent
+                Frame.__init__(self)
+                self.main = self.master
+                self.main.geometry('1200x600+100+100')
+                self.main.title(symbol)
+                f = Frame(self.main)
+                f.pack(fill=BOTH, expand=1)
+
+                self.table = pt = Table(f, dataframe=stock.df,
+                                        showtoolbar=True, showstatusbar=True)
+                options = {'align': 'w',
+                         'cellbackgr': '#F4F4F3',
+                         'cellwidth': 80,
+                         'colheadercolor': '#535b71',
+                         'floatprecision': 2,
+                         'font': 'Arial',
+                         'fontsize': 9,
+                         'fontstyle': '',
+                         'grid_color': '#AAAAAA',
+                         'linewidth': 1,
+                         'rowheight': 18,
+                         'rowselectedcolor': '#E4DED4',
+                         'textcolor': 'black'}
+                config.apply_options(options, self.table)
+                pt.show()
+                return
+
+        app = TestApp()
+        app.mainloop()
     else:
         log("no data found in df")
     return
+
+
+# md programs -------------------------------------------------------------------------------------------------------
 
 
 def md_check(symbol="", p2="", p3=""):
@@ -1017,13 +1123,20 @@ def bp_stop(p1="", p2="", p3=""):
 # PROGRAMS fo wl buttons----------------------------------------------------------------------------
 
 
-def wl_btn(btn_no):
+def wl_btn_chart(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
-    log("start: Go " + symbol, True, False)
+    log("start: ndf.chart.last " + symbol, True, False)
     ndf_chart_last(symbol)
     log("ready.", False, False)
     return
 
+
+def wl_btn_show(btn_no):
+    symbol = wl.df.loc[btn_no-1]['symbol']
+    log("start: ndf.show.last " + symbol, True, False)
+    ndf_show_last(symbol)
+    log("ready.", False, False)
+    return
 
 # Back_processes -----------------------------------------------------
 
@@ -1064,6 +1177,7 @@ class back_processes(object):
 
 # Socket ----------------------------------------------------
 
+
 class ListenWebsocket(QtCore.QThread):
     def __init__(self, parent=None):
         super(ListenWebsocket, self).__init__(parent)
@@ -1073,46 +1187,43 @@ class ListenWebsocket(QtCore.QThread):
                                         on_error=self.on_error,
                                         on_close=self.on_close
                                         )
+        self.cdx = 1
+        self.cont_datetime = datetime.now()
 
     def on_message(self, message):
-        now = datetime.now()
-        duration = now - gui.sx
-        duration_in_s = duration.total_seconds()
-        if duration_in_s > 30:
-            s("message: " + message)
-            gui.sx = datetime.now()
-        return
+        # print(message)
+        # print(datetime.now(), self.cont_datetime)
+        duration = datetime.now() - self.cont_datetime
+        duration_in_s = int(duration.total_seconds())
+        # print(duration_in_s)
+        # print(duration_in_s)
+        if duration_in_s > 15:
+            s(message)
+            # print("segg")
+            # print(datetime.now())
+            # print(self.cont_datetime)
+            self.cont_datetime = datetime.now()
 
     def on_error(self, error):
         print("error" + error)
-        return
 
     def on_close(self):
-        print("### closed ###")
-        return
+        print("Status: FinnHub socket closed")
 
     def on_open(self):
-        print("1")
-        # ws.send('{"type":"subscribe","symbol":"AAPL"}')
-        # ws.send('{"type":"subscribe","symbol":"AMZN"}')
+
+        self.ws.send('{"type":"subscribe","symbol":"AAPL"}')
+        # self.ws.send('{"type":"subscribe","symbol":"AMZN"}')
         self.ws.send('{"type":"subscribe","symbol":"BINANCE:BTCUSDT"}')
-        # ws.send('{"type":"subscribe","symbol":"IC MARKETS:1"}')
+        # self.ws.send('{"type":"subscribe","symbol":"IC MARKETS:1"}')
+        print("Status: FinnHub socket opened")
 
     def run(self):
-        print("th run")
         self.ws.on_open = self.on_open
         self.ws.run_forever()
 
 
-
-
-
-
-
 if __name__ == "__main__":
-
-
-
 
     # 1.
     print("Status: GUI Load")
@@ -1124,6 +1235,8 @@ if __name__ == "__main__":
     md = market_data()
     wl = watch_list()
     gui.refresh_ui()
+    # gui.showFullScreen()
+    gui.showMaximized()
     tools = tools()
     ndf = n_date_frame()
 
@@ -1131,8 +1244,8 @@ if __name__ == "__main__":
     # nsrg.add_rsi("APA")
 
     # gui.show()
-    gui.showFullScreen()
-    print("Status: GUI Running")
+
+    print("Status: GUI is running")
     # ws.on_open = on_open
     # ws.run_forever()
     # threadpool = QThreadPool()

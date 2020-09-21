@@ -1,0 +1,5376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>iphoenix100</class>
+ <widget class="QWidget" name="iphoenix100">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1300</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>800</width>
+    <height>300</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>8000</width>
+    <height>5000</height>
+   </size>
+  </property>
+  <property name="font">
+   <font>
+    <family>MS Serif</family>
+    <pointsize>7</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>nDot</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background:rgb(216, 213, 202)</string>
+  </property>
+  <widget class="QProgressBar" name="Progress_Bar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1300</width>
+     <height>5</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QProgressBar:horizontal {
+border: none;
+background: rgb(216, 213, 202);
+}
+QProgressBar::chunk:horizontal {
+background:rgb(255, 170, 0);
+}</string>
+   </property>
+   <property name="value">
+    <number>24</number>
+   </property>
+   <property name="textVisible">
+    <bool>false</bool>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Status">
+   <property name="geometry">
+    <rect>
+     <x>23</x>
+     <y>691</y>
+     <width>771</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #888888;</string>
+   </property>
+   <property name="text">
+    <string>Status: ok</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Command_Hint">
+   <property name="geometry">
+    <rect>
+     <x>119</x>
+     <y>54</y>
+     <width>541</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>11</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: #ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 15px;
+padding-left: 10px;
+color: #aaaaaa;
+</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="Command_Line">
+   <property name="geometry">
+    <rect>
+     <x>119</x>
+     <y>23</y>
+     <width>541</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: #ffffff;
+border-top-left-radius: 15px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #eeeeee;
+padding-left: 10px;
+</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="placeholderText">
+    <string>Add command</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Run_Button">
+   <property name="geometry">
+    <rect>
+     <x>660</x>
+     <y>23</y>
+     <width>121</width>
+     <height>56</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-top-left-radius: 0px;
+	border-top-right-radius:15px;
+	border-bottom-right-radius: 15px;
+	border-bottom-left-radius: 0px;
+}
+QPushButton:pressed {
+    background-color: #ffffff;
+	color: #000000;
+	border-top-left-radius: 0px;
+	border-top-right-radius:15px;
+	border-bottom-right-radius: 15px;
+	border-bottom-left-radius: 0px;
+}</string>
+   </property>
+   <property name="text">
+    <string>RUN</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>370</y>
+     <width>351</width>
+     <height>291</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QGroupBox {
+    border: 1px solid white;
+    border-radius: 15px;
+    margin-top: 0.5em;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 20px;
+    padding: -9px 3px 0 3px;
+	color: #ffffff
+}</string>
+   </property>
+   <property name="title">
+    <string>From:</string>
+   </property>
+   <widget class="QCalendarWidget" name="From_D">
+    <property name="geometry">
+     <rect>
+      <x>14</x>
+      <y>30</y>
+      <width>321</width>
+      <height>211</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::ActionsContextMenu</enum>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QCalendarWidget QToolButton {
+  	font-size: 14px;
+  	icon-size: 20px, 20px;
+  	background-color: white;
+	color:rgb(255, 170, 0);
+  }
+  QCalendarWidget QMenu {
+  	width: 150px;
+  	left: 20px;
+  	color: white;
+  	font-size: 18px;
+  	background-color: rgb(100, 100, 100);
+  }
+  QCalendarWidget QSpinBox { 
+  	width: 150px; 
+  	font-size:24px; 
+  	color: white; 
+  	background-color:white; 
+  	selection-background-color: rgb(136, 136, 136);
+  	selection-color: rgb(255, 255, 255);
+  }
+  QCalendarWidget QSpinBox::up-button { subcontrol-origin: border;  subcontrol-position: top right;  width:65px; }
+  QCalendarWidget QSpinBox::down-button {subcontrol-origin: border; subcontrol-position: bottom right;  width:65px;}
+  QCalendarWidget QSpinBox::up-arrow { width:56px;  height:56px; }
+  QCalendarWidget QSpinBox::down-arrow { width:56px;  height:56px; }
+   
+  /* header row */
+  QCalendarWidget QWidget { alternate-background-color:#eeeeee; }
+   
+  /* normal days */
+  QCalendarWidget QAbstractItemView:enabled 
+  {
+  	font-size:12px;  
+  	color: #555555;  
+  	background-color: white;  
+  	selection-background-color: rgb(64, 64, 64); 
+  	selection-color: rgb(255, 170, 0); 
+  }
+   
+  /* days in other months */
+  /* navigation bar */
+QCalendarWidget QWidget#qt_calendar_navigationbar
+{ 
+  background-color:white; 
+}
+
+QCalendarWidget QAbstractItemView:disabled 
+{ 
+color: rgb(64, 64, 64); 
+}</string>
+    </property>
+    <property name="gridVisible">
+     <bool>true</bool>
+    </property>
+    <property name="navigationBarVisible">
+     <bool>true</bool>
+    </property>
+    <property name="dateEditEnabled">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QTimeEdit" name="From_T">
+    <property name="geometry">
+     <rect>
+      <x>13</x>
+      <y>250</y>
+      <width>321</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: #ffffff;
+border: 1px solid #aaaaaa;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_2">
+   <property name="geometry">
+    <rect>
+     <x>450</x>
+     <y>370</y>
+     <width>341</width>
+     <height>291</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QGroupBox {
+    border: 1px solid white;
+    border-radius: 15px;
+    margin-top: 0.5em;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 20px;
+    padding: -9px 3px 0 3px;
+	color: #ffffff
+}</string>
+   </property>
+   <property name="title">
+    <string>To:</string>
+   </property>
+   <property name="flat">
+    <bool>false</bool>
+   </property>
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <widget class="QCalendarWidget" name="To_D">
+    <property name="geometry">
+     <rect>
+      <x>15</x>
+      <y>30</y>
+      <width>312</width>
+      <height>211</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::ActionsContextMenu</enum>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QCalendarWidget QToolButton {
+  	font-size: 14px;
+  	icon-size: 20px, 20px;
+  	background-color: white;
+	color:rgb(255, 170, 0);
+  }
+  QCalendarWidget QMenu {
+  	width: 150px;
+  	left: 20px;
+  	color: white;
+  	font-size: 18px;
+  	background-color: rgb(100, 100, 100);
+  }
+  QCalendarWidget QSpinBox { 
+  	width: 150px; 
+  	font-size:24px; 
+  	color: white; 
+  	background-color:white; 
+  	selection-background-color: rgb(136, 136, 136);
+  	selection-color: rgb(255, 255, 255);
+  }
+  QCalendarWidget QSpinBox::up-button { subcontrol-origin: border;  subcontrol-position: top right;  width:65px; }
+  QCalendarWidget QSpinBox::down-button {subcontrol-origin: border; subcontrol-position: bottom right;  width:65px;}
+  QCalendarWidget QSpinBox::up-arrow { width:56px;  height:56px; }
+  QCalendarWidget QSpinBox::down-arrow { width:56px;  height:56px; }
+   
+  /* header row */
+  QCalendarWidget QWidget { alternate-background-color:#eeeeee; }
+   
+  /* normal days */
+  QCalendarWidget QAbstractItemView:enabled 
+  {
+  	font-size:12px;  
+  	color: #555555;  
+  	background-color: white;  
+  	selection-background-color: rgb(64, 64, 64); 
+  	selection-color: rgb(255, 170, 0); 
+  }
+   
+  /* days in other months */
+  /* navigation bar */
+QCalendarWidget QWidget#qt_calendar_navigationbar
+{ 
+  background-color:white; 
+}
+
+QCalendarWidget QAbstractItemView:disabled 
+{ 
+color: rgb(64, 64, 64); 
+}</string>
+    </property>
+    <property name="gridVisible">
+     <bool>true</bool>
+    </property>
+    <property name="navigationBarVisible">
+     <bool>true</bool>
+    </property>
+    <property name="dateEditEnabled">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QTimeEdit" name="To_T">
+    <property name="geometry">
+     <rect>
+      <x>17</x>
+      <y>250</y>
+      <width>311</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: #ffffff;
+border: 1px solid #aaaaaa;</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QTextBrowser" name="Logs_Browser">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>103</y>
+     <width>801</width>
+     <height>251</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Fixedsys</family>
+     <pointsize>11</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border:none;
+background-color:#ffffff;
+padding-left: 10px;
+padding-right: 0px;
+padding-top:0px;
+pdding-bottom:0px;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <property name="lineWidth">
+    <number>7</number>
+   </property>
+   <property name="verticalScrollBarPolicy">
+    <enum>Qt::ScrollBarAsNeeded</enum>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAsNeeded</enum>
+   </property>
+   <property name="lineWrapMode">
+    <enum>QTextEdit::NoWrap</enum>
+   </property>
+   <property name="html">
+    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Fixedsys'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Arial'; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>801</x>
+     <y>8</y>
+     <width>3</width>
+     <height>1500</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>5</y>
+     <width>2000</width>
+     <height>3</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_3">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>103</y>
+     <width>800</width>
+     <height>3</height>
+    </rect>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_4">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>354</y>
+     <width>800</width>
+     <height>3</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_5">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>680</y>
+     <width>800</width>
+     <height>3</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Datetime_mod1">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>430</y>
+     <width>70</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-radius:10px;
+}
+QPushButton:pressed {
+    background-color: #ffffff;
+	color: #000000;
+	border-radius:10px;
+}</string>
+   </property>
+   <property name="text">
+    <string>&lt;      -6h</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Datetime_mod2">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>480</y>
+     <width>70</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-radius:10px;
+}
+QPushButton:pressed {
+    background-color: #ffffff;
+	color: #000000;
+	border-radius:10px;
+}</string>
+   </property>
+   <property name="text">
+    <string>&lt;      -1d</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Datetime_mod3">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>530</y>
+     <width>70</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-radius:10px;
+}
+QPushButton:pressed {
+    background-color: #ffffff;
+	color: #000000;
+	border-radius:10px;
+}</string>
+   </property>
+   <property name="text">
+    <string>&lt;      -2d</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Datetime_mod4">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>580</y>
+     <width>70</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-radius:10px;
+}
+QPushButton:pressed {
+    background-color: #ffffff;
+	color: #000000;
+	border-radius:10px;
+}</string>
+   </property>
+   <property name="text">
+    <string>&lt;      -4d</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Datetime_mod5">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>630</y>
+     <width>70</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-radius:10px;
+}
+QPushButton:pressed {
+    background-color: #ffffff;
+	color: #000000;
+	border-radius:10px;
+}</string>
+   </property>
+   <property name="text">
+    <string>&lt;      -30d</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="Datetime_now">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>380</y>
+     <width>70</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-radius:10px;
+}
+QPushButton:pressed {
+    background-color: #ffffff;
+	color: #000000;
+	border-radius:10px;
+}</string>
+   </property>
+   <property name="text">
+    <string>now  &gt;</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>14</x>
+     <y>18</y>
+     <width>101</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial Black</family>
+     <pointsize>27</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:#aaaaaa;
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>nDot</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>12</x>
+     <y>16</y>
+     <width>101</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial Black</family>
+     <pointsize>27</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:#ffffff;
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>nDot</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>13</x>
+     <y>17</y>
+     <width>101</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial Black</family>
+     <pointsize>27</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:rgb(216, 213, 202);
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>nDot</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line_6">
+   <property name="geometry">
+    <rect>
+     <x>804</x>
+     <y>45</y>
+     <width>600</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>857</x>
+     <y>12</y>
+     <width>160</width>
+     <height>37</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>20</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:#ffffff;
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>Watch list</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_5">
+   <property name="geometry">
+    <rect>
+     <x>859</x>
+     <y>14</y>
+     <width>160</width>
+     <height>37</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>20</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:#999999;
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>Watch list</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_6">
+   <property name="geometry">
+    <rect>
+     <x>858</x>
+     <y>13</y>
+     <width>160</width>
+     <height>37</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>20</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:rgb(216, 213, 202);
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>Watch list</string>
+   </property>
+  </widget>
+  <widget class="QCommandLinkButton" name="WL_refresh">
+   <property name="geometry">
+    <rect>
+     <x>820</x>
+     <y>12</y>
+     <width>181</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Segoe UI</family>
+     <stylestrategy>PreferAntialias</stylestrategy>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;
+color: #888888;
+padding: 0;
+margin: 0;
+background: none;</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/rf.png</normaloff>../images/rf.png</iconset>
+   </property>
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QFrame" name="WL_frame">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>810</x>
+     <y>80</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_2">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1050</x>
+     <y>80</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_2">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_2">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_2">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_2">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_2">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_2">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_2">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_2">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_2">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_2">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_3">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>810</x>
+     <y>190</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_3">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_3">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_3">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_3">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_3">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_3">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_3">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_3">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_3">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_3">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_4">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1050</x>
+     <y>190</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_4">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_4">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_4">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_4">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_4">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_4">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_4">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_4">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_4">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_4">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_5">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>810</x>
+     <y>300</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_5">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_5">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_5">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_5">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_5">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_5">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_5">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_5">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_5">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_5">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_6">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1050</x>
+     <y>300</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_6">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_6">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_6">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_6">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_6">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_6">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_6">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_6">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_6">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_6">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_7">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>810</x>
+     <y>410</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_7">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_7">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_7">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_7">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_7">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_7">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_7">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_7">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_7">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_7">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_8">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1050</x>
+     <y>410</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_8">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_8">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_8">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_8">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_8">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_8">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_8">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_8">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_8">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_8">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_9">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>810</x>
+     <y>520</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_9">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_9">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_9">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_9">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_9">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_9">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_9">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_9">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_9">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_9">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_10">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1050</x>
+     <y>520</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_10">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_10">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_10">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_10">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_10">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_10">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_10">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_10">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_10">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_10">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_11">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>810</x>
+     <y>630</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_11">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_11">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_11">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_11">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_11">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_11">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_11">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_11">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_11">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_11">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QFrame" name="WL_frame_12">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1050</x>
+     <y>630</y>
+     <width>221</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QToolButton" name="WL_btn_chart_12">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>5</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Chart</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_symbol_12">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>5</y>
+      <width>80</width>
+      <height>40</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>16</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>1</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+border-top-left-radius: 5px;
+border-bottom: 1px solid #aaaaaa;
+background: #ffffff;
+color: #888888;
+}
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>MSFT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_c_12">
+    <property name="geometry">
+     <rect>
+      <x>6</x>
+      <y>45</y>
+      <width>60</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>9</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+border-bottom-left-radius: 5px;
+background: #ffffff;
+color: #333333
+</string>
+    </property>
+    <property name="text">
+     <string>215.25</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_arrow_12">
+    <property name="geometry">
+     <rect>
+      <x>66</x>
+      <y>45</y>
+      <width>20</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial Black</family>
+      <pointsize>12</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>▲</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bear_12">
+    <property name="geometry">
+     <rect>
+      <x>86</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: 1px solid #aaaaaa;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right:none;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 0, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>80</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="WL_bull_12">
+    <property name="geometry">
+     <rect>
+      <x>96</x>
+      <y>5</y>
+      <width>10</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QProgressBar:vertical {
+border-left: none;
+border-top: 1px solid #ffffff;
+border-bottom: 1px solid #ffffff;
+border-right: 1px solid #aaaaaa;
+background: white;
+}
+QProgressBar::chunk:vertical {
+background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 255, 0), stop:1 rgb(255, 255, 255));
+}</string>
+    </property>
+    <property name="value">
+     <number>20</number>
+    </property>
+    <property name="textVisible">
+     <bool>false</bool>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_long_12">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>5</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(0, 255, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>L:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_neutral_12">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>25</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: #888888
+</string>
+    </property>
+    <property name="text">
+     <string>N:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_nn_short_12">
+    <property name="geometry">
+     <rect>
+      <x>106</x>
+      <y>45</y>
+      <width>50</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background: #ffffff;
+color: rgb(255, 0, 0)
+</string>
+    </property>
+    <property name="text">
+     <string>S:25%</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_12">
+    <property name="geometry">
+     <rect>
+      <x>156</x>
+      <y>35</y>
+      <width>51</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#111111;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:15px;
+border-bottom-right-radius: 15px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>Show</string>
+    </property>
+   </widget>
+  </widget>
+  <zorder>label_2</zorder>
+  <zorder>Progress_Bar</zorder>
+  <zorder>Status</zorder>
+  <zorder>Command_Hint</zorder>
+  <zorder>Command_Line</zorder>
+  <zorder>Run_Button</zorder>
+  <zorder>groupBox</zorder>
+  <zorder>groupBox_2</zorder>
+  <zorder>Logs_Browser</zorder>
+  <zorder>line</zorder>
+  <zorder>line_3</zorder>
+  <zorder>line_4</zorder>
+  <zorder>line_5</zorder>
+  <zorder>line_2</zorder>
+  <zorder>Datetime_mod1</zorder>
+  <zorder>Datetime_mod2</zorder>
+  <zorder>Datetime_mod3</zorder>
+  <zorder>Datetime_mod4</zorder>
+  <zorder>Datetime_mod5</zorder>
+  <zorder>Datetime_now</zorder>
+  <zorder>label</zorder>
+  <zorder>label_3</zorder>
+  <zorder>line_6</zorder>
+  <zorder>label_4</zorder>
+  <zorder>label_5</zorder>
+  <zorder>label_6</zorder>
+  <zorder>WL_refresh</zorder>
+  <zorder>WL_frame</zorder>
+  <zorder>WL_frame_2</zorder>
+  <zorder>WL_frame_3</zorder>
+  <zorder>WL_frame_4</zorder>
+  <zorder>WL_frame_5</zorder>
+  <zorder>WL_frame_6</zorder>
+  <zorder>WL_frame_7</zorder>
+  <zorder>WL_frame_8</zorder>
+  <zorder>WL_frame_9</zorder>
+  <zorder>WL_frame_10</zorder>
+  <zorder>WL_frame_11</zorder>
+  <zorder>WL_frame_12</zorder>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
