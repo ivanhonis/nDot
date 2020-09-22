@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.4, 2020-09-21T10:39:34. -->
+<!-- Written by QtCreator 4.12.4, 2020-09-21T11:31:27. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -155,12 +155,12 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">main</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.C:/Users/honis.ivan/Documents/IPhoneix120/main.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/honis.ivan/Documents/IPhoneix120/main.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">main2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.C:/Users/honis.ivan/PycharmProjects/nDot/qt_ui/main.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/honis.ivan/PycharmProjects/nDot/qt_ui/main.py</value>
     <value type="bool" key="PythonEditor.RunConfiguation.Buffered">false</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{35ddba75-adbe-4ba3-bd67-f5c3d27012db}</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">C:\Users\honis.ivan\Documents\IPhoneix120\main.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">C:\Users\honis.ivan\PycharmProjects\nDot\qt_ui\main.py</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>

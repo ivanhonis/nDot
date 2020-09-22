@@ -91,12 +91,16 @@ class data_base():
         return i_return
 
     def execute_simply(self, sqlstr, multiple=False):
-        # log("db-> execute_simply: " + sqlstr[:150])
-        print(datetime.now(), "sql length", len(sqlstr))
+
+        def place_value(number):
+            return ("{:,}".format(number))
+
+        log("db-> execute_simply - SQL size:" + place_value(int(len(sqlstr)/1024)) + " KB")
+        # pri(datetime.now(), "sql length", len(sqlstr))
         if self.open_close:
             self.open()
         self.cursor.execute(sqlstr)
-        print(datetime.now(), "close")
+        # print(datetime.now(), "close")
         if self.cursor.rowcount > 0:
             log("db-> execute_simply row(s) affected: " + str(self.cursor.rowcount))
         if self.open_close:
@@ -512,7 +516,7 @@ class watch_list:
     def __init__(self):
         self.df = self.read()
         # self.refresh_close()
-        self.refresh_sentiment()
+        # self.refresh_sentiment()
 
     def read(self):
         return pd.read_csv('wl.csv', sep=';')
@@ -674,7 +678,7 @@ class gui(QWidget):
             ['ndf.chart', 'ndf_chart', 'ndf.chart <symbol> ui date time', 1],
             ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol, numbers (optional)> ', 1],
             ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol, numbers (optional)> ', 1],
-            ['ndf.add.sma', 'ndf_add_sma', 'ndf.add.sma <symbol, window_size> ', 1],
+            ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol, <technical indicator> ', 2],
             ['md.check', 'md_check', 'md.check <symbol> ', 1],
             # ['bp.start', 'bp_start', 'bp.start <> ', 0],
             # ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
@@ -702,7 +706,7 @@ class gui(QWidget):
     def load_ui(self):
         loadUi("./qt_ui/form.ui", self)
         # hozzárendelések ------------------------------------------------------------------
-        self.Command_Line.setText("ndf.add.sma PENN")
+        self.Command_Line.setText("ndf.tech PENN SMA")
         self.Run_Button.clicked.connect(self.run_button_action)
         self.Command_Line.returnPressed.connect(self.run_button_action)
         self.Command_Line.textChanged.connect(self.command_line_changed)
@@ -738,16 +742,15 @@ class gui(QWidget):
         self.Datetime_mod5.clicked.connect(partial(self.date_modifier, "days", 30))
         self.Datetime_now.clicked.connect(self.date_now)
         # induló értékek ------------------------------------------------------------------
-        self.setWindowTitle("nDot")
+        self.setWindowTitle("   nDot")
         app_icon = QtGui.QIcon()
-        app_icon.addFile('./images/ndot_icon_x.png', QtCore.QSize(16, 16))
+        app_icon.addFile('./images/ndot_icon_x2.png', QtCore.QSize(16, 16))
         app.setWindowIcon(app_icon)
         i_now = datetime.now()
         self.From_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
         self.To_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
         self.From_T.setTime(QTime(i_now.hour, i_now.minute))
         self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-        return
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
@@ -798,26 +801,22 @@ class gui(QWidget):
             i_wl_frame_object[i_no].findChild(QProgressBar, "WL_bear"+i_noid[i_no]).setValue(int(row['snt_bearish']*100))
             i_wl_frame_object[i_no].show()
             i_no = i_no + 1
-        return
 
     def date_now(self):
         i_now = datetime.now()
         self.To_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
         self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-        return
 
     def date_modifier(self, interval_type, interval_num):
         i_nowp = datetime.now() - timedelta(**{interval_type: interval_num})
         self.From_D.setSelectedDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
         self.From_T.setTime(QTime(i_nowp.hour, i_nowp.minute))
-        return
 
     def progress_action(self):
         # self.progress_count = self.progress_count + 5
         # if self.progress_count > 100:
         #     self.progress_count = 0
         self.Progress_Bar.setValue(random.randint(0, 100))
-        return
 
     def run_button_action(self):
         command_text = self.Command_Line.text()
@@ -850,7 +849,6 @@ class gui(QWidget):
                                             'border-bottom-left-radius: 0px;' +\
                                             'border-bottom: 1px solid #eeeeee;' +\
                                             'padding-left: 10px;')
-        return
 
     def command_line_changed(self):
         self.Command_Line.setStyleSheet('background-color: #ffffff; ' + \
@@ -867,7 +865,6 @@ class gui(QWidget):
             self.Command_Hint.setText(i_hint)
         else:
             self.Command_Hint.setText("")
-        return
 
 
 # PROGRAMS ----------------------------------------------------------------------------
@@ -876,7 +873,7 @@ class gui(QWidget):
 def do(symbol="", p2="", p3=""):
     # stock = n_date_frame()
     # stock.add_last(symbol, 1)
-    return
+    pass
 
 
 def s(msg_str):
@@ -884,7 +881,6 @@ def s(msg_str):
     QApplication.processEvents()
     if nsys.print_console:
         print(time.strftime("%m-%d %H:%M:%S")+" > "+"Status: "+msg_str)
-    return
 
 
 def log(add_text, line=False, indent=True):
@@ -900,7 +896,6 @@ def log(add_text, line=False, indent=True):
     gui.Logs_Browser.setText(i_log_text)
     gui.Logs_Browser.moveCursor(QtGui.QTextCursor.End)
     QApplication.processEvents()
-    return
 
 
 def test(p1="", p2="", p3=""):
@@ -918,7 +913,6 @@ def test(p1="", p2="", p3=""):
         log("  FinnHub connection is OK.")
     else:
         log("  FinnHub connection ERROR.")
-    return
 
 
 def sys_print(set_p="1", p2="", p3=""):
@@ -930,12 +924,10 @@ def sys_print(set_p="1", p2="", p3=""):
         log("sys.print is True")
     else:
         log("sys.print is False")
-    return
 
 
 def exit_program(p1="", p2="", p3=""):
     gui.close()
-    return
 
 
 # ndf programs  ----------------------------------------------------------------------------
@@ -944,26 +936,24 @@ def exit_program(p1="", p2="", p3=""):
 def ndf_add(symbol="", p2="", p3=""):
     ndf.add(symbol)
     ndf.check(symbol)
-    return
 
-def ndf_add_sma(symbol, window_size=60, p3=""):
-    ndf.add_sma(symbol, window_size)
+
+def ndf_tech(symbol, tech_indicator, p3=""):
+    ndf.add_sma(symbol, 60)
+
 
 def ndf_refresh(symbol="", p2="", p3=""):
     ndf.refresh(symbol)
     # ndf.check(symbol)
     # gui.refresh_ui()
-    return
 
 
 def ndf_remove(symbol="", p2="", p3=""):
     db.remove_symbol(symbol)
-    return
 
 
 def ndf_check(symbol="", p2="", p3=""):
     ndf.check(symbol)
-    return
 
 
 def ndf_chart(symbol, p2="", p3=""):
@@ -985,7 +975,6 @@ def ndf_chart(symbol, p2="", p3=""):
         mpf.show()
     else:
         log("no data found in df")
-    return
 
 
 def ndf_chart_last(symbol="", xminute="60", p3=""):
@@ -1006,7 +995,6 @@ def ndf_chart_last(symbol="", xminute="60", p3=""):
         mpf.show()
     else:
         log("no data found in df")
-    return
 
 
 def ndf_show_last(symbol="", xminute="60", p3=""):
@@ -1061,7 +1049,6 @@ def ndf_show_last(symbol="", xminute="60", p3=""):
         app.mainloop()
     else:
         log("no data found in df")
-    return
 
 
 # md programs -------------------------------------------------------------------------------------------------------
@@ -1072,7 +1059,6 @@ def md_check(symbol="", p2="", p3=""):
         log("  FinnHub connection is OK.")
     else:
         log("  FinnHub connection ERROR.")
-    return
 
 
 
@@ -1083,31 +1069,26 @@ def wl_add(symbol="", p2="", p3=""):
     wl.add(symbol)
     ndf.check(symbol)
     gui.refresh_ui()
-    return
 
 
 def wl_remove(symbol="", p2="", p3=""):
     wl.remove(symbol)
     gui.refresh_ui()
-    return
 
 
 def wl_refresh_close(p1="", p2="", p3=""):
     wl.refresh_close()
     gui.refresh_ui()
-    return
 
 
 def wl_refresh_profile(p1="", p2="", p3=""):
     wl.refresh_profile()
     gui.refresh_ui()
-    return
 
 
 def wl_refresh_sentiment(p1="", p2="", p3=""):
     wl.refresh_sentiment()
     gui.refresh_ui()
-    return
 
 
 def bp_start(p1="", p2="", p3=""):
@@ -1128,7 +1109,6 @@ def wl_btn_chart(btn_no):
     log("start: ndf.chart.last " + symbol, True, False)
     ndf_chart_last(symbol)
     log("ready.", False, False)
-    return
 
 
 def wl_btn_show(btn_no):
@@ -1136,7 +1116,6 @@ def wl_btn_show(btn_no):
     log("start: ndf.show.last " + symbol, True, False)
     ndf_show_last(symbol)
     log("ready.", False, False)
-    return
 
 # Back_processes -----------------------------------------------------
 
@@ -1244,7 +1223,6 @@ if __name__ == "__main__":
     # nsrg.add_rsi("APA")
 
     # gui.show()
-
     print("Status: GUI is running")
     # ws.on_open = on_open
     # ws.run_forever()

@@ -39,7 +39,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1300</width>
+     <width>795</width>
      <height>5</height>
     </rect>
    </property>
@@ -88,7 +88,7 @@ background:rgb(255, 170, 0);
    <property name="geometry">
     <rect>
      <x>119</x>
-     <y>54</y>
+     <y>58</y>
      <width>541</width>
      <height>25</height>
     </rect>
@@ -117,7 +117,7 @@ color: #aaaaaa;
    <property name="geometry">
     <rect>
      <x>119</x>
-     <y>23</y>
+     <y>27</y>
      <width>541</width>
      <height>31</height>
     </rect>
@@ -149,7 +149,7 @@ padding-left: 10px;
    <property name="geometry">
     <rect>
      <x>660</x>
-     <y>23</y>
+     <y>27</y>
      <width>121</width>
      <height>56</height>
     </rect>
@@ -187,7 +187,7 @@ QPushButton:pressed {
   <widget class="QGroupBox" name="groupBox">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>5</x>
      <y>370</y>
      <width>351</width>
      <height>291</height>
@@ -196,21 +196,30 @@ QPushButton:pressed {
    <property name="font">
     <font>
      <family>Arial</family>
-     <pointsize>14</pointsize>
+     <pointsize>-1</pointsize>
     </font>
    </property>
    <property name="styleSheet">
     <string notr="true">QGroupBox {
-    border: 1px solid white;
-    border-radius: 15px;
-    margin-top: 0.5em;
+    border: 1px solid #333333;
+	border-top: 3 px solid #333333;
+    border-color: #333333;
+    margin-top: 27px;
+	margin-left: 7px;
+	margin-right: 3px;
+    font-size: 14px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
 }
 
 QGroupBox::title {
     subcontrol-origin: margin;
-    left: 20px;
-    padding: -9px 3px 0 3px;
-	color: #ffffff
+    subcontrol-position: top center;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    padding: 5px 150px;
+    background-color: #333333;
+    color: rgb(255, 255, 255);
 }</string>
    </property>
    <property name="title">
@@ -219,9 +228,9 @@ QGroupBox::title {
    <widget class="QCalendarWidget" name="From_D">
     <property name="geometry">
      <rect>
-      <x>14</x>
-      <y>30</y>
-      <width>321</width>
+      <x>26</x>
+      <y>34</y>
+      <width>304</width>
       <height>211</height>
      </rect>
     </property>
@@ -302,9 +311,9 @@ color: rgb(64, 64, 64);
    <widget class="QTimeEdit" name="From_T">
     <property name="geometry">
      <rect>
-      <x>13</x>
+      <x>23</x>
       <y>250</y>
-      <width>321</width>
+      <width>311</width>
       <height>22</height>
      </rect>
     </property>
@@ -326,30 +335,39 @@ border: 1px solid #aaaaaa;</string>
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>450</x>
+     <x>445</x>
      <y>370</y>
-     <width>341</width>
+     <width>351</width>
      <height>291</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Arial</family>
-     <pointsize>14</pointsize>
+     <pointsize>-1</pointsize>
     </font>
    </property>
    <property name="styleSheet">
     <string notr="true">QGroupBox {
-    border: 1px solid white;
-    border-radius: 15px;
-    margin-top: 0.5em;
+    border: 1px solid #333333;
+	border-top: 3 px solid #333333;
+    border-color: #333333;
+    margin-top: 27px;
+	margin-left: 16px;
+	margin-right: 12px;
+    font-size: 14px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
 }
 
 QGroupBox::title {
     subcontrol-origin: margin;
-    left: 20px;
-    padding: -9px 3px 0 3px;
-	color: #ffffff
+    subcontrol-position: top center;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    padding: 5px 150px;
+    background-color: #333333;
+    color: rgb(255, 255, 255);
 }</string>
    </property>
    <property name="title">
@@ -364,9 +382,9 @@ QGroupBox::title {
    <widget class="QCalendarWidget" name="To_D">
     <property name="geometry">
      <rect>
-      <x>15</x>
-      <y>30</y>
-      <width>312</width>
+      <x>26</x>
+      <y>37</y>
+      <width>304</width>
       <height>211</height>
      </rect>
     </property>
@@ -447,8 +465,8 @@ color: rgb(64, 64, 64);
    <widget class="QTimeEdit" name="To_T">
     <property name="geometry">
      <rect>
-      <x>17</x>
-      <y>250</y>
+      <x>24</x>
+      <y>256</y>
       <width>311</width>
       <height>22</height>
      </rect>
@@ -523,7 +541,7 @@ p, li { white-space: pre-wrap; }
    <property name="geometry">
     <rect>
      <x>801</x>
-     <y>8</y>
+     <y>-1</y>
      <width>3</width>
      <height>1500</height>
     </rect>
@@ -537,7 +555,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>5</y>
-     <width>2000</width>
+     <width>801</width>
      <height>3</height>
     </rect>
    </property>
@@ -548,14 +566,17 @@ p, li { white-space: pre-wrap; }
   <widget class="Line" name="line_3">
    <property name="geometry">
     <rect>
-     <x>1</x>
+     <x>-3</x>
      <y>103</y>
-     <width>800</width>
+     <width>804</width>
      <height>3</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">color: #aaaaaa</string>
+   </property>
    <property name="frameShadow">
-    <enum>QFrame::Sunken</enum>
+    <enum>QFrame::Plain</enum>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -590,8 +611,8 @@ p, li { white-space: pre-wrap; }
   <widget class="QPushButton" name="Datetime_mod1">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>430</y>
+     <x>371</x>
+     <y>426</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -622,8 +643,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod2">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>480</y>
+     <x>371</x>
+     <y>476</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -654,8 +675,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod3">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>530</y>
+     <x>371</x>
+     <y>526</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -686,8 +707,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod4">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>580</y>
+     <x>371</x>
+     <y>576</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -718,8 +739,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod5">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>630</y>
+     <x>371</x>
+     <y>626</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -750,8 +771,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_now">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>380</y>
+     <x>371</x>
+     <y>376</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -783,7 +804,7 @@ QPushButton:pressed {
    <property name="geometry">
     <rect>
      <x>14</x>
-     <y>18</y>
+     <y>22</y>
      <width>101</width>
      <height>61</height>
     </rect>
@@ -808,7 +829,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>12</x>
-     <y>16</y>
+     <y>20</y>
      <width>101</width>
      <height>61</height>
     </rect>
@@ -833,7 +854,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>13</x>
-     <y>17</y>
+     <y>21</y>
      <width>101</width>
      <height>61</height>
     </rect>
@@ -858,7 +879,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>804</x>
-     <y>45</y>
+     <y>41</y>
      <width>600</width>
      <height>20</height>
     </rect>
@@ -871,7 +892,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>857</x>
-     <y>12</y>
+     <y>6</y>
      <width>160</width>
      <height>37</height>
     </rect>
@@ -896,7 +917,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>859</x>
-     <y>14</y>
+     <y>8</y>
      <width>160</width>
      <height>37</height>
     </rect>
@@ -921,7 +942,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>858</x>
-     <y>13</y>
+     <y>7</y>
      <width>160</width>
      <height>37</height>
     </rect>
@@ -946,7 +967,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>820</x>
-     <y>12</y>
+     <y>6</y>
      <width>181</width>
      <height>41</height>
     </rect>
