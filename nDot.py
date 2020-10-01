@@ -28,11 +28,15 @@ from PyQt5.QtCore import QTime, QDate
 # from PyQt5 import QtGui
 # from PyQt5 import
 
+import matplotlib.pyplot as plt
+import mplfinance as mpf
+import matplotlib
+matplotlib.rcParams["toolbar"] = "toolmanager"
+from matplotlib.backend_tools import ToolBase
 
 
 class n_system:
     print_console = False
-
 
 class data_base():
     open_close = True
@@ -335,6 +339,8 @@ class market_data():
         i_df = pd.DataFrame(self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3}))
         # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
         i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+        # a finnhub idejét Európa/Budapest időre konvertálom
+        i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
         i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
         i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
         i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
@@ -357,6 +363,7 @@ class market_data():
             tools.unixdt_to_dbdt(to_dt))
         i_df = pd.DataFrame(self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3}))
         i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+        i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
         i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
         i_df = i_df[['datetime', 't', 'rsi']]
         i_df = i_df.round({'rsi': 6})
@@ -364,8 +371,48 @@ class market_data():
         return i_df
 
 
+class trade():
+
+    def __init__(self):
+        self.config = {
+            'time_zone': 'UTC+2',
+            'nyse_open': '15:30',
+            'nyse_close': '22:00',
+            'trade_from': '16:00',
+            'trade_to': '22:00',
+        }
+
+    def time_filter(self, df):
+        self.config['nyse_open']
+        i_intime = df.between_time(self.config['nyse_open'], self.config['nyse_close'])
+        i_outtime = df.between_time(self.config['nyse_close'], self.config['nyse_open'])
+        return  i_intime, i_outtime
+
 class n_date_frame():
-    df = pd.DataFrame(None)
+
+    def __init__(self):
+        self.df = pd.DataFrame(None)
+        self.indicators = pd.DataFrame(None)
+        self.load_indicators()
+
+    def load_indicators(self):
+        i_indicators = [
+            ['SMA30'],
+            ['SMA60'],
+            ['ICHIMOKU'],
+            ['RSI']
+        ]
+        self.indicators = pd.DataFrame(i_indicators)
+        self.indicators.columns = ['indicator']
+        self.indicators.set_index('indicator')
+
+    def is_indicator(self, tech_indicator):
+        i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
+        if len(i_search) > 0:
+            i_found = True
+        else:
+            i_found = False
+        return i_found
 
     def add(self, symbol):
         log("ndf-> add " + symbol)
@@ -388,57 +435,68 @@ class n_date_frame():
             db.add_symbol_values(symbol, i_df_stock)
         return
 
-    def add_sma(self, symbol, window_size):
+    def add_tech(self, symbol, tech_indicator="SMA60"):
 
         def sma(i_df, window_size):
-            i_c1_name = "SMA_" + str(window_size)
+            i_c1_name = "SMA" + str(window_size)
             i_df[i_c1_name] = i_df.iloc[:, i_df.columns.get_loc("ohlc4")].rolling(window=int(window_size)).mean()
             i_df[i_c1_name] = i_df[i_c1_name].fillna(0.123456)
+
+            # i_df_drops = i_df[i_df[i_c1_name] == 0.123456]
+            # i_df = i_df.drop(i_df_drops.index, axis=0)
+
             i_df[i_c1_name] = round(i_df[i_c1_name], 6)
             i_df['datetime'] = i_df["datetime"].astype(str)
             i_prop_array = [i_c1_name]
             return i_prop_array, i_df
 
-        log("ndf-> add_rsi " + symbol + " - " + str(window_size))
-        i_res = db.get_last_m(symbol, 1)
-        i_df = pd.DataFrame(i_res)
-        i_df.columns = db.column_names
-        last_dbdt = str(i_df.iloc[0]['datetime'])
+        log("ndf-> add_tech " + symbol + " - " + str(tech_indicator))
 
-        i_res = db.get_first_m(symbol, 1)
-        i_df = pd.DataFrame(i_res)
-        i_df.columns = db.column_names
-        first_dbdt = str(i_df.iloc[0]['datetime'])
+        if self.is_indicator(tech_indicator):
 
-        i_datetime_series = pd.DataFrame(pd.date_range(start=last_dbdt, end=first_dbdt, freq='-65d'))
-        new_row = {0: first_dbdt}
-        i_datetime_series = i_datetime_series.append(new_row, ignore_index=True)
-
-        for i_i in range(len(i_datetime_series[0])-1):
-            i_select_from = i_datetime_series.loc[i_i+1][0]
-            i_select_to = i_datetime_series.loc[i_i][0] + timedelta(days=3)
-            i_df = pd.DataFrame(None)
-            i_df = pd.DataFrame(db.get_timeframe_desc(symbol, i_select_from, i_select_to))
-            i_df = i_df.iloc[::-1]
+            i_res = db.get_last_m(symbol, 1)
+            i_df = pd.DataFrame(i_res)
             i_df.columns = db.column_names
-            # print(db.column_names)
-            # if "t" in db.column_names:
-            #     print("t benne van")
-            # if "SMA_70" in db.column_names:
-            #     print("SMA_70 benne van")
-            # else:
-            #     print("SMA_70 NINCS benne")
-            i_new_prop_array, i_df = sma(i_df, window_size)
-            # print("prop array", i_new_prop_array)
-            # print(i_df.head())
-            for i_new_prop in i_new_prop_array:
-                # print(i_new_prop)
-                i_datetime = tools.get_df_column(i_df, "datetime")
-                i_values = tools.get_df_column(i_df, i_new_prop)
-                if i_new_prop not in db.column_names:
-                    db.add_symbol_float_property(symbol, i_new_prop)
-                db.add_symbol_value_multi(symbol, i_datetime, i_new_prop, i_values)
-        return
+            last_dbdt = str(i_df.iloc[0]['datetime'])
+
+            i_res = db.get_first_m(symbol, 1)
+            i_df = pd.DataFrame(i_res)
+            i_df.columns = db.column_names
+            first_dbdt = str(i_df.iloc[0]['datetime'])
+
+            i_datetime_series = pd.DataFrame(pd.date_range(start=last_dbdt, end=first_dbdt, freq='-65d'))
+            new_row = {0: first_dbdt}
+            i_datetime_series = i_datetime_series.append(new_row, ignore_index=True)
+
+            for i_i in range(len(i_datetime_series[0])-1):
+                i_select_from = i_datetime_series.loc[i_i+1][0]
+                i_select_to = i_datetime_series.loc[i_i][0] + timedelta(days=3)
+                i_df = pd.DataFrame(None)
+                i_df = pd.DataFrame(db.get_timeframe_desc(symbol, i_select_from, i_select_to))
+                i_df = i_df.iloc[::-1]
+                i_df.columns = db.column_names
+
+                if tech_indicator == "SMA60":
+                    i_new_prop_array, i_df = sma(i_df, 60)
+                if tech_indicator == "SMA30":
+                    i_new_prop_array, i_df = sma(i_df, 30)
+                if tech_indicator == "RSI":
+                    i_new_prop_array, i_df = sma(i_df, 60)
+
+                # print("prop array", i_new_prop_array)
+                # print(i_df.head())
+                for i_new_prop in i_new_prop_array:
+                    # print(i_new_prop)
+                    i_datetime = tools.get_df_column(i_df, "datetime")
+                    i_values = tools.get_df_column(i_df, i_new_prop)
+                    if i_new_prop not in db.column_names:
+                        db.add_symbol_float_property(symbol, i_new_prop)
+                    db.add_symbol_value_multi(symbol, i_datetime, i_new_prop, i_values)
+        else:
+            log(tech_indicator + " - " + "technical indicator does not exist!")
+            tech_indictor_tuple = tuple(self.indicators["indicator"])
+            tech_indictor_str = ', '.join(tech_indictor_tuple)
+            log("Indicators: " + tech_indictor_str)
 
     def refresh(self, symbol):
         log("ndf-> refresh " + symbol)
@@ -648,13 +706,12 @@ class tools():
 
 
 class gui(QWidget):
-    progress_count = 0
-    commands = ""
-    sx = datetime.now()
+    # progress_count = 0
 
     def __init__(self):
         super(gui, self).__init__()
         self.load_ui()
+        self.commands = pd.DataFrame(None)
         self.load_commands()
         # self.thread = ListenWebsocket()
         # self.thread.start()
@@ -662,27 +719,27 @@ class gui(QWidget):
 
     def load_commands(self):
         c = [
-            ['do', 'do', 'Do what you want', 0],
-            ['test', 'test', 'test <p1 (optional), p2 (optional), p3 (optional)>', 0],
+            ['do', 'do', 'do', 0],
+            ['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
             ['sys.print', 'sys_print', 'sys.print <True/False> ', 1],
             ['wl.add', 'wl_add', 'wl.add <symbol> ', 1],
             ['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
             # ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
-            ['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile <> ', 0],
-            ['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment <> ', 0],
+            ['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
+            ['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
             # ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
-            ['ndf.add', 'ndf_add', 'ndf.add <symbol> ', 1],
-            ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol> ', 1],
-            ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol> ', 1],
-            ['ndf.check', 'ndf_check', 'ndf.check <symbol> ', 1],
-            ['ndf.chart', 'ndf_chart', 'ndf.chart <symbol> ui date time', 1],
-            ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol, numbers (optional)> ', 1],
-            ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol, numbers (optional)> ', 1],
-            ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol, <technical indicator> ', 2],
-            ['md.check', 'md_check', 'md.check <symbol> ', 1],
+            ['ndf.add', 'ndf_add', 'ndf.add <symbol>', 1],
+            ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
+            ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
+            ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
+            ['ndf.chart', 'ndf_chart', 'ndf.chart <symbol> UI date time', 1],
+            ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol> <numbers / optional>', 1],
+            ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
+            ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
+            ['md.check', 'md_check', 'md.check <symbol>', 1],
             # ['bp.start', 'bp_start', 'bp.start <> ', 0],
             # ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
-            ['exit', 'exit', 'exit <> ', 0]
+            ['exit', 'exit', 'exit ', 0]
         ]
         self.commands = pd.DataFrame(c)
         self.commands.columns = ['command', 'program', 'hint', 'params']
@@ -773,7 +830,6 @@ class gui(QWidget):
         i_wl_frame_object[10] = gui.WL_frame_11
         i_wl_frame_object[11] = gui.WL_frame_12
 
-
         i_noid = np.array(['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12'])
 
         for i_obj in i_wl_frame_object:
@@ -818,20 +874,17 @@ class gui(QWidget):
         #     self.progress_count = 0
         self.Progress_Bar.setValue(random.randint(0, 100))
 
-    def run_button_action(self):
-        command_text = self.Command_Line.text()
-        command_partitioned = command_text.split()
-        command_text_first_word = str.lower(command_partitioned[0])
-        args = []
-        if len(command_partitioned) == 2:
-            args = [command_partitioned[1]]
-        if len(command_partitioned) == 3:
-            args = [command_partitioned[1], command_partitioned[2]]
-        if len(command_partitioned) == 4:
-            args = [command_partitioned[1], command_partitioned[2], command_partitioned[3]]
+    def is_command(self, command):
+        i_search = self.commands.loc[self.commands['command'] == command]
+        if len(i_search) > 0:
+            i_found = True
+        else:
+            i_found = False
+        return i_found
 
-        i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
-        if i_found and i_params < len(command_partitioned):
+    def run_button_action(self):
+
+        def run_method(i_program, args):
             method = eval(i_program)
             kwargs = {}
             args_str = ', '.join(map(str, args))
@@ -839,16 +892,53 @@ class gui(QWidget):
             method(*args, **kwargs)
             log("ready.", False, False)
             self.Command_Line.setText("")
+
+        command_text = self.Command_Line.text()
+        command_partitioned = command_text.split()
+        command_text_first_word = str.lower(command_partitioned[0])
+        if self.is_command(command_text_first_word):
+            args = []
+            if len(command_partitioned) == 2:
+                args = [command_partitioned[1]]
+            if len(command_partitioned) == 3:
+                args = [command_partitioned[1], command_partitioned[2]]
+            if len(command_partitioned) == 4:
+                args = [command_partitioned[1], command_partitioned[2], command_partitioned[3]]
+            i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
+            if i_found and i_params < len(command_partitioned):
+                if len(command_partitioned) > 1:
+                    if (len(wl.df.loc[wl.df['symbol'] == command_partitioned[1]]) == 0) and command_text_first_word != "md.check":
+                        self.Command_Hint.setText(self.Command_Hint.text() + " Non listed Symbol!")
+                        self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' + \
+                                                        'border-top-left-radius: 15px;' + \
+                                                        'border-top-right-radius: 0px;' + \
+                                                        'border-bottom-right-radius: 0px;' + \
+                                                        'border-bottom-left-radius: 0px;' + \
+                                                        'border-bottom: 1px solid #eeeeee;' + \
+                                                        'padding-left: 10px;')
+                    else:
+                        run_method(i_program, args)
+                else:
+                    run_method(i_program, args)
+            else:
+                if i_found and i_params > len(command_partitioned):
+                    self.Command_Hint.setText(self.Command_Hint.text() + " Missing parameter(s)!")
+
+                print(wl.df.loc[wl.df['symbol'] == command_partitioned[1]])
+
+                self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' +\
+                                                'border-top-left-radius: 15px;' +\
+                                                'border-top-right-radius: 0px;' +\
+                                                'border-bottom-right-radius: 0px;' +\
+                                                'border-bottom-left-radius: 0px;' +\
+                                                'border-bottom: 1px solid #eeeeee;' +\
+                                                'padding-left: 10px;')
         else:
-            if i_found and i_params > len(command_partitioned):
-                self.Command_Hint.setText(self.Command_Hint.text() + " Missing parameter(s)!")
-            self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' +\
-                                            'border-top-left-radius: 15px;' +\
-                                            'border-top-right-radius: 0px;' +\
-                                            'border-bottom-right-radius: 0px;' +\
-                                            'border-bottom-left-radius: 0px;' +\
-                                            'border-bottom: 1px solid #eeeeee;' +\
-                                            'padding-left: 10px;')
+            log(command_text_first_word + " - command does not exist!")
+            log("Commands:")
+            for i_index, i_row in self.commands.iterrows():
+                log(" - " + i_row["hint"])
+
 
     def command_line_changed(self):
         self.Command_Line.setStyleSheet('background-color: #ffffff; ' + \
@@ -939,7 +1029,7 @@ def ndf_add(symbol="", p2="", p3=""):
 
 
 def ndf_tech(symbol, tech_indicator, p3=""):
-    ndf.add_sma(symbol, 60)
+    ndf.add_tech(symbol, tech_indicator)
 
 
 def ndf_refresh(symbol="", p2="", p3=""):
@@ -966,35 +1056,185 @@ def ndf_chart(symbol, p2="", p3=""):
         quote = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
         import matplotlib.pyplot as plt
         import mplfinance as mpf
-        fig = mpf.figure(style='yahoo', figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', tight_layout=True,
-                         num=symbol)
-        ax1 = fig.add_subplot(4, 1, (1, 3))
-        ax2 = fig.add_subplot(4, 1, 4, sharex=ax1)
-        plt.subplots_adjust(hspace=.001)
-        mpf.plot(quote, ax=ax1, volume=ax2, axtitle='')
+        mpf.plot(quote, type='line', volume=True, mav=(20, 40))
+        # fig = mpf.figure(style='yahoo', figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', tight_layout=True,
+        #                  num=symbol)
+        # ax1 = fig.add_subplot(4, 1, (1, 3))
+        # ax2 = fig.add_subplot(4, 1, 4, sharex=ax1)
+        # # plt.subplots_adjust(hspace=.001)
+        # mpf.plot(quote, ax=ax1, volume=ax2, axtitle='')
         mpf.show()
     else:
         log("no data found in df")
+
+# class Index(object):
+#
+#     def next(self, event):
+#         print("next")
+#
+#     def prev(self, event):
+#         print("prev")
+
+
+class NewTool1(ToolBase):
+    image = r"./images/ndot_icon_x2.png"
+
+    def trigger(self, sender, event, data=None):
+
+        for i_i in range(1, 5):
+            for ax in nchart.axes:
+                ax.clear()
+            nchart.window_minus(3)
+            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to], type='candle', ax=nchart.ax_main, volume=nchart.ax_volu, returnfig=True, tight_layout=True)
+            nchart.fig.canvas.draw()
+            QApplication.processEvents()
+
+
+class NewTool2(ToolBase):
+    image = r"./images/ndot_icon_x2.png"
+
+    def trigger(self, sender, event, data=None):
+
+        for i_i in range(1, 5):
+            for ax in nchart.axes:
+                ax.clear()
+            nchart.window_plus(3)
+            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to], type='candle', ax=nchart.ax_main, volume=nchart.ax_volu, returnfig=True, tight_layout=True)
+            nchart.fig.canvas.draw()
+            QApplication.processEvents()
+
+
+class nchart_last():
+
+    def __init__(self):
+        self.symbol = ""
+        self.df = pd.DataFrame(None)
+        self.row_count = 0
+        self.window_size = 120
+        self.window_to = 0
+        self.window_from = 0
+        self.fig = ""
+        self.axes = ""
+        self.last_block_count = 2
+        self.stock = n_date_frame()
+
+    def show(self):
+        self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
+        if db.row_count > 0:
+            i_chart_df = self.stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"}, errors="raise")
+            self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
+            i_in_time, i_out_time = trade.time_filter(self.df)
+            self.df = i_in_time
+            # self.ap = [mpf.make_addplot(self.df['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
+            #       mpf.make_addplot(self.df['Open'], panel=3, type='bar', ylabel='Line2')]
+            # self.fig, self.axes = mpf.plot(self.df, mav=10, type='candle', ylabel='Candle', addplot=self.ap, panel_ratios=(3, 1, 1, 1), figratio=(11, 5),
+            #          figscale=1, volume=True, tight_layout=True, title=self.symbol, returnfig=True)
+
+            self.row_count = self.df.shape[0]
+            self.window_to = self.row_count
+            self.window_from = self.row_count - self.window_size
+            self.fig, self.axes = mpf.plot(self.df.iloc[self.window_from:self.window_to], type='candle', figratio=(17, 6), figscale=.8,
+                                           volume=True, show_nontrading=True, tight_layout=True, title=self.symbol, returnfig=True)
+            tm = self.fig.canvas.manager.toolmanager
+            tm.add_tool("<-", NewTool1)
+            tm = self.fig.canvas.manager.toolmanager
+            tm.add_tool("->", NewTool2)
+            self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
+            self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
+
+            self.ax_main = self.axes[0]
+            self.ax_volu = self.axes[2]
+
+            self.fig.show()
+
+        else:
+            log("no data found in df")
+
+    def window_minus(self, step):
+        self.window_to = self.window_to - step
+        self.window_from = self.window_to - self.window_size
+        if self.window_from < ((step*2)+1):
+            log("start: db.get_last_m for chart " + self.symbol, True, False)
+            old_row_count = self.row_count
+            self.last_block_count += 1
+            self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
+            if db.row_count > 0:
+                i_chart_df = self.stock.df.rename(
+                    columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"},
+                    errors="raise")
+                self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
+                i_in_time, i_out_time = trade.time_filter(self.df)
+                self.df = i_in_time
+                self.row_count = self.df.shape[0]
+                groving = self.row_count - old_row_count
+                self.window_from = self.window_from + groving
+                self.window_to = self.window_to + groving
+            log("ready.", False, False)
+
+
+    def window_plus(self, step):
+        self.window_to = self.window_to + step
+        if self.window_to > self.row_count:
+            self.window_to = self.row_count
+        self.window_from = self.window_to - self.window_size
+
+
 
 
 def ndf_chart_last(symbol="", xminute="60", p3=""):
-    stock = n_date_frame()
-    stock.get_last_m(symbol, xminute)
-    if db.row_count > 0:
-        log("ndf_chart_last-> plot chart")
-        i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"},errors="raise")
-        quote = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
-        import matplotlib.pyplot as plt
-        import mplfinance as mpf
-        fig = mpf.figure(style='yahoo', figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', tight_layout=True,
-                         num=symbol)
-        ax1 = fig.add_subplot(4, 1, (1, 3))
-        ax2 = fig.add_subplot(4, 1, 4, sharex=ax1)
-        plt.subplots_adjust(hspace=.001)
-        mpf.plot(quote, ax=ax1, volume=ax2, axtitle='')
-        mpf.show()
-    else:
-        log("no data found in df")
+    nchart.symbol = symbol
+    nchart.show()
+
+        # import matplotlib.pyplot as plt
+        # import mplfinance as mpf
+        # from matplotlib.widgets import Button
+
+
+
+        # ap = [mpf.make_addplot(quote['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
+        #       mpf.make_addplot(quote['Open'], panel=3, type='bar', ylabel='Line2')]
+        # fig, ax = mpf.plot(quote, mav=10, type='candle', ylabel='Candle', addplot=ap, panel_ratios=(3, 1, 1, 1), figratio=(11, 5),
+        #          figscale=1, volume=True, tight_layout=True, title=symbol, returnfig=True)
+        #
+        # callback = Index()
+        # # plt.subplots_adjust(bottom=0.2)
+        # axprev = fig.add_axes([0.7, 0.05, 0.1, 0.075])
+        # axnext = fig.add_axes([0.81, 0.05, 0.1, 0.075])
+        # bnext = Button(axnext, 'Next')
+        # bnext.on_clicked(callback.next)
+        # print(bnext.get_active())
+        # bprev = Button(axprev, 'Previous')
+        # bprev.on_clicked(callback.prev)
+
+        # tm = fig.canvas.manager.toolmanager
+        # tm.add_tool("<-", NewTool1)
+        # tm = fig.canvas.manager.toolmanager
+        # tm.add_tool("->", NewTool2)
+        # fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
+        # fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
+        # plt.show()
+
+        # ap = [mpf.make_addplot(quote['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
+        #       mpf.make_addplot(quote['Open'], panel=3, type='bar', ylabel='Line2')]
+        # mpf.plot(quote, type='candle', ylabel='Candle', figratio=(11, 5),
+        #          figscale=1, volume=True, tight_layout=True, title=symbol)
+
+        # # mpf.plot(quote, type='line', volume=True, vlines=dict(vlines=['2020-09-21 22:00'], linewidths=1, alpha=0.2) )
+        # fig = mpf.figure(figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', num=symbol)
+        # ax1 = fig.add_subplot(4, 1, (1, 3))
+        # ax2 = fig.add_subplot(4, 1, 4, sharex=ax1)
+        # # ax3 = fig.add_subplot(5, 1, 5, sharex=ax1)
+        # # ax1.get_xaxis()
+        # # ax1.set_xticklabels([])
+        # # ax1.set_yticklabels([])
+        # # ax2.set_xticklabels([])
+        # # ax2.set_yticklabels([])
+        # plt.subplots_adjust(hspace=.001)
+        # # mpf.plot(quote, ax=ax1, volume=ax2, axtitle='', type='candle', vlines=dict(vlines=['2020-09-21 22:00'], linewidths=1, alpha=0.2))
+        # mpf.plot(quote, ax=ax1, volume=ax2, axtitle='', type='candle')
+        # mpf.show()
+
+
 
 
 def ndf_show_last(symbol="", xminute="60", p3=""):
@@ -1218,6 +1458,8 @@ if __name__ == "__main__":
     gui.showMaximized()
     tools = tools()
     ndf = n_date_frame()
+    nchart = nchart_last()
+    trade = trade()
 
     # nsrg = strategy()
     # nsrg.add_rsi("APA")

@@ -546,6 +546,16 @@ p, li { white-space: pre-wrap; }
      <height>1500</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">color: #999999;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
+   </property>
    <property name="orientation">
     <enum>Qt::Vertical</enum>
    </property>
@@ -587,19 +597,6 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>354</y>
-     <width>800</width>
-     <height>3</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
-  <widget class="Line" name="line_5">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>680</y>
      <width>800</width>
      <height>3</height>
     </rect>
@@ -878,11 +875,21 @@ background:none;</string>
   <widget class="Line" name="line_6">
    <property name="geometry">
     <rect>
-     <x>804</x>
+     <x>801</x>
      <y>41</y>
      <width>600</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #999999;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
    </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
@@ -1729,7 +1736,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>810</x>
-     <y>190</y>
+     <y>170</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -2092,7 +2099,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>1050</x>
-     <y>190</y>
+     <y>170</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -2455,7 +2462,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>810</x>
-     <y>300</y>
+     <y>260</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -2818,7 +2825,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>1050</x>
-     <y>300</y>
+     <y>260</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -3181,7 +3188,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>810</x>
-     <y>410</y>
+     <y>350</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -3544,7 +3551,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>1050</x>
-     <y>410</y>
+     <y>350</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -3907,7 +3914,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>810</x>
-     <y>520</y>
+     <y>440</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -4270,7 +4277,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>1050</x>
-     <y>520</y>
+     <y>440</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -4633,7 +4640,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>810</x>
-     <y>630</y>
+     <y>530</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -4996,7 +5003,7 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>1050</x>
-     <y>630</y>
+     <y>530</y>
      <width>221</width>
      <height>91</height>
     </rect>
@@ -5352,6 +5359,167 @@ border-bottom-left-radius: 0px;
     </property>
    </widget>
   </widget>
+  <widget class="Line" name="line_8">
+   <property name="geometry">
+    <rect>
+     <x>804</x>
+     <y>43</y>
+     <width>600</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #ffffff;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_9">
+   <property name="geometry">
+    <rect>
+     <x>803</x>
+     <y>38</y>
+     <width>600</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #444444;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_10">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>671</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #444444;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_11">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>674</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #999999;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_12">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>676</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #ffffff;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_5">
+   <property name="geometry">
+    <rect>
+     <x>803</x>
+     <y>0</y>
+     <width>3</width>
+     <height>1500</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #ffffff;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_7">
+   <property name="geometry">
+    <rect>
+     <x>799</x>
+     <y>0</y>
+     <width>3</width>
+     <height>1500</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #444444;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
   <zorder>label_2</zorder>
   <zorder>Progress_Bar</zorder>
   <zorder>Status</zorder>
@@ -5364,7 +5532,6 @@ border-bottom-left-radius: 0px;
   <zorder>line</zorder>
   <zorder>line_3</zorder>
   <zorder>line_4</zorder>
-  <zorder>line_5</zorder>
   <zorder>line_2</zorder>
   <zorder>Datetime_mod1</zorder>
   <zorder>Datetime_mod2</zorder>
@@ -5374,7 +5541,6 @@ border-bottom-left-radius: 0px;
   <zorder>Datetime_now</zorder>
   <zorder>label</zorder>
   <zorder>label_3</zorder>
-  <zorder>line_6</zorder>
   <zorder>label_4</zorder>
   <zorder>label_5</zorder>
   <zorder>label_6</zorder>
@@ -5391,6 +5557,14 @@ border-bottom-left-radius: 0px;
   <zorder>WL_frame_10</zorder>
   <zorder>WL_frame_11</zorder>
   <zorder>WL_frame_12</zorder>
+  <zorder>line_8</zorder>
+  <zorder>line_10</zorder>
+  <zorder>line_12</zorder>
+  <zorder>line_5</zorder>
+  <zorder>line_7</zorder>
+  <zorder>line_6</zorder>
+  <zorder>line_11</zorder>
+  <zorder>line_9</zorder>
  </widget>
  <resources/>
  <connections/>
