@@ -172,6 +172,11 @@ class data_base():
         i_sql_string = "SELECT * FROM `" + symbol + "` ORDER BY `datetime` DESC LIMIT " +str(elem_no)
         return self.execute_fetchall(i_sql_string)
 
+    def get_first_null(self, symbol, column):
+        log("db-> get_first_null: " + symbol + " - "+str(column))
+        i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `" + column + "` IS NULL ORDER BY `datetime` LIMIT 1"
+        return self.execute_fetchall(i_sql_string)
+
     def add_symbol(self, symbol):
         log("db-> add_symbol " + symbol)
         i_sql_command = "CREATE TABLE IF NOT EXISTS`" + self.config['database'] + "`.`" + symbol + \
@@ -319,7 +324,7 @@ class market_data():
         self.finnhub_client.DEFAULT_TIMEOUT = 100
 
     def check_finnhub_connection(self, symbol="AAPL"):
-        log("md-> check_finnhub_connection")
+        log("md-> check_finnhub_connection: " + symbol)
         i_return = False
         try:
             i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, 'D', 1590988249, 1591852249))
@@ -336,7 +341,8 @@ class market_data():
     def get_stock_candles(self, symbol, resolution, from_dt, to_dt):
         log("md-> get_stock_candles: " + symbol + " - " + tools.unixdt_to_dbdt(from_dt) + " - " +
             tools.unixdt_to_dbdt(to_dt))
-        i_df = pd.DataFrame(self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3}))
+        i_result = self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3})
+        i_df = pd.DataFrame(i_result)
         # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
         i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
         # a finnhub idejét Európa/Budapest időre konvertálom
@@ -435,15 +441,16 @@ class n_date_frame():
             db.add_symbol_values(symbol, i_df_stock)
         return
 
-    def add_tech(self, symbol, tech_indicator="SMA60"):
+    def add_tech(self, symbol, tech_indicator="SMA60", refresh=False):
 
-        def sma(i_df, window_size):
+        def sma(i_df, window_size, refresh=False):
             i_c1_name = "SMA" + str(window_size)
             i_df[i_c1_name] = i_df.iloc[:, i_df.columns.get_loc("ohlc4")].rolling(window=int(window_size)).mean()
             i_df[i_c1_name] = i_df[i_c1_name].fillna(0.123456)
 
-            # i_df_drops = i_df[i_df[i_c1_name] == 0.123456]
-            # i_df = i_df.drop(i_df_drops.index, axis=0)
+            if refresh:
+                i_df_drops = i_df[i_df[i_c1_name] == 0.123456]
+                i_df = i_df.drop(i_df_drops.index, axis=0)
 
             i_df[i_c1_name] = round(i_df[i_c1_name], 6)
             i_df['datetime'] = i_df["datetime"].astype(str)
@@ -459,10 +466,19 @@ class n_date_frame():
             i_df.columns = db.column_names
             last_dbdt = str(i_df.iloc[0]['datetime'])
 
-            i_res = db.get_first_m(symbol, 1)
-            i_df = pd.DataFrame(i_res)
-            i_df.columns = db.column_names
-            first_dbdt = str(i_df.iloc[0]['datetime'])
+            if refresh:
+                i_res = db.get_first_null(symbol, tech_indicator)
+                if db.row_count == 0:
+                    log("ndf-> add_tech:" + tech_indicator + " is correct.")
+                    return
+                i_df = pd.DataFrame(i_res)
+                i_df.columns = db.column_names
+                first_dbdt = str(i_df.iloc[0]['datetime'] - timedelta(days=1))
+            else:
+                i_res = db.get_first_m(symbol, 1)
+                i_df = pd.DataFrame(i_res)
+                i_df.columns = db.column_names
+                first_dbdt = str(i_df.iloc[0]['datetime'])
 
             i_datetime_series = pd.DataFrame(pd.date_range(start=last_dbdt, end=first_dbdt, freq='-65d'))
             new_row = {0: first_dbdt}
@@ -476,12 +492,13 @@ class n_date_frame():
                 i_df = i_df.iloc[::-1]
                 i_df.columns = db.column_names
 
+                i_new_prop_array = []
                 if tech_indicator == "SMA60":
-                    i_new_prop_array, i_df = sma(i_df, 60)
+                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
                 if tech_indicator == "SMA30":
-                    i_new_prop_array, i_df = sma(i_df, 30)
+                    i_new_prop_array, i_df = sma(i_df, 30, refresh)
                 if tech_indicator == "RSI":
-                    i_new_prop_array, i_df = sma(i_df, 60)
+                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
 
                 # print("prop array", i_new_prop_array)
                 # print(i_df.head())
@@ -719,10 +736,11 @@ class gui(QWidget):
 
     def load_commands(self):
         c = [
+            ['help', 'help', 'help - List of all commands!', 0],
             ['do', 'do', 'do', 0],
             ['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
-            ['sys.print', 'sys_print', 'sys.print <True/False> ', 1],
-            ['wl.add', 'wl_add', 'wl.add <symbol> ', 1],
+            ['sys.print', 'sys_print', 'sys.print <True/False>', 1],
+            ['wl.add', 'wl_add', 'wl.add <symbol>', 0],
             ['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
             # ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
             ['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
@@ -736,15 +754,23 @@ class gui(QWidget):
             ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol> <numbers / optional>', 1],
             ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
             ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
-            ['md.check', 'md_check', 'md.check <symbol>', 1],
+            ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
+            ['md.check', 'md_check', 'md.check <symbol>', 0],
             # ['bp.start', 'bp_start', 'bp.start <> ', 0],
             # ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
-            ['exit', 'exit', 'exit ', 0]
+            ['exit', 'exit', 'exit', 0]
         ]
         self.commands = pd.DataFrame(c)
         self.commands.columns = ['command', 'program', 'hint', 'params']
         self.commands.set_index('command')
         return
+
+    def print_command(self):
+        log("Commands:")
+        for i_index, i_row in self.commands.iterrows():
+            log(" - " + i_row["hint"])
+        QApplication.processEvents()
+
 
     def get_command(self, command):
         i_search = self.commands.loc[self.commands['command'] == command, 'program']
@@ -763,7 +789,7 @@ class gui(QWidget):
     def load_ui(self):
         loadUi("./qt_ui/form.ui", self)
         # hozzárendelések ------------------------------------------------------------------
-        self.Command_Line.setText("ndf.tech PENN SMA")
+        self.Command_Line.setText("ndf.tech.refresh MSFT SMA30")
         self.Run_Button.clicked.connect(self.run_button_action)
         self.Command_Line.returnPressed.connect(self.run_button_action)
         self.Command_Line.textChanged.connect(self.command_line_changed)
@@ -874,13 +900,35 @@ class gui(QWidget):
         #     self.progress_count = 0
         self.Progress_Bar.setValue(random.randint(0, 100))
 
-    def is_command(self, command):
-        i_search = self.commands.loc[self.commands['command'] == command]
-        if len(i_search) > 0:
-            i_found = True
+    # def is_command(self, command):
+    #     i_search = self.commands.loc[self.commands['command'] == command]
+    #     if len(i_search) > 0:
+    #         i_found = True
+    #     else:
+    #         i_found = False
+    #     return i_found
+
+    def mark_command_line(self, message, bug=True):
+        if bug:
+            self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' + \
+                                            'border-top-left-radius: 15px;' + \
+                                            'border-top-right-radius: 0px;' + \
+                                            'border-bottom-right-radius: 0px;' + \
+                                            'border-bottom-left-radius: 0px;' + \
+                                            'border-bottom: 1px solid #eeeeee;' + \
+                                            'padding-left: 10px;')
+            self.Command_Hint.setText(message)
+            QApplication.processEvents()
         else:
-            i_found = False
-        return i_found
+            self.Command_Line.setStyleSheet('background-color: #ffffff; ' + \
+                                            'border-top-left-radius: 15px;' + \
+                                            'border-top-right-radius: 0px;' + \
+                                            'border-bottom-right-radius: 0px;' + \
+                                            'border-bottom-left-radius: 0px;' + \
+                                            'border-bottom: 1px solid #eeeeee;' + \
+                                            'padding-left: 10px;')
+            self.Command_Hint.setText(message)
+            QApplication.processEvents()
 
     def run_button_action(self):
 
@@ -896,73 +944,103 @@ class gui(QWidget):
         command_text = self.Command_Line.text()
         command_partitioned = command_text.split()
         command_text_first_word = str.lower(command_partitioned[0])
-        if self.is_command(command_text_first_word):
-            args = []
+
+        i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
+        args = []
+
+        if i_found:
             if len(command_partitioned) == 2:
                 args = [command_partitioned[1]]
             if len(command_partitioned) == 3:
                 args = [command_partitioned[1], command_partitioned[2]]
             if len(command_partitioned) == 4:
                 args = [command_partitioned[1], command_partitioned[2], command_partitioned[3]]
-            i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
-            if i_found and i_params < len(command_partitioned):
-                if len(command_partitioned) > 1:
-                    if (len(wl.df.loc[wl.df['symbol'] == command_partitioned[1]]) == 0) and command_text_first_word != "md.check":
-                        self.Command_Hint.setText(self.Command_Hint.text() + " Non listed Symbol!")
-                        self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' + \
-                                                        'border-top-left-radius: 15px;' + \
-                                                        'border-top-right-radius: 0px;' + \
-                                                        'border-bottom-right-radius: 0px;' + \
-                                                        'border-bottom-left-radius: 0px;' + \
-                                                        'border-bottom: 1px solid #eeeeee;' + \
-                                                        'padding-left: 10px;')
-                    else:
+
+            if i_params >= 1:
+                if len(command_partitioned) - 1 >= i_params:
+                    if (len(wl.df.loc[wl.df['symbol'] == command_partitioned[1]]) > 0):
                         run_method(i_program, args)
+                    else:
+                        self.mark_command_line("Non listed Symbol!")
                 else:
-                    run_method(i_program, args)
+                    self.mark_command_line("Missing parameter(s)!")
             else:
-                if i_found and i_params > len(command_partitioned):
-                    self.Command_Hint.setText(self.Command_Hint.text() + " Missing parameter(s)!")
-
-                print(wl.df.loc[wl.df['symbol'] == command_partitioned[1]])
-
-                self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' +\
-                                                'border-top-left-radius: 15px;' +\
-                                                'border-top-right-radius: 0px;' +\
-                                                'border-bottom-right-radius: 0px;' +\
-                                                'border-bottom-left-radius: 0px;' +\
-                                                'border-bottom: 1px solid #eeeeee;' +\
-                                                'padding-left: 10px;')
+                run_method(i_program, args)
         else:
-            log(command_text_first_word + " - command does not exist!")
-            log("Commands:")
-            for i_index, i_row in self.commands.iterrows():
-                log(" - " + i_row["hint"])
+            self.mark_command_line("Command does not exist!")
+            self.print_command()
 
 
     def command_line_changed(self):
-        self.Command_Line.setStyleSheet('background-color: #ffffff; ' + \
-                                        'border-top-left-radius: 15px;' + \
-                                        'border-top-right-radius: 0px;' + \
-                                        'border-bottom-right-radius: 0px;' + \
-                                        'border-bottom-left-radius: 0px;' + \
-                                        'border-bottom: 1px solid #eeeeee;' + \
-                                        'padding-left: 10px;')
         command_text = self.Command_Line.text()
-        command_text_first_word = command_text.partition(' ')[0]
+        command_text_first_word = str.lower(command_text.partition(' ')[0])
         i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
         if i_found:
-            self.Command_Hint.setText(i_hint)
+            self.mark_command_line(i_hint, False)
         else:
-            self.Command_Hint.setText("")
+            self.mark_command_line("", False)
 
 
 # PROGRAMS ----------------------------------------------------------------------------
+
+def help(p1="", p2="", p3=""):
+    gui.print_command()
 
 
 def do(symbol="", p2="", p3=""):
     # stock = n_date_frame()
     # stock.add_last(symbol, 1)
+
+    stock = n_date_frame()
+    stock.get_time_frame(symbol)
+    log("ndf_chart-> plot chart")
+    i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close",
+                                                "v": "Volume"},errors="raise")
+    df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
+
+    import mplfinance as mpf
+    # import pandas as pd
+    # import matplotlib.pyplot as plt
+
+    # Tenkan Sen
+    tenkan_max = df['High'].rolling(window=9, min_periods=0).max()
+    tenkan_min = df['Low'].rolling(window=9, min_periods=0).min()
+    df['tenkan_avg'] = (tenkan_max + tenkan_min) / 2
+
+    # Kijun Sen
+    kijun_max = df['High'].rolling(window=26, min_periods=0).max()
+    kijun_min = df['Low'].rolling(window=26, min_periods=0).min()
+    df['kijun_avg'] = (kijun_max + kijun_min) / 2
+
+    # Senkou Span A
+    # (Kijun + Tenkan) / 2 Shifted ahead by 26 periods
+    df['senkou_a'] = ((df['kijun_avg'] + df['tenkan_avg']) / 2).shift(26)
+
+    # Senkou Span B
+    # 52 period High + Low / 2
+    senkou_b_max = df['High'].rolling(window=52, min_periods=0).max()
+    senkou_b_min = df['Low'].rolling(window=52, min_periods=0).min()
+    df['senkou_b'] = ((senkou_b_max + senkou_b_min) / 2).shift(52)
+
+    # Chikou Span
+    # Current close shifted -26
+    df['chikou'] = (df['Close']).shift(-26)
+
+    # Plotting Ichimoku
+
+    # m_plots = ['kijun_avg', 'tenkan_avg',df[df.columns[5:]][-250:] ]
+
+    add_plots = [
+        mpf.make_addplot(df['kijun_avg'][-250:]),
+        mpf.make_addplot(df['tenkan_avg'][-250:]),
+        mpf.make_addplot(df['chikou'][-250:]),
+        mpf.make_addplot(df['senkou_a'][-250:]),
+        mpf.make_addplot(df['senkou_b'][-250:])
+    ]
+    mpf.plot(df[-250:], type='candle', mav=200, volume=True, ylabel="Price", ylabel_lower='Volume', style='nightclouds',
+              figratio=(15, 10), figscale=1.5, addplot=add_plots, title=symbol,
+             fill_between=dict(y1=df['senkou_a'].values, y2=df['senkou_b'].values, color='#f2ad73', alpha=0.20))
+
     pass
 
 
@@ -1030,6 +1108,14 @@ def ndf_add(symbol="", p2="", p3=""):
 
 def ndf_tech(symbol, tech_indicator, p3=""):
     ndf.add_tech(symbol, tech_indicator)
+
+
+def ndf_tech_refresh(symbol, p2="", p3=""):
+    i_sahdow = db.get_first_m(symbol, 1)
+    # Csak az oszlop nevek miatt kell
+    for i_c_name in db.column_names:
+        if ndf.is_indicator(i_c_name):
+            ndf.add_tech(symbol, i_c_name, True)
 
 
 def ndf_refresh(symbol="", p2="", p3=""):
@@ -1159,6 +1245,7 @@ class nchart_last():
             self.last_block_count += 1
             self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
             if db.row_count > 0:
+
                 i_chart_df = self.stock.df.rename(
                     columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"},
                     errors="raise")
