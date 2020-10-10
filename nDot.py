@@ -12,6 +12,7 @@ import threading
 import numpy as np
 from functools import partial
 from tkinter import *
+import tables
 # import matplotlib.animation as animation
 # import matplotlib.dates as mdates
 
@@ -394,6 +395,248 @@ class trade():
         i_outtime = df.between_time(self.config['nyse_close'], self.config['nyse_open'])
         return  i_intime, i_outtime
 
+class nd_db:
+
+    def __init__(self):
+        self.store = pd.HDFStore('nDot_db.h5', "a")
+
+    def write(self, symbol):
+        log("nd_db-> write:" + symbol)
+        self.open()
+        self.store.put(symbol, nddf[symbol], format='table')
+        self.close()
+
+    def read(self, symbol):
+        log("nd_db-> read:" + symbol)
+        self.open()
+        nddf[symbol] = self.store.get(symbol)
+        self.close()
+
+    def remove(self, symbol):
+        log("nd_db-> remove:" + symbol)
+        self.open()
+        i_return = self.store.remove(symbol)
+        print(i_return)
+        self.close()
+        return i_return
+
+    def open(self):
+        self.store.open("a")
+
+    def close(self):
+        self.store.close()
+
+    def info(self):
+        self.open()
+        i_nfo = self.store.info()
+        self.close()
+        return i_nfo
+
+
+class n_date_frame2():
+
+    def add(self, symbol):
+        log("ndf2-> add " + symbol)
+        i_now = datetime.now() + timedelta(days=1)
+        i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-93d')
+        nddf[symbol] = pd.DataFrame()
+        for i_i in range(len(i_datetime_series)-1):
+            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
+            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
+            nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix))
+        nddf[symbol].drop_duplicates(inplace=True)
+        log("Time frame: " + nddf[symbol]["datetime"].min() + " - " + nddf[symbol]["datetime"].max())
+        log("Number of rows: " + str(nddf[symbol].shape[0]))
+        nddb.write(symbol)
+
+    def remove(self, symbol):
+        log("ndf2-> remove " + symbol)
+        i_log = nddb.remove(symbol)
+
+
+    def refresh(self, symbol):
+        log("ndf2-> refresh " + symbol)
+        log("Time frame (now): " + nddf[symbol]["datetime"].min() + " - " + nddf[symbol]["datetime"].max())
+        to_dbdt = datetime.now() + timedelta(days=1)
+        to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
+        from_dbdt = str(nddf[symbol]["datetime"].max())
+        i_tounix = tools.dbdt_to_unixdt(to_dbdt)
+        i_fromunix = tools.dbdt_to_unixdt(from_dbdt)
+        nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix))
+        nddf[symbol].drop_duplicates(inplace=True)
+        log("Time frame (after refresh): " + nddf[symbol]["datetime"].min() + " - " + nddf[symbol]["datetime"].max())
+        log("Number of rows: " + str(nddf[symbol].shape[0]))
+        nddb.write(symbol)
+
+class n_date_frame():
+
+    def __init__(self):
+        self.df = pd.DataFrame(None)
+        self.indicators = pd.DataFrame(None)
+        self.load_indicators()
+
+    def load_indicators(self):
+        i_indicators = [
+            ['SMA30'],
+            ['SMA60'],
+            ['ICHIMOKU'],
+            ['RSI']
+        ]
+        self.indicators = pd.DataFrame(i_indicators)
+        self.indicators.columns = ['indicator']
+        self.indicators.set_index('indicator')
+
+    def is_indicator(self, tech_indicator):
+        i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
+        if len(i_search) > 0:
+            i_found = True
+        else:
+            i_found = False
+        return i_found
+
+    def add(self, symbol):
+        log("ndf-> add " + symbol)
+        i_now = datetime.now() + timedelta(days=1)
+        i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
+        db.add_symbol(symbol)
+        db.add_symbol_float_property(symbol, "v")
+        db.add_symbol_float_property(symbol, "ohlc4")
+        db.add_symbol_float_property(symbol, "o")
+        db.add_symbol_float_property(symbol, "h")
+        db.add_symbol_float_property(symbol, "l")
+        db.add_symbol_float_property(symbol, "c")
+        db.add_symbol_float_property(symbol, "t")
+        for i_i in range(len(i_datetime_series)-1):
+            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
+            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
+            i_df_stock = pd.DataFrame(None)
+            i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
+            db.add_symbol_values(symbol, i_df_stock)
+        return
+
+    def add_tech(self, symbol, tech_indicator="SMA60", refresh=False):
+
+        def sma(i_df, window_size, refresh=False):
+            i_c1_name = "SMA" + str(window_size)
+            i_df[i_c1_name] = i_df.iloc[:, i_df.columns.get_loc("ohlc4")].rolling(window=int(window_size)).mean()
+            i_df[i_c1_name] = i_df[i_c1_name].fillna(0.123456)
+
+            if refresh:
+                i_df_drops = i_df[i_df[i_c1_name] == 0.123456]
+                i_df = i_df.drop(i_df_drops.index, axis=0)
+
+            i_df[i_c1_name] = round(i_df[i_c1_name], 6)
+            i_df['datetime'] = i_df["datetime"].astype(str)
+            i_prop_array = [i_c1_name]
+            return i_prop_array, i_df
+
+        log("ndf-> add_tech " + symbol + " - " + str(tech_indicator))
+
+        if self.is_indicator(tech_indicator):
+
+            i_res = db.get_last_m(symbol, 1)
+            i_df = pd.DataFrame(i_res)
+            i_df.columns = db.column_names
+            last_dbdt = str(i_df.iloc[0]['datetime'])
+
+            if refresh:
+                i_res = db.get_first_null(symbol, tech_indicator)
+                if db.row_count == 0:
+                    log("ndf-> add_tech:" + tech_indicator + " is correct.")
+                    return
+                i_df = pd.DataFrame(i_res)
+                i_df.columns = db.column_names
+                first_dbdt = str(i_df.iloc[0]['datetime'] - timedelta(days=1))
+            else:
+                i_res = db.get_first_m(symbol, 1)
+                i_df = pd.DataFrame(i_res)
+                i_df.columns = db.column_names
+                first_dbdt = str(i_df.iloc[0]['datetime'])
+
+            i_datetime_series = pd.DataFrame(pd.date_range(start=last_dbdt, end=first_dbdt, freq='-65d'))
+            new_row = {0: first_dbdt}
+            i_datetime_series = i_datetime_series.append(new_row, ignore_index=True)
+
+            for i_i in range(len(i_datetime_series[0])-1):
+                i_select_from = i_datetime_series.loc[i_i+1][0]
+                i_select_to = i_datetime_series.loc[i_i][0] + timedelta(days=3)
+                i_df = pd.DataFrame(None)
+                i_df = pd.DataFrame(db.get_timeframe_desc(symbol, i_select_from, i_select_to))
+                i_df = i_df.iloc[::-1]
+                i_df.columns = db.column_names
+
+                i_new_prop_array = []
+                if tech_indicator == "SMA60":
+                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
+                if tech_indicator == "SMA30":
+                    i_new_prop_array, i_df = sma(i_df, 30, refresh)
+                if tech_indicator == "RSI":
+                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
+
+                # print("prop array", i_new_prop_array)
+                # print(i_df.head())
+                for i_new_prop in i_new_prop_array:
+                    # print(i_new_prop)
+                    i_datetime = tools.get_df_column(i_df, "datetime")
+                    i_values = tools.get_df_column(i_df, i_new_prop)
+                    if i_new_prop not in db.column_names:
+                        db.add_symbol_float_property(symbol, i_new_prop)
+                    db.add_symbol_value_multi(symbol, i_datetime, i_new_prop, i_values)
+        else:
+            log(tech_indicator + " - " + "technical indicator does not exist!")
+            tech_indictor_tuple = tuple(self.indicators["indicator"])
+            tech_indictor_str = ', '.join(tech_indictor_tuple)
+            log("Indicators: " + tech_indictor_str)
+
+    def refresh(self, symbol):
+        log("ndf-> refresh " + symbol)
+        to_dbdt = datetime.now() + timedelta(days=1)
+        to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
+        i_res = db.get_last_m(symbol, 1)
+        i_df = pd.DataFrame(i_res)
+        i_df.columns = db.column_names
+        from_dbdt = str(i_df.iloc[0]['datetime'])
+        i_tounix = tools.dbdt_to_unixdt(to_dbdt)
+        i_fromunix = tools.dbdt_to_unixdt(from_dbdt)
+        i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
+        db.add_symbol_values(symbol, i_df_stock)
+        return
+
+    def get_last_m(self, symbol, xm):
+        log("ndf-> get " + symbol + " last " + xm + " minutes")
+        i_res = db.get_last_m(symbol, xm)
+        if db.row_count > 0:
+            df = pd.DataFrame(i_res)
+            df.columns = db.column_names
+            self.df = df.iloc[::-1]
+        else:
+            self.df = pd.DataFrame(None)
+        return
+
+    def get_time_frame(self, symbol):
+        log("ndf-> get_time_frame " + symbol + " use gui date time")
+        i_db_dt_from = tools.get_ui_date_dbdt("from")
+        i_db_dt_to = tools.get_ui_date_dbdt("to")
+        i_res = db.get_timeframe(symbol, i_db_dt_from, i_db_dt_to)
+        if db.row_count > 0:
+            df = pd.DataFrame(i_res)
+            df.columns = db.column_names
+            self.df = df
+        else:
+            self.df = pd.DataFrame(None)
+        return
+
+    def check(self, symbol):
+        log("ndf-> check " + symbol)
+        db.qcheck(symbol)
+        if db.row_count > 0:
+            log("  Data quality ERROR: " + symbol)
+        else:
+            log("  Data quality OK: " + symbol)
+        return
+
 class n_date_frame():
 
     def __init__(self):
@@ -747,6 +990,9 @@ class gui(QWidget):
             ['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
             # ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
             ['ndf.add', 'ndf_add', 'ndf.add <symbol>', 1],
+            ['ndf2.add', 'ndf2_add', 'ndf2.add <symbol>', 1],
+            ['ndf2.refresh', 'ndf2_refresh', 'ndf2.refresh <symbol>', 1],
+            ['ndf2.info', 'ndf2_info', 'ndf2.info', 0],
             ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
             ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
             ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
@@ -936,9 +1182,11 @@ class gui(QWidget):
             method = eval(i_program)
             kwargs = {}
             args_str = ', '.join(map(str, args))
-            log("start: " + command_text_first_word + " <" + args_str + ">", True, False)
+            i_start = datetime.now()
+            log("Start: " + command_text_first_word + " <" + args_str + ">", True, False)
             method(*args, **kwargs)
-            log("ready.", False, False)
+            log("Ready.", False, False)
+            log("Runtime:" + str(datetime.now()-i_start), False, False)
             self.Command_Line.setText("")
 
         command_text = self.Command_Line.text()
@@ -1060,10 +1308,14 @@ def log(add_text, line=False, indent=True):
     if line:
         i_log_text = gui.Logs_Browser.toPlainText() + "─" * 82 + "\r"
         gui.Logs_Browser.setText(i_log_text)
-    i_log_text = gui.Logs_Browser.toPlainText() + time.strftime("%m-%d %H:%M:%S") + " > " + i_ind + add_text + " \r"
-    gui.Logs_Browser.setText(i_log_text)
-    gui.Logs_Browser.moveCursor(QtGui.QTextCursor.End)
-    QApplication.processEvents()
+
+    lines = add_text.splitlines()
+
+    for one_line in lines:
+        i_log_text = gui.Logs_Browser.toPlainText() + time.strftime("%m-%d %H:%M:%S") + " > " + i_ind + one_line + " \r"
+        gui.Logs_Browser.setText(i_log_text)
+        gui.Logs_Browser.moveCursor(QtGui.QTextCursor.End)
+        QApplication.processEvents()
 
 
 def test(p1="", p2="", p3=""):
@@ -1099,6 +1351,18 @@ def exit_program(p1="", p2="", p3=""):
 
 
 # ndf programs  ----------------------------------------------------------------------------
+
+
+def ndf2_add(symbol="", p2="", p3=""):
+    ndf2.add(symbol)
+
+
+def ndf2_refresh(symbol="", p2="", p3=""):
+    ndf2.refresh(symbol)
+
+
+def ndf2_info(p1="", p2="", p3=""):
+    log(nddb.info())
 
 
 def ndf_add(symbol="", p2="", p3=""):
@@ -1532,6 +1796,9 @@ class ListenWebsocket(QtCore.QThread):
 if __name__ == "__main__":
 
     # 1.
+    ndf2 = n_date_frame2()
+    nddf = {}
+    nddb = nd_db()
     print("Status: GUI Load")
     app = QApplication([])
     gui = gui()
