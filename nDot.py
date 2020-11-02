@@ -2,11 +2,15 @@
 from datetime import datetime, timedelta
 import sys
 import websocket
+import os
+import psutil
 import time
-import mysql.connector
-from mysql.connector import Error
+# import mysql.connector
+# from mysql.connector import Error
 import random
 import pandas as pd
+from pandas import DataFrame
+import pandas_ta as ta
 import finnhub
 import threading
 import numpy as np
@@ -39,282 +43,6 @@ from matplotlib.backend_tools import ToolBase
 class n_system:
     print_console = False
 
-class data_base():
-    open_close = True
-    config = {
-        'host': 'sql132.main-hosting.eu',
-        'user': 'u826803502_AIS1',
-        'password': '+1zZJqwQ',
-        'database': 'u826803502_ArtIntSol',
-        'connect_timeout': 90000,
-        'raise_on_warnings': True,
-        'use_pure': False
-    }
-    cnx = ""
-    cursor = ""
-    row_count = 0
-    column_names = ""
-    server_version = ""
-    db_size = ""
-    error = ""
-
-    def open(self):
-        # s("nDot db open")
-        self.cnx = mysql.connector.connect(**self.config)
-        self.cursor = self.cnx.cursor(buffered=True)
-        return
-
-    def setcursor(self):
-        self.cursor = self.cnx.cursor(buffered=True)
-        return
-
-    def close(self):
-        # s("nDot db close")
-        self.cnx.commit()
-        self.cursor.close()
-        self.cnx.close()
-        return
-
-    def check_connection(self):
-        log("db-> check_connection")
-        i_return = False
-        try:
-            connection = mysql.connector.connect(**self.config)
-            if connection.is_connected():
-                i_return = True
-                self.server_version = connection.get_server_info()
-                cursor = connection.cursor()
-                cursor.execute('SELECT table_schema AS "Database", ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS "Size (MB)" FROM information_schema.TABLES GROUP BY table_schema')
-                record = cursor.fetchall()
-                i_df = pd.DataFrame(record)
-                self.db_size = i_df.iloc[1][1]
-                cursor.close()
-                connection.close()
-        except Error as e:
-            i_return = False
-            self.error = e
-        return i_return
-
-    def execute_simply(self, sqlstr, multiple=False):
-
-        def place_value(number):
-            return ("{:,}".format(number))
-
-        log("db-> execute_simply - SQL size:" + place_value(int(len(sqlstr)/1024)) + " KB")
-        # pri(datetime.now(), "sql length", len(sqlstr))
-        if self.open_close:
-            self.open()
-        self.cursor.execute(sqlstr)
-        # print(datetime.now(), "close")
-        if self.cursor.rowcount > 0:
-            log("db-> execute_simply row(s) affected: " + str(self.cursor.rowcount))
-        if self.open_close:
-            self.close()
-        return
-
-    def execute_base(self, sqlstr, multiple=False):
-        # log("db-> execute_base: " + sqlstr[:100])
-        if self.open_close:
-            self.open()
-
-        try:
-            self.cursor.execute(sqlstr)
-        except mysql.connector.Error as err:
-            log("db-> execute_base EXCEPT: {}".format(err)+" SQL: "+sqlstr[:150])
-        else:
-            if self.cursor.rowcount > 0:
-                log("db-> execute_base row(s) affected: " + str(self.cursor.rowcount))
-        # self.setcursor()
-        if self.open_close:
-            self.close()
-        return
-
-    def execute_fetchall(self, sqlstr):
-        # log("db-> execute_fetchall: " + sqlstr[:100])
-        if self.open_close:
-            self.open()
-        try:
-            self.cursor.execute(sqlstr)
-        except mysql.connector.Error as err:
-            log("db-> execute_fetchall EXCEPT: {}".format(err))
-            i_result = []
-        else:
-            if self.cursor.rowcount > 0:
-                log("db-> execute_fetchall selected rows: " + str(self.cursor.rowcount))
-                self.column_names = self.cursor.column_names
-                self.row_count = self.cursor.rowcount
-                i_result = self.cursor.fetchall()
-            else:
-                self.row_count = 0
-                i_result = []
-        if self.open_close:
-            self.close()
-        return i_result
-
-    def get_timeframe(self, symbol, fromdt, todt):
-        log("db-> get_timeframe " + symbol + " " + str(fromdt) + " - " + str(todt))
-        i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `datetime`>='" +\
-                       str(fromdt) + "' AND `datetime`<='" + str(todt) + "'"
-        return self.execute_fetchall(i_sql_string)
-
-    def get_timeframe_desc(self, symbol, fromdt, todt):
-        log("db-> get_timeframe_desc " + symbol + " " + str(fromdt) + " - " + str(todt))
-        i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `datetime`>='" +\
-                       str(fromdt) + "' AND `datetime`<='" + str(todt) + "' ORDER BY `datetime` DESC"
-        return self.execute_fetchall(i_sql_string)
-
-    def get_first_m(self, symbol, elem_no):
-        log("db-> get_first_m: " + symbol + " "+str(elem_no))
-        i_sql_string = "SELECT * FROM `" + symbol + "` ORDER BY `datetime` ASC LIMIT " +str(elem_no)
-        return self.execute_fetchall(i_sql_string)
-
-    def get_last_m(self, symbol, elem_no):
-        log("db-> get_last_m: " + symbol + " "+str(elem_no))
-        i_sql_string = "SELECT * FROM `" + symbol + "` ORDER BY `datetime` DESC LIMIT " +str(elem_no)
-        return self.execute_fetchall(i_sql_string)
-
-    def get_first_null(self, symbol, column):
-        log("db-> get_first_null: " + symbol + " - "+str(column))
-        i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `" + column + "` IS NULL ORDER BY `datetime` LIMIT 1"
-        return self.execute_fetchall(i_sql_string)
-
-    def add_symbol(self, symbol):
-        log("db-> add_symbol " + symbol)
-        i_sql_command = "CREATE TABLE IF NOT EXISTS`" + self.config['database'] + "`.`" + symbol + \
-                        "` ( `datetime` DATETIME NOT NULL , UNIQUE `datetime_i` (`datetime`)) ENGINE = InnoDB"
-        self.execute_base(i_sql_command)
-        i_sql_command = "ALTER TABLE `" + symbol + "` ADD INDEX(`datetime`)"
-        self.execute_base(i_sql_command)
-        return
-
-    def remove_symbol(self, symbol):
-        log("db-> remove_symbol " + symbol)
-        i_sql_command = "DROP TABLE IF EXISTS`"+self.config['database']+"`.`" + symbol + "`"
-        self.execute_base(i_sql_command)
-        return
-
-    def add_symbol_float_property(self, symbol, prop):
-        log("db-> add db " + symbol + " float prop: " + prop)
-        i_sql_command = "ALTER TABLE `" + symbol + "` ADD IF NOT EXISTS`" + prop + \
-                        "` DECIMAL(16,6) NULL DEFAULT NULL AFTER `datetime`"
-        self.execute_base(i_sql_command)
-        return
-
-    def add_symbol_string_property(self, symbol, prop, plength):
-        log("db-> add db " + symbol + " string prop: " + prop)
-        i_sql_command = "ALTER TABLE `" + symbol + "` ADD IF NOT EXISTS`" + prop + \
-                        "` VARCHAR(" + str(plength) + ") NULL DEFAULT NULL AFTER `datetime`"
-        self.execute_base(i_sql_command)
-        return
-
-    # def add_instrument_value(self, instrument, dt, prop, val):
-    #     i_sql_command = "SELECT * FROM `"+instrument+"` WHERE `datetime` = '"+dt+"'"
-    #     if type(val) != str:
-    #         val = str(val)
-    #
-    #     if self.execute_fetchall(i_sql_command):
-    #         i_sql_command = "UPDATE `"+instrument+"` SET `"+prop+"`= '"+val+"' WHERE `datetime` = '"+dt+"'"
-    #         self.execute_base(i_sql_command)
-    #     else:
-    #         i_sql_command = "INSERT INTO `"+instrument+"` SET datetime = '"+dt+"', "+prop+" = '"+val+"'"
-    #         self.execute_base(i_sql_command)
-    #     return
-
-    def add_symbol_value_multi(self, symbol, dt_array, prop, val_array):
-        log("db-> write to db "+symbol+" - "+prop +" estimated rows:" + str(len(dt_array)))
-        sql_text = pd.DataFrame()
-        sql_text["datetime"] = dt_array
-        sql_text["val"] = val_array
-        sql_text["val"] = sql_text["val"].apply(str)
-        sql_text["when"] = "WHEN `datetime` = '"
-        sql_text["then"] = "' THEN '"
-        sql_text["then_end"] = "'"
-        sql_text["sql_slice"] = sql_text["when"] + sql_text["datetime"] + sql_text["then"] + sql_text["val"] + sql_text["then_end"]
-        # sql_text = sql_text.head()
-        i_sql_when = ' '.join(sql_text["sql_slice"])
-        i_sql_datetime = "','".join(sql_text["datetime"])
-        i_sql_datetime = "'" + i_sql_datetime + "'"
-        i_full_sql_text = "UPDATE " + symbol + " SET `" + prop + "` = CASE " +\
-                    i_sql_when +\
-                    " END WHERE `datetime` IN (" +i_sql_datetime + ")"
-        self.execute_simply(i_full_sql_text)
-
-    def add_symbol_values(self, instrument, df):
-        i_elemet_block_size = 30000
-        i_dt_rows = df.shape[0]
-        log("db-> add_symbol_values: "+instrument+" estimated rows:" + str(i_dt_rows))
-        i_dt_array_len = int(i_dt_rows / i_elemet_block_size)+1
-        i_sql_elements_array = ["" for x in range(i_dt_array_len)]
-        start_no = 0
-        for i_i in range(i_dt_array_len):
-            to_no = min(start_no+i_elemet_block_size, i_dt_rows)
-            sql_texts = []
-            for index, row in df.iloc[start_no:to_no].iterrows():
-                sql_texts.append(str(tuple(row.values)))
-            i_sql_elements_array[i_i] = ', '.join(sql_texts)
-            start_no = start_no+i_elemet_block_size + 1
-        for i_i in range(len(i_sql_elements_array)):
-            i_sql_str = "INSERT INTO `" + instrument + "` " +\
-                    "(`datetime` , `t`, `o`, `h`, `l`, `c`, `ohlc4`, `v`  ) VALUES " + \
-                    i_sql_elements_array[i_i] +\
-                    " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
-            self.execute_base(i_sql_str)
-
-    def qcheck(self, symbol):
-        log("db-> qcheck: "+symbol)
-        i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `t` is null or `c` is null or `l` is null or `h` is null or `o` is null or `ohlc4` is null or `v` is null"
-        self.execute_fetchall(i_sql_string)
-        null_count = self.row_count
-        i_sql_string = "SELECT * FROM `" + symbol + "` WHERE `t` = 0 or `c` = 0 or `l` = 0 or `h` = 0 or `o` = 0 or `ohlc4` = 0 or `v` = 0"
-        self.execute_fetchall(i_sql_string)
-        zero_count = self.row_count
-        self.row_count = null_count + zero_count
-
-    # def add_instrument_value_multi_tchk(self, instrument, dt_array, prop, val_array):
-    #     s("write to db "+instrument+" - "+prop)
-    #     i_dt_array_len = len(dt_array)
-    #
-    #     if prop == "t":
-    #         self.add_instrument(instrument)
-    #         self.add_instrument_float_property(instrument, prop)
-    #         i_elemet_block_size = 32000
-    #
-    #         # beszúrom az üreseket, ha még nincsenek és utána minden módosítom
-    #         i_sql_elements_array = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size))]
-    #
-    #         for i_i in range(i_dt_array_len):
-    #             i_pos = int(i_i / i_elemet_block_size)
-    #             i_sql_elements_array[i_pos] = i_sql_elements_array[i_pos] + "('" + dt_array[i_i] + "', '" + str(val_array[i_i]) + "'), "
-    #
-    #         for i_i in range(len(i_sql_elements_array)):
-    #             i_sql_str = "INSERT INTO `" + instrument + "` " +\
-    #                     "(`datetime` , `" + prop + "` ) VALUES " +\
-    #                     i_sql_elements_array[i_i][:-2] +\
-    #                     " ON DUPLICATE KEY UPDATE `datetime` = VALUES(datetime)"
-    #             self.execute_base(i_sql_str)
-    #     else:
-    #         # minden sort lemódosítok
-    #         self.add_instrument_float_property(instrument, prop)
-    #         i_elemet_block_size2 = 32000
-    #         i_sql_elements_array2 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
-    #         i_sql_elements_array3 = ["" for x in range(1+int(i_dt_array_len / i_elemet_block_size2))]
-    #         # s("Update create 1")
-    #         # for i_i2 in range(1):
-    #         for i_i2 in range(i_dt_array_len):
-    #             i_pos2 = int(i_i2 / i_elemet_block_size2)
-    #             i_sql_elements_array2[i_pos2] = i_sql_elements_array2[i_pos2] +\
-    #                                           "WHEN `datetime` = '" + dt_array[i_i2] +\
-    #                                             "' THEN '" + str(val_array[i_i2]) + "' "
-    #
-    #             i_sql_elements_array3[i_pos2] = i_sql_elements_array3[i_pos2] +\
-    #                                           "'" + dt_array[i_i2] + "',"
-    #         # s("Update create 2")
-    #         for i_i3 in range(len(i_sql_elements_array2)):
-    #             i_sql_str2 = "UPDATE " + instrument + " SET `" + prop + "` = CASE " +\
-    #                     i_sql_elements_array2[i_i3] +\
-    #                     " END WHERE `datetime` IN (" + i_sql_elements_array3[i_i3][:-1] + ")"
-    #             self.execute_simply(i_sql_str2)
-    #     return
 
 class market_data():
     api_key_finnhubio1 = "bs9c9lvrh5rahoaofmt0"
@@ -339,21 +67,29 @@ class market_data():
                 i_return = False
         return i_return
 
-    def get_stock_candles(self, symbol, resolution, from_dt, to_dt):
+    def get_stock_candles(self, symbol, resolution, from_dt, to_dt, rename=False):
         log("md-> get_stock_candles: " + symbol + " - " + tools.unixdt_to_dbdt(from_dt) + " - " +
             tools.unixdt_to_dbdt(to_dt))
-        i_result = self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3})
-        i_df = pd.DataFrame(i_result)
-        # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
-        i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
-        # a finnhub idejét Európa/Budapest időre konvertálom
-        i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
-        i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
-        i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
-        i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
-        i_df = i_df.round({'t': 6, 'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6})
-        i_df.set_index('datetime')
-        # return pandas df -> o h c l v t datetime ohcl4
+        try:
+            i_result = self.finnhub_client.technical_indicator(symbol=symbol, resolution=resolution, _from=from_dt, to=to_dt, indicator='rsi', indicator_fields={"timeperiod": 3})
+        except:
+            log("Finnhub exception.")
+            i_df = pd.DataFrame(None)
+        else:
+            i_df = pd.DataFrame(i_result)
+            # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
+            i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+            # a finnhub idejét Európa/Budapest időre konvertálom
+            i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
+            i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
+            i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
+            i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
+            i_df = i_df.round({'t': 6, 'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6})
+            i_df.set_index('datetime')
+            if rename:
+                i_df = i_df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close",
+                             "v": "Volume"}, errors="raise")
+            # return pandas df -> o h c l v t datetime ohcl4
         return i_df
 
     def company_profile(self, symbol):
@@ -390,15 +126,31 @@ class trade():
         }
 
     def time_filter(self, df):
-        self.config['nyse_open']
+        # self.config['nyse_open']
         i_intime = df.between_time(self.config['nyse_open'], self.config['nyse_close'])
         i_outtime = df.between_time(self.config['nyse_close'], self.config['nyse_open'])
-        return  i_intime, i_outtime
+        return i_intime, i_outtime
+
 
 class nd_db:
 
     def __init__(self):
         self.store = pd.HDFStore('nDot_db.h5', "a")
+        for i_key in self.get_keys():
+            self.read(i_key, True)
+        self.close()
+
+    def get_size(self):
+        return int(os.path.getsize('nDot_db.h5')/1024)
+
+    def get_keys(self):
+        self.open()
+        i_keys = self.store.keys()
+        i_return = []
+        for i_key in i_keys:
+            i_return.append(i_key[1:])
+        self.close()
+        return i_return
 
     def write(self, symbol):
         log("nd_db-> write:" + symbol)
@@ -406,18 +158,20 @@ class nd_db:
         self.store.put(symbol, nddf[symbol], format='table')
         self.close()
 
-    def read(self, symbol):
-        log("nd_db-> read:" + symbol)
+    def read(self, symbol, for_init=False):
+        if not for_init:
+            log("nd_db-> read:" + symbol)
         self.open()
         nddf[symbol] = self.store.get(symbol)
         self.close()
 
     def remove(self, symbol):
         log("nd_db-> remove:" + symbol)
-        self.open()
-        i_return = self.store.remove(symbol)
-        print(i_return)
-        self.close()
+        i_return = ""
+        if symbol in self.get_keys():
+            self.open()
+            i_return = self.store.remove(symbol)
+            self.close()
         return i_return
 
     def open(self):
@@ -435,6 +189,17 @@ class nd_db:
 
 class n_date_frame2():
 
+    def __init__(self):
+        self.indicators = pd.DataFrame(None)
+        self.load_indicators()
+
+    def set_dt_order(self, symbol, ascending=True):
+        nddf[symbol]['Date'] = pd.to_datetime(nddf[symbol]['Date'])
+        nddf[symbol].sort_values(by=['Date'], inplace=True, ascending=True)
+        # nddf[symbol].sort_index(inplace=True)
+        nddf[symbol].drop_duplicates(inplace=True)
+        nddf[symbol].set_index('Date')
+
     def add(self, symbol):
         log("ndf2-> add " + symbol)
         i_now = datetime.now() + timedelta(days=1)
@@ -444,388 +209,112 @@ class n_date_frame2():
         for i_i in range(len(i_datetime_series)-1):
             i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
             i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-            nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix))
-        nddf[symbol].drop_duplicates(inplace=True)
-        log("Time frame: " + nddf[symbol]["datetime"].min() + " - " + nddf[symbol]["datetime"].max())
+            nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True))
+        self.set_dt_order(symbol)
+        log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
         log("Number of rows: " + str(nddf[symbol].shape[0]))
         nddb.write(symbol)
+
+    def load_indicators(self):
+        i_i = [
+            ['SMA30', ['SMA_30']],
+            ['SMA60', ['SMA_60']],
+            ['SMA90', ['SMA_90']],
+            ['ADX', ['ADX_90']],
+            ['ICHIMOKU', ['ISA_9',      'ISB_26',    'ITS_9',           'IKS_26',    'ICS_26']]
+        #   ['ICHIMOKU', ['ICHI_LEAD1', ICHI_LEAD2', 'ICHI_CONVERSION', 'ICHI_BASE', 'ICHI_LAGGING']]
+        ]
+        self.indicators = pd.DataFrame(i_i)
+        self.indicators.columns = ['indicator', 'fields']
+        self.indicators.set_index('indicator')
+
+    def get_added_indicators(self, symbol):
+        i_detectd_indicators = {}
+        for i_col in nddf[symbol].columns:
+            for i_index, i_row in self.indicators.iterrows():
+                if i_col in i_row['fields']:
+                    i_detectd_indicators[i_row['indicator']] = 1
+        return(tuple(i_detectd_indicators.keys()))
+
+    def is_indicator(self, tech_indicator):
+        i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
+        if len(i_search) > 0:
+            i_found = True
+        else:
+            i_found = False
+        return i_found
+
+    def tech_remove(self, symbol, tech_indicator):
+        log("ndf2-> remove_tech " + symbol + " - " + str(tech_indicator))
+        i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
+        if self.is_indicator(tech_indicator):
+            i_fields = eval(str(i_search["fields"].iloc[0]))
+            for i_drop_c in i_fields:
+                if i_drop_c in nddf[symbol].columns:
+                    nddf[symbol].drop(i_drop_c, axis=1, inplace=True)
+            nddb.write(symbol)
+        else:
+            log(tech_indicator + " - " + "technical indicator does not exist!")
+            tech_indictor_tuple = tuple(self.indicators["indicator"])
+            tech_indictor_str = ', '.join(tech_indictor_tuple)
+            log("Indicators: " + tech_indictor_str)
+
+    def add_tech(self, symbol, tech_indicator="SMA60"):
+
+        def case_set_back(symbol):
+            # a pandas ta elállítgatja a neveket, ezért minden
+            # hívás után szépen vissza állítom a neveket :)
+            nddf[symbol] = nddf[symbol].rename(columns={"open": "Open",
+                                         "close": "Close",
+                                         "low": "Low",
+                                         "high": "High",
+                                         "volume": "Volume"
+                                         })
+
+        log("ndf2-> add_tech " + symbol + " - " + str(tech_indicator))
+
+        if self.is_indicator(tech_indicator):
+
+            if tech_indicator == "SMA30":
+                nddf[symbol].ta.sma(length=30, append=True)
+            elif tech_indicator == "SMA60":
+                nddf[symbol].ta.sma(length=60, append=True)
+            elif tech_indicator == "SMA90":
+                nddf[symbol].ta.sma(length=90, append=True)
+            elif tech_indicator == "ICHIMOKU":
+                nddf[symbol].ta.ichimoku(append=True)
+            elif tech_indicator == "ADX":
+                nddf[symbol].ta.adx(length=8, append=True)
+
+            case_set_back(symbol)
+            nddb.write(symbol)
+
+        else:
+            log(tech_indicator + " - " + "technical indicator does not exist!")
+            tech_indictor_tuple = tuple(self.indicators["indicator"])
+            tech_indictor_str = ', '.join(tech_indictor_tuple)
+            log("Indicators: " + tech_indictor_str)
 
     def remove(self, symbol):
         log("ndf2-> remove " + symbol)
+        if symbol in nddf:
+            del nddf[symbol]
         i_log = nddb.remove(symbol)
-
 
     def refresh(self, symbol):
         log("ndf2-> refresh " + symbol)
-        log("Time frame (now): " + nddf[symbol]["datetime"].min() + " - " + nddf[symbol]["datetime"].max())
+        log("Time frame (before refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+        log("Number of rows (before refresh): " + str(nddf[symbol].shape[0]))
         to_dbdt = datetime.now() + timedelta(days=1)
         to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
-        from_dbdt = str(nddf[symbol]["datetime"].max())
+        from_dbdt = str(nddf[symbol]["Date"].max())
         i_tounix = tools.dbdt_to_unixdt(to_dbdt)
         i_fromunix = tools.dbdt_to_unixdt(from_dbdt)
-        nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix))
-        nddf[symbol].drop_duplicates(inplace=True)
-        log("Time frame (after refresh): " + nddf[symbol]["datetime"].min() + " - " + nddf[symbol]["datetime"].max())
-        log("Number of rows: " + str(nddf[symbol].shape[0]))
+        nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True))
+        self.set_dt_order(symbol)
+        log("Time frame (after refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+        log("Number of rows (after refresh): " + str(nddf[symbol].shape[0]))
         nddb.write(symbol)
-
-class n_date_frame():
-
-    def __init__(self):
-        self.df = pd.DataFrame(None)
-        self.indicators = pd.DataFrame(None)
-        self.load_indicators()
-
-    def load_indicators(self):
-        i_indicators = [
-            ['SMA30'],
-            ['SMA60'],
-            ['ICHIMOKU'],
-            ['RSI']
-        ]
-        self.indicators = pd.DataFrame(i_indicators)
-        self.indicators.columns = ['indicator']
-        self.indicators.set_index('indicator')
-
-    def is_indicator(self, tech_indicator):
-        i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
-        if len(i_search) > 0:
-            i_found = True
-        else:
-            i_found = False
-        return i_found
-
-    def add(self, symbol):
-        log("ndf-> add " + symbol)
-        i_now = datetime.now() + timedelta(days=1)
-        i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
-        db.add_symbol(symbol)
-        db.add_symbol_float_property(symbol, "v")
-        db.add_symbol_float_property(symbol, "ohlc4")
-        db.add_symbol_float_property(symbol, "o")
-        db.add_symbol_float_property(symbol, "h")
-        db.add_symbol_float_property(symbol, "l")
-        db.add_symbol_float_property(symbol, "c")
-        db.add_symbol_float_property(symbol, "t")
-        for i_i in range(len(i_datetime_series)-1):
-            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
-            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-            i_df_stock = pd.DataFrame(None)
-            i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
-            db.add_symbol_values(symbol, i_df_stock)
-        return
-
-    def add_tech(self, symbol, tech_indicator="SMA60", refresh=False):
-
-        def sma(i_df, window_size, refresh=False):
-            i_c1_name = "SMA" + str(window_size)
-            i_df[i_c1_name] = i_df.iloc[:, i_df.columns.get_loc("ohlc4")].rolling(window=int(window_size)).mean()
-            i_df[i_c1_name] = i_df[i_c1_name].fillna(0.123456)
-
-            if refresh:
-                i_df_drops = i_df[i_df[i_c1_name] == 0.123456]
-                i_df = i_df.drop(i_df_drops.index, axis=0)
-
-            i_df[i_c1_name] = round(i_df[i_c1_name], 6)
-            i_df['datetime'] = i_df["datetime"].astype(str)
-            i_prop_array = [i_c1_name]
-            return i_prop_array, i_df
-
-        log("ndf-> add_tech " + symbol + " - " + str(tech_indicator))
-
-        if self.is_indicator(tech_indicator):
-
-            i_res = db.get_last_m(symbol, 1)
-            i_df = pd.DataFrame(i_res)
-            i_df.columns = db.column_names
-            last_dbdt = str(i_df.iloc[0]['datetime'])
-
-            if refresh:
-                i_res = db.get_first_null(symbol, tech_indicator)
-                if db.row_count == 0:
-                    log("ndf-> add_tech:" + tech_indicator + " is correct.")
-                    return
-                i_df = pd.DataFrame(i_res)
-                i_df.columns = db.column_names
-                first_dbdt = str(i_df.iloc[0]['datetime'] - timedelta(days=1))
-            else:
-                i_res = db.get_first_m(symbol, 1)
-                i_df = pd.DataFrame(i_res)
-                i_df.columns = db.column_names
-                first_dbdt = str(i_df.iloc[0]['datetime'])
-
-            i_datetime_series = pd.DataFrame(pd.date_range(start=last_dbdt, end=first_dbdt, freq='-65d'))
-            new_row = {0: first_dbdt}
-            i_datetime_series = i_datetime_series.append(new_row, ignore_index=True)
-
-            for i_i in range(len(i_datetime_series[0])-1):
-                i_select_from = i_datetime_series.loc[i_i+1][0]
-                i_select_to = i_datetime_series.loc[i_i][0] + timedelta(days=3)
-                i_df = pd.DataFrame(None)
-                i_df = pd.DataFrame(db.get_timeframe_desc(symbol, i_select_from, i_select_to))
-                i_df = i_df.iloc[::-1]
-                i_df.columns = db.column_names
-
-                i_new_prop_array = []
-                if tech_indicator == "SMA60":
-                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
-                if tech_indicator == "SMA30":
-                    i_new_prop_array, i_df = sma(i_df, 30, refresh)
-                if tech_indicator == "RSI":
-                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
-
-                # print("prop array", i_new_prop_array)
-                # print(i_df.head())
-                for i_new_prop in i_new_prop_array:
-                    # print(i_new_prop)
-                    i_datetime = tools.get_df_column(i_df, "datetime")
-                    i_values = tools.get_df_column(i_df, i_new_prop)
-                    if i_new_prop not in db.column_names:
-                        db.add_symbol_float_property(symbol, i_new_prop)
-                    db.add_symbol_value_multi(symbol, i_datetime, i_new_prop, i_values)
-        else:
-            log(tech_indicator + " - " + "technical indicator does not exist!")
-            tech_indictor_tuple = tuple(self.indicators["indicator"])
-            tech_indictor_str = ', '.join(tech_indictor_tuple)
-            log("Indicators: " + tech_indictor_str)
-
-    def refresh(self, symbol):
-        log("ndf-> refresh " + symbol)
-        to_dbdt = datetime.now() + timedelta(days=1)
-        to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
-        i_res = db.get_last_m(symbol, 1)
-        i_df = pd.DataFrame(i_res)
-        i_df.columns = db.column_names
-        from_dbdt = str(i_df.iloc[0]['datetime'])
-        i_tounix = tools.dbdt_to_unixdt(to_dbdt)
-        i_fromunix = tools.dbdt_to_unixdt(from_dbdt)
-        i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
-        db.add_symbol_values(symbol, i_df_stock)
-        return
-
-    def get_last_m(self, symbol, xm):
-        log("ndf-> get " + symbol + " last " + xm + " minutes")
-        i_res = db.get_last_m(symbol, xm)
-        if db.row_count > 0:
-            df = pd.DataFrame(i_res)
-            df.columns = db.column_names
-            self.df = df.iloc[::-1]
-        else:
-            self.df = pd.DataFrame(None)
-        return
-
-    def get_time_frame(self, symbol):
-        log("ndf-> get_time_frame " + symbol + " use gui date time")
-        i_db_dt_from = tools.get_ui_date_dbdt("from")
-        i_db_dt_to = tools.get_ui_date_dbdt("to")
-        i_res = db.get_timeframe(symbol, i_db_dt_from, i_db_dt_to)
-        if db.row_count > 0:
-            df = pd.DataFrame(i_res)
-            df.columns = db.column_names
-            self.df = df
-        else:
-            self.df = pd.DataFrame(None)
-        return
-
-    def check(self, symbol):
-        log("ndf-> check " + symbol)
-        db.qcheck(symbol)
-        if db.row_count > 0:
-            log("  Data quality ERROR: " + symbol)
-        else:
-            log("  Data quality OK: " + symbol)
-        return
-
-class n_date_frame():
-
-    def __init__(self):
-        self.df = pd.DataFrame(None)
-        self.indicators = pd.DataFrame(None)
-        self.load_indicators()
-
-    def load_indicators(self):
-        i_indicators = [
-            ['SMA30'],
-            ['SMA60'],
-            ['ICHIMOKU'],
-            ['RSI']
-        ]
-        self.indicators = pd.DataFrame(i_indicators)
-        self.indicators.columns = ['indicator']
-        self.indicators.set_index('indicator')
-
-    def is_indicator(self, tech_indicator):
-        i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
-        if len(i_search) > 0:
-            i_found = True
-        else:
-            i_found = False
-        return i_found
-
-    def add(self, symbol):
-        log("ndf-> add " + symbol)
-        i_now = datetime.now() + timedelta(days=1)
-        i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
-        db.add_symbol(symbol)
-        db.add_symbol_float_property(symbol, "v")
-        db.add_symbol_float_property(symbol, "ohlc4")
-        db.add_symbol_float_property(symbol, "o")
-        db.add_symbol_float_property(symbol, "h")
-        db.add_symbol_float_property(symbol, "l")
-        db.add_symbol_float_property(symbol, "c")
-        db.add_symbol_float_property(symbol, "t")
-        for i_i in range(len(i_datetime_series)-1):
-            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
-            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-            i_df_stock = pd.DataFrame(None)
-            i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
-            db.add_symbol_values(symbol, i_df_stock)
-        return
-
-    def add_tech(self, symbol, tech_indicator="SMA60", refresh=False):
-
-        def sma(i_df, window_size, refresh=False):
-            i_c1_name = "SMA" + str(window_size)
-            i_df[i_c1_name] = i_df.iloc[:, i_df.columns.get_loc("ohlc4")].rolling(window=int(window_size)).mean()
-            i_df[i_c1_name] = i_df[i_c1_name].fillna(0.123456)
-
-            if refresh:
-                i_df_drops = i_df[i_df[i_c1_name] == 0.123456]
-                i_df = i_df.drop(i_df_drops.index, axis=0)
-
-            i_df[i_c1_name] = round(i_df[i_c1_name], 6)
-            i_df['datetime'] = i_df["datetime"].astype(str)
-            i_prop_array = [i_c1_name]
-            return i_prop_array, i_df
-
-        log("ndf-> add_tech " + symbol + " - " + str(tech_indicator))
-
-        if self.is_indicator(tech_indicator):
-
-            i_res = db.get_last_m(symbol, 1)
-            i_df = pd.DataFrame(i_res)
-            i_df.columns = db.column_names
-            last_dbdt = str(i_df.iloc[0]['datetime'])
-
-            if refresh:
-                i_res = db.get_first_null(symbol, tech_indicator)
-                if db.row_count == 0:
-                    log("ndf-> add_tech:" + tech_indicator + " is correct.")
-                    return
-                i_df = pd.DataFrame(i_res)
-                i_df.columns = db.column_names
-                first_dbdt = str(i_df.iloc[0]['datetime'] - timedelta(days=1))
-            else:
-                i_res = db.get_first_m(symbol, 1)
-                i_df = pd.DataFrame(i_res)
-                i_df.columns = db.column_names
-                first_dbdt = str(i_df.iloc[0]['datetime'])
-
-            i_datetime_series = pd.DataFrame(pd.date_range(start=last_dbdt, end=first_dbdt, freq='-65d'))
-            new_row = {0: first_dbdt}
-            i_datetime_series = i_datetime_series.append(new_row, ignore_index=True)
-
-            for i_i in range(len(i_datetime_series[0])-1):
-                i_select_from = i_datetime_series.loc[i_i+1][0]
-                i_select_to = i_datetime_series.loc[i_i][0] + timedelta(days=3)
-                i_df = pd.DataFrame(None)
-                i_df = pd.DataFrame(db.get_timeframe_desc(symbol, i_select_from, i_select_to))
-                i_df = i_df.iloc[::-1]
-                i_df.columns = db.column_names
-
-                i_new_prop_array = []
-                if tech_indicator == "SMA60":
-                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
-                if tech_indicator == "SMA30":
-                    i_new_prop_array, i_df = sma(i_df, 30, refresh)
-                if tech_indicator == "RSI":
-                    i_new_prop_array, i_df = sma(i_df, 60, refresh)
-
-                # print("prop array", i_new_prop_array)
-                # print(i_df.head())
-                for i_new_prop in i_new_prop_array:
-                    # print(i_new_prop)
-                    i_datetime = tools.get_df_column(i_df, "datetime")
-                    i_values = tools.get_df_column(i_df, i_new_prop)
-                    if i_new_prop not in db.column_names:
-                        db.add_symbol_float_property(symbol, i_new_prop)
-                    db.add_symbol_value_multi(symbol, i_datetime, i_new_prop, i_values)
-        else:
-            log(tech_indicator + " - " + "technical indicator does not exist!")
-            tech_indictor_tuple = tuple(self.indicators["indicator"])
-            tech_indictor_str = ', '.join(tech_indictor_tuple)
-            log("Indicators: " + tech_indictor_str)
-
-    def refresh(self, symbol):
-        log("ndf-> refresh " + symbol)
-        to_dbdt = datetime.now() + timedelta(days=1)
-        to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
-        i_res = db.get_last_m(symbol, 1)
-        i_df = pd.DataFrame(i_res)
-        i_df.columns = db.column_names
-        from_dbdt = str(i_df.iloc[0]['datetime'])
-        i_tounix = tools.dbdt_to_unixdt(to_dbdt)
-        i_fromunix = tools.dbdt_to_unixdt(from_dbdt)
-        i_df_stock = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix)
-        db.add_symbol_values(symbol, i_df_stock)
-        return
-
-    def get_last_m(self, symbol, xm):
-        log("ndf-> get " + symbol + " last " + xm + " minutes")
-        i_res = db.get_last_m(symbol, xm)
-        if db.row_count > 0:
-            df = pd.DataFrame(i_res)
-            df.columns = db.column_names
-            self.df = df.iloc[::-1]
-        else:
-            self.df = pd.DataFrame(None)
-        return
-
-    def get_time_frame(self, symbol):
-        log("ndf-> get_time_frame " + symbol + " use gui date time")
-        i_db_dt_from = tools.get_ui_date_dbdt("from")
-        i_db_dt_to = tools.get_ui_date_dbdt("to")
-        i_res = db.get_timeframe(symbol, i_db_dt_from, i_db_dt_to)
-        if db.row_count > 0:
-            df = pd.DataFrame(i_res)
-            df.columns = db.column_names
-            self.df = df
-        else:
-            self.df = pd.DataFrame(None)
-        return
-
-    def check(self, symbol):
-        log("ndf-> check " + symbol)
-        db.qcheck(symbol)
-        if db.row_count > 0:
-            log("  Data quality ERROR: " + symbol)
-        else:
-            log("  Data quality OK: " + symbol)
-        return
-
-
-# class n_strategy():
-#     n = ""
-#
-#     def add_rsi(self, symbol):
-#         s("add RSI - " + symbol)
-#         i_now = datetime.now() + timedelta(days=1)
-#         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-#         i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-63d')
-#         for i_i in range(len(i_datetime_series)-1):
-#             i_tounix = tools.dbdt_to_unixdt(str((i_datetime_series[i_i] + timedelta(days=4))))
-#             i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-#             s("get data RSI " + symbol + " - " + str(i_datetime_series[i_i] + timedelta(days=4)) + " - " + str(i_datetime_series[i_i+1]))
-#             i_df_stock = pd.DataFrame(None)
-#             i_df_stock = md.technical_indicator_rsi(symbol, "1", i_fromunix, i_tounix)
-#             i_datetime = tools.get_df_column(i_df_stock, "datetime")
-#
-#             db_act1 = data_base()
-#             ci1 = tools.get_df_column(i_df_stock, "rsi")
-#             db_act1.add_symbol_value_multi(symbol, i_datetime, "rsi", ci1)
-#         return
 
 
 class watch_list:
@@ -835,6 +324,7 @@ class watch_list:
         self.df = self.read()
         # self.refresh_close()
         # self.refresh_sentiment()
+
 
     def read(self):
         return pd.read_csv('wl.csv', sep=';')
@@ -892,7 +382,7 @@ class watch_list:
         self.refresh_sentiment()
         self.write()
         gui.refresh_ui()
-        ndf.add(symbol)
+        ndf2.add(symbol)
         return
 
     def remove(self, symbol):
@@ -979,7 +469,7 @@ class gui(QWidget):
 
     def load_commands(self):
         c = [
-            ['help', 'help', 'help - List of all commands!', 0],
+            ['help', 'help2', 'help - List of all commands!', 0],
             ['do', 'do', 'do', 0],
             ['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
             ['sys.print', 'sys_print', 'sys.print <True/False>', 1],
@@ -989,18 +479,26 @@ class gui(QWidget):
             ['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
             ['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
             # ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
-            ['ndf.add', 'ndf_add', 'ndf.add <symbol>', 1],
+            # ['ndf.add', 'ndf_add', 'ndf.add <symbol>', 1],
             ['ndf2.add', 'ndf2_add', 'ndf2.add <symbol>', 1],
+            ['ndf2.tech', 'ndf2_tech', 'ndf2.tech <symbol> <technical indicator>', 2],
+            ['ndf2.tech.remove', 'ndf2_tech_remove', 'ndf2.tech.remove <symbol> <technical indicator>', 2],
+            ['ndf2.tech.refresh', 'ndf2_tech_refresh', 'ndf2.tech.refresh <symbol>', 1],
+            ['ndf2.tech.refresh.all', 'ndf2_tech_refresh_all', 'ndf2.tech.refresh.all', 0],
+            ['ndf2.remove', 'ndf2_remove', 'ndf2.remove <symbol>', 1],
             ['ndf2.refresh', 'ndf2_refresh', 'ndf2.refresh <symbol>', 1],
             ['ndf2.info', 'ndf2_info', 'ndf2.info', 0],
-            ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
-            ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
-            ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
-            ['ndf.chart', 'ndf_chart', 'ndf.chart <symbol> UI date time', 1],
-            ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol> <numbers / optional>', 1],
-            ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
-            ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
-            ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
+            ['ndf2.columns', 'ndf2_columns', 'ndf2.columns', 0],
+            ['ndf2.show.last', 'ndf2_show_last', 'ndf2.show.last <symbol> <numbers / optional>', 1],
+
+            # ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
+            # ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
+            # ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
+            # ['ndf.chart', 'ndf_chart', 'ndf.chart <symbol> UI date time', 1],
+            # ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol> <numbers / optional>', 1],
+            # ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
+            # ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
+            # ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
             ['md.check', 'md_check', 'md.check <symbol>', 0],
             # ['bp.start', 'bp_start', 'bp.start <> ', 0],
             # ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
@@ -1035,7 +533,7 @@ class gui(QWidget):
     def load_ui(self):
         loadUi("./qt_ui/form.ui", self)
         # hozzárendelések ------------------------------------------------------------------
-        self.Command_Line.setText("ndf.tech.refresh MSFT SMA30")
+        self.Command_Line.setText("")
         self.Run_Button.clicked.connect(self.run_button_action)
         self.Command_Line.returnPressed.connect(self.run_button_action)
         self.Command_Line.textChanged.connect(self.command_line_changed)
@@ -1103,6 +601,7 @@ class gui(QWidget):
         i_wl_frame_object[11] = gui.WL_frame_12
 
         i_noid = np.array(['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12'])
+        # i_noid = np.array(['', '_2', '_3', '_4', '_5', '_6', '_7', '_8'])
 
         for i_obj in i_wl_frame_object:
             i_obj.hide()
@@ -1231,11 +730,13 @@ class gui(QWidget):
 
 # PROGRAMS ----------------------------------------------------------------------------
 
-def help(p1="", p2="", p3=""):
+def help2(p1="", p2="", p3=""):
     gui.print_command()
 
 
 def do(symbol="", p2="", p3=""):
+
+    print(nddf['MSFT'])
     # stock = n_date_frame()
     # stock.add_last(symbol, 1)
 
@@ -1251,20 +752,24 @@ def do(symbol="", p2="", p3=""):
     # import matplotlib.pyplot as plt
 
     # Tenkan Sen
+    # conversionLine
     tenkan_max = df['High'].rolling(window=9, min_periods=0).max()
     tenkan_min = df['Low'].rolling(window=9, min_periods=0).min()
     df['tenkan_avg'] = (tenkan_max + tenkan_min) / 2
 
     # Kijun Sen
+    # baseLine
     kijun_max = df['High'].rolling(window=26, min_periods=0).max()
     kijun_min = df['Low'].rolling(window=26, min_periods=0).min()
     df['kijun_avg'] = (kijun_max + kijun_min) / 2
 
     # Senkou Span A
+    # Lead1
     # (Kijun + Tenkan) / 2 Shifted ahead by 26 periods
     df['senkou_a'] = ((df['kijun_avg'] + df['tenkan_avg']) / 2).shift(26)
 
     # Senkou Span B
+    # Lead1
     # 52 period High + Low / 2
     senkou_b_max = df['High'].rolling(window=52, min_periods=0).max()
     senkou_b_min = df['Low'].rolling(window=52, min_periods=0).min()
@@ -1272,6 +777,7 @@ def do(symbol="", p2="", p3=""):
 
     # Chikou Span
     # Current close shifted -26
+    # Lagging
     df['chikou'] = (df['Close']).shift(-26)
 
     # Plotting Ichimoku
@@ -1288,7 +794,6 @@ def do(symbol="", p2="", p3=""):
     mpf.plot(df[-250:], type='candle', mav=200, volume=True, ylabel="Price", ylabel_lower='Volume', style='nightclouds',
               figratio=(15, 10), figscale=1.5, addplot=add_plots, title=symbol,
              fill_between=dict(y1=df['senkou_a'].values, y2=df['senkou_b'].values, color='#f2ad73', alpha=0.20))
-
     pass
 
 
@@ -1306,7 +811,7 @@ def log(add_text, line=False, indent=True):
         i_ind = ""
 
     if line:
-        i_log_text = gui.Logs_Browser.toPlainText() + "─" * 82 + "\r"
+        i_log_text = gui.Logs_Browser.toPlainText() + "─" * 65 + "\r"
         gui.Logs_Browser.setText(i_log_text)
 
     lines = add_text.splitlines()
@@ -1323,16 +828,23 @@ def test(p1="", p2="", p3=""):
     log("2/2. This is a test log message.")
     s("This is a test status message")
 
-    if db.check_connection():
-        log("  Server version: " + db.server_version)
-        log("  Data base size: " + str(db.db_size) + " MB")
-    else:
-        log("  Error: " + str(db.error.msg))
+    # if db.check_connection():
+    #     log("  Server version: " + db.server_version)
+    #     log("  Data base size: " + str(db.db_size) + " MB")
+    # else:
+    #     log("  Error: " + str(db.error.msg))
 
     if md.check_finnhub_connection():
         log("  FinnHub connection is OK.")
     else:
         log("  FinnHub connection ERROR.")
+
+    ndf2_info()
+
+    process = psutil.Process(os.getpid())
+    log("Memory usage: " + str(round(process.memory_percent(),2)) + " %")
+    i_disk_usage = psutil.disk_usage('/')
+    log("Disk usage: " + str(i_disk_usage.percent) + " %")
 
 
 def sys_print(set_p="1", p2="", p3=""):
@@ -1357,43 +869,95 @@ def ndf2_add(symbol="", p2="", p3=""):
     ndf2.add(symbol)
 
 
+def ndf2_tech(symbol, tech_indicator, p3=""):
+    ndf2.add_tech(symbol, tech_indicator)
+
+
+def ndf2_tech_remove(symbol, tech_indicator, p3=""):
+    ndf2.tech_remove(symbol, tech_indicator)
+
+
+def ndf2_tech_refresh(symbol, p2="", p3=""):
+    i_indicators = ndf2.get_added_indicators(symbol)
+    print(i_indicators)
+    for i_i in i_indicators:
+        ndf2.add_tech(symbol, i_i)
+
+def ndf2_tech_refresh_all(p1="", p2="", p3=""):
+    i_symbols = tuple(nddf.keys())
+    for i_s in i_symbols:
+        log("Refresh indicators in dataframe: " + i_s)
+        i_indicators = ndf2.get_added_indicators(i_s)
+        for i_i in i_indicators:
+            ndf2.add_tech(i_s, i_i)
+
+
+def ndf2_remove(symbol="", p2="", p3=""):
+    ndf2.remove(symbol)
+
+
 def ndf2_refresh(symbol="", p2="", p3=""):
     ndf2.refresh(symbol)
 
 
 def ndf2_info(p1="", p2="", p3=""):
     log(nddb.info())
+    log("nDot db size: " + str(nddb.get_size()) + " KB")
+    i_nddf_size = sys.getsizeof(nddf)
+    for key in nddf:
+        i_nddf_size += nddf[key].memory_usage(deep=True).sum()
+    log("nddf size in memory: " + str(int(i_nddf_size/1024)) + " KB")
+
+def ndf2_columns(p1="", p2="", p3=""):
+    i_cols = tuple(nddf.keys())
+    log("Data Frame columns by symbols:")
+    for i_c in i_cols:
+        log(i_c)
+        log(str(tuple(nddf[i_c].columns)))
 
 
-def ndf_add(symbol="", p2="", p3=""):
-    ndf.add(symbol)
-    ndf.check(symbol)
+def ndf2_show_last(symbol="", xminute="60", p3=""):
+    if symbol in nddf:
+
+        from pandastable import Table, TableModel, config
+
+        class TestApp(Frame):
+            """Basic test frame for the table"""
+
+            def __init__(self, parent=None):
+                self.parent = parent
+                Frame.__init__(self)
+                self.main = self.master
+                self.main.geometry('1200x600+100+100')
+                self.main.title(symbol)
+                f = Frame(self.main)
+                f.pack(fill=BOTH, expand=1)
+
+                self.table = pt = Table(f, dataframe=nddf[symbol].iloc[::-1],
+                                        showtoolbar=True, showstatusbar=True)
+                options = {'align': 'w',
+                         'cellbackgr': '#F4F4F3',
+                         'cellwidth': 80,
+                         'colheadercolor': '#535b71',
+                         'floatprecision': 2,
+                         'font': 'Arial',
+                         'fontsize': 9,
+                         'fontstyle': '',
+                         'grid_color': '#AAAAAA',
+                         'linewidth': 1,
+                         'rowheight': 18,
+                         'rowselectedcolor': '#E4DED4',
+                         'textcolor': 'black'}
+                config.apply_options(options, self.table)
+                pt.show()
+                return
+
+        app = TestApp()
+        app.mainloop()
+    else:
+        log("nddf key not exist: " + symbol)
 
 
-def ndf_tech(symbol, tech_indicator, p3=""):
-    ndf.add_tech(symbol, tech_indicator)
-
-
-def ndf_tech_refresh(symbol, p2="", p3=""):
-    i_sahdow = db.get_first_m(symbol, 1)
-    # Csak az oszlop nevek miatt kell
-    for i_c_name in db.column_names:
-        if ndf.is_indicator(i_c_name):
-            ndf.add_tech(symbol, i_c_name, True)
-
-
-def ndf_refresh(symbol="", p2="", p3=""):
-    ndf.refresh(symbol)
-    # ndf.check(symbol)
-    # gui.refresh_ui()
-
-
-def ndf_remove(symbol="", p2="", p3=""):
-    db.remove_symbol(symbol)
-
-
-def ndf_check(symbol="", p2="", p3=""):
-    ndf.check(symbol)
 
 
 def ndf_chart(symbol, p2="", p3=""):
@@ -1417,25 +981,33 @@ def ndf_chart(symbol, p2="", p3=""):
     else:
         log("no data found in df")
 
-# class Index(object):
-#
-#     def next(self, event):
-#         print("next")
-#
-#     def prev(self, event):
-#         print("prev")
-
 
 class NewTool1(ToolBase):
     image = r"./images/ndot_icon_x2.png"
 
     def trigger(self, sender, event, data=None):
-
+        # print(nddf[nchart.symbol]["Close"].iloc[nchart.window_from:nchart.window_to])
         for i_i in range(1, 5):
             for ax in nchart.axes:
                 ax.clear()
             nchart.window_minus(3)
-            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to], type='candle', ax=nchart.ax_main, volume=nchart.ax_volu, returnfig=True, tight_layout=True)
+            ap = [mpf.make_addplot(nchart.df.iloc[nchart.window_from:nchart.window_to],
+                                   type='candle',
+                                   ax=nchart.ax2,
+                                   ylabel='OHLC Price')
+                  # mpf.make_addplot(nddf[self.symbol].iloc[self.window_from:self.window_to][['Low', 'High']], ax=ax1)
+                  ]
+
+            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to],
+                     type='candle',
+                     ax=nchart.ax1,
+                     volume=nchart.ax3,
+                     addplot=ap,
+                     tight_layout=True)
+
+            for ax in nchart.axes[:-1]:
+                plt.setp(ax.get_xticklabels(), visible=False)
+
             nchart.fig.canvas.draw()
             QApplication.processEvents()
 
@@ -1449,7 +1021,24 @@ class NewTool2(ToolBase):
             for ax in nchart.axes:
                 ax.clear()
             nchart.window_plus(3)
-            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to], type='candle', ax=nchart.ax_main, volume=nchart.ax_volu, returnfig=True, tight_layout=True)
+
+            ap = [mpf.make_addplot(nchart.df.iloc[nchart.window_from:nchart.window_to],
+                                   type='candle',
+                                   ax=nchart.ax2,
+                                   ylabel='OHLC Price')
+                  # mpf.make_addplot(nddf[self.symbol].iloc[self.window_from:self.window_to][['Low', 'High']], ax=ax1)
+                  ]
+            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to],
+                     type='candle',
+                     ax=nchart.ax1,
+                     volume=nchart.ax3,
+                     addplot=ap,
+                     tight_layout=True)
+            nchart.fig.subplots_adjust(hspace=0.001, wspace=0, left=0.07)
+
+            for ax in nchart.axes[:-1]:
+                plt.setp(ax.get_xticklabels(), visible=False)
+
             nchart.fig.canvas.draw()
             QApplication.processEvents()
 
@@ -1458,7 +1047,6 @@ class nchart_last():
 
     def __init__(self):
         self.symbol = ""
-        self.df = pd.DataFrame(None)
         self.row_count = 0
         self.window_size = 120
         self.window_to = 0
@@ -1466,62 +1054,79 @@ class nchart_last():
         self.fig = ""
         self.axes = ""
         self.last_block_count = 2
-        self.stock = n_date_frame()
+        self.df = pd.DataFrame(None)
+        self.add_plots = []
+        self.ax1 = ""
+        self.ax2 = ""
+        self.ax3 = ""
 
     def show(self):
-        self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
-        if db.row_count > 0:
-            i_chart_df = self.stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"}, errors="raise")
-            self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
-            i_in_time, i_out_time = trade.time_filter(self.df)
-            self.df = i_in_time
-            # self.ap = [mpf.make_addplot(self.df['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
-            #       mpf.make_addplot(self.df['Open'], panel=3, type='bar', ylabel='Line2')]
-            # self.fig, self.axes = mpf.plot(self.df, mav=10, type='candle', ylabel='Candle', addplot=self.ap, panel_ratios=(3, 1, 1, 1), figratio=(11, 5),
-            #          figscale=1, volume=True, tight_layout=True, title=self.symbol, returnfig=True)
+        print(self.symbol)
+        self.df = pd.DataFrame(None)
+        print(nddf[self.symbol])
+        self.df = nddf[self.symbol]
+        self.df = self.df.set_index("date")
+        self.row_count = self.df.shape[0]
+        self.window_to = self.row_count
+        self.window_from = self.row_count - self.window_size
+        print(self.df)
 
-            self.row_count = self.df.shape[0]
-            self.window_to = self.row_count
-            self.window_from = self.row_count - self.window_size
-            self.fig, self.axes = mpf.plot(self.df.iloc[self.window_from:self.window_to], type='candle', figratio=(17, 6), figscale=.8,
-                                           volume=True, show_nontrading=True, tight_layout=True, title=self.symbol, returnfig=True)
-            tm = self.fig.canvas.manager.toolmanager
-            tm.add_tool("<-", NewTool1)
-            tm = self.fig.canvas.manager.toolmanager
-            tm.add_tool("->", NewTool2)
-            self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
-            self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
+        self.fig = mpf.figure(style='yahoo',
+                              figsize=(16, 8),
+                              tight_layout=False,
+                              dpi=80)
 
-            self.ax_main = self.axes[0]
-            self.ax_volu = self.axes[2]
+        self.fig.subplots_adjust(hspace=0.001, wspace=0, left=0.07)
+        self.fig.patch.set_facecolor('#d8d5ca')
+        self.fig.suptitle(self.symbol, fontsize=16)
 
-            self.fig.show()
+        self.ax1 = self.fig.add_subplot(6, 1, (1, 4))
+        self.ax1.set_facecolor('#ffffff')
+        self.ax1.patch.set_edgecolor('black')
+        self.ax1.patch.set_linewidth('1')
 
-        else:
-            log("no data found in df")
+        self.ax2 = self.fig.add_subplot(6, 1, 5, sharex=self.ax1)
+        self.ax2.set_facecolor('#efefef')
+        self.ax2.patch.set_edgecolor('black')
+        self.ax2.patch.set_linewidth('1')
+
+        self.ax3 = self.fig.add_subplot(6, 1, 6, sharex=self.ax1)
+        self.ax3.set_facecolor('#ffffff')
+        self.ax3.patch.set_edgecolor('#000000')
+        self.ax3.patch.set_linewidth('1')
+
+        ap = [mpf.make_addplot(self.df.iloc[self.window_from:self.window_to],
+                               type='candle',
+                               ax=self.ax2,
+                               ylabel='OHLC Price')
+              # mpf.make_addplot(nddf[self.symbol].iloc[self.window_from:self.window_to][['Low', 'High']], ax=ax1)
+              ]
+
+        mpf.plot(self.df.iloc[self.window_from:self.window_to],
+                 ax=self.ax1,
+                 volume=self.ax3,
+                 addplot=ap,
+                 xrotation=10,
+                 type='candle')
+        # fill_between=dict(y1=df['senkou_a'].values, y2=df['senkou_b'].values,
+        #                   color='#f2ad73', alpha=0.20),
+
+        tm = self.fig.canvas.manager.toolmanager
+        tm.add_tool("<-", NewTool1)
+        tm = self.fig.canvas.manager.toolmanager
+        tm.add_tool("->", NewTool2)
+        self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
+        self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
+
+        self.axes = self.fig.axes
+        self.fig.show()
 
     def window_minus(self, step):
         self.window_to = self.window_to - step
         self.window_from = self.window_to - self.window_size
-        if self.window_from < ((step*2)+1):
-            log("start: db.get_last_m for chart " + self.symbol, True, False)
-            old_row_count = self.row_count
-            self.last_block_count += 1
-            self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
-            if db.row_count > 0:
-
-                i_chart_df = self.stock.df.rename(
-                    columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"},
-                    errors="raise")
-                self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
-                i_in_time, i_out_time = trade.time_filter(self.df)
-                self.df = i_in_time
-                self.row_count = self.df.shape[0]
-                groving = self.row_count - old_row_count
-                self.window_from = self.window_from + groving
-                self.window_to = self.window_to + groving
-            log("ready.", False, False)
-
+        if self.window_from <= 0:
+            self.window_from = 0
+            self.window_to = self.window_from + self.window_size
 
     def window_plus(self, step):
         self.window_to = self.window_to + step
@@ -1532,114 +1137,87 @@ class nchart_last():
 
 
 
+# class nchart_last():
+#
+#     def __init__(self):
+#         self.symbol = ""
+#         self.df = pd.DataFrame(None)
+#         self.row_count = 0
+#         self.window_size = 120
+#         self.window_to = 0
+#         self.window_from = 0
+#         self.fig = ""
+#         self.axes = ""
+#         self.last_block_count = 2
+#         self.stock = n_date_frame()
+#
+#     def show(self):
+#         self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
+#         if db.row_count > 0:
+#             i_chart_df = self.stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"}, errors="raise")
+#             self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
+#             i_in_time, i_out_time = trade.time_filter(self.df)
+#             self.df = i_in_time
+#             # self.ap = [mpf.make_addplot(self.df['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
+#             #       mpf.make_addplot(self.df['Open'], panel=3, type='bar', ylabel='Line2')]
+#             # self.fig, self.axes = mpf.plot(self.df, mav=10, type='candle', ylabel='Candle', addplot=self.ap, panel_ratios=(3, 1, 1, 1), figratio=(11, 5),
+#             #          figscale=1, volume=True, tight_layout=True, title=self.symbol, returnfig=True)
+#
+#             self.row_count = self.df.shape[0]
+#             self.window_to = self.row_count
+#             self.window_from = self.row_count - self.window_size
+#             self.fig, self.axes = mpf.plot(self.df.iloc[self.window_from:self.window_to], type='candle', figratio=(17, 6), figscale=.8,
+#                                            volume=True, show_nontrading=True, tight_layout=True, title=self.symbol, returnfig=True)
+#             tm = self.fig.canvas.manager.toolmanager
+#             tm.add_tool("<-", NewTool1)
+#             tm = self.fig.canvas.manager.toolmanager
+#             tm.add_tool("->", NewTool2)
+#             self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
+#             self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
+#
+#             self.ax_main = self.axes[0]
+#             self.ax_volu = self.axes[2]
+#
+#             self.fig.show()
+#
+#         else:
+#             log("no data found in df")
+#
+#     def window_minus(self, step):
+#         self.window_to = self.window_to - step
+#         self.window_from = self.window_to - self.window_size
+#         if self.window_from < ((step*2)+1):
+#             log("start: db.get_last_m for chart " + self.symbol, True, False)
+#             old_row_count = self.row_count
+#             self.last_block_count += 1
+#             self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
+#             if db.row_count > 0:
+#
+#                 i_chart_df = self.stock.df.rename(
+#                     columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"},
+#                     errors="raise")
+#                 self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
+#                 i_in_time, i_out_time = trade.time_filter(self.df)
+#                 self.df = i_in_time
+#                 self.row_count = self.df.shape[0]
+#                 groving = self.row_count - old_row_count
+#                 self.window_from = self.window_from + groving
+#                 self.window_to = self.window_to + groving
+#             log("ready.", False, False)
+#
+#
+#     def window_plus(self, step):
+#         self.window_to = self.window_to + step
+#         if self.window_to > self.row_count:
+#             self.window_to = self.row_count
+#         self.window_from = self.window_to - self.window_size
+
+
+
+
 def ndf_chart_last(symbol="", xminute="60", p3=""):
     nchart.symbol = symbol
     nchart.show()
-
-        # import matplotlib.pyplot as plt
-        # import mplfinance as mpf
-        # from matplotlib.widgets import Button
-
-
-
-        # ap = [mpf.make_addplot(quote['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
-        #       mpf.make_addplot(quote['Open'], panel=3, type='bar', ylabel='Line2')]
-        # fig, ax = mpf.plot(quote, mav=10, type='candle', ylabel='Candle', addplot=ap, panel_ratios=(3, 1, 1, 1), figratio=(11, 5),
-        #          figscale=1, volume=True, tight_layout=True, title=symbol, returnfig=True)
-        #
-        # callback = Index()
-        # # plt.subplots_adjust(bottom=0.2)
-        # axprev = fig.add_axes([0.7, 0.05, 0.1, 0.075])
-        # axnext = fig.add_axes([0.81, 0.05, 0.1, 0.075])
-        # bnext = Button(axnext, 'Next')
-        # bnext.on_clicked(callback.next)
-        # print(bnext.get_active())
-        # bprev = Button(axprev, 'Previous')
-        # bprev.on_clicked(callback.prev)
-
-        # tm = fig.canvas.manager.toolmanager
-        # tm.add_tool("<-", NewTool1)
-        # tm = fig.canvas.manager.toolmanager
-        # tm.add_tool("->", NewTool2)
-        # fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
-        # fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
-        # plt.show()
-
-        # ap = [mpf.make_addplot(quote['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
-        #       mpf.make_addplot(quote['Open'], panel=3, type='bar', ylabel='Line2')]
-        # mpf.plot(quote, type='candle', ylabel='Candle', figratio=(11, 5),
-        #          figscale=1, volume=True, tight_layout=True, title=symbol)
-
-        # # mpf.plot(quote, type='line', volume=True, vlines=dict(vlines=['2020-09-21 22:00'], linewidths=1, alpha=0.2) )
-        # fig = mpf.figure(figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', num=symbol)
-        # ax1 = fig.add_subplot(4, 1, (1, 3))
-        # ax2 = fig.add_subplot(4, 1, 4, sharex=ax1)
-        # # ax3 = fig.add_subplot(5, 1, 5, sharex=ax1)
-        # # ax1.get_xaxis()
-        # # ax1.set_xticklabels([])
-        # # ax1.set_yticklabels([])
-        # # ax2.set_xticklabels([])
-        # # ax2.set_yticklabels([])
-        # plt.subplots_adjust(hspace=.001)
-        # # mpf.plot(quote, ax=ax1, volume=ax2, axtitle='', type='candle', vlines=dict(vlines=['2020-09-21 22:00'], linewidths=1, alpha=0.2))
-        # mpf.plot(quote, ax=ax1, volume=ax2, axtitle='', type='candle')
-        # mpf.show()
-
-
-
-
-def ndf_show_last(symbol="", xminute="60", p3=""):
-    stock = n_date_frame()
-    stock.get_last_m(symbol, xminute)
-    if db.row_count > 0:
-        # i_df_s = pd.DataFrame(None)
-        # stock.df['o'] = stock.df['o'].astype(float)
-        # stock.df['h'] = stock.df['h'].astype(float)
-        # stock.df['l'] = stock.df['l'].astype(float)
-        # stock.df['c'] = stock.df['c'].astype(float)
-        # i_df_s['ohlc4'] = stock.df['ohlc4'].astype(float)
-        # i_df_s['v'] = stock.df['v'].astype(int)
-        # # i_df = i_df.round({'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6, 'v': 0})
-        # i_df_s.set_index('datetime')
-
-
-        from pandastable import Table, TableModel, config
-
-        class TestApp(Frame):
-            """Basic test frame for the table"""
-
-            def __init__(self, parent=None):
-                self.parent = parent
-                Frame.__init__(self)
-                self.main = self.master
-                self.main.geometry('1200x600+100+100')
-                self.main.title(symbol)
-                f = Frame(self.main)
-                f.pack(fill=BOTH, expand=1)
-
-                self.table = pt = Table(f, dataframe=stock.df,
-                                        showtoolbar=True, showstatusbar=True)
-                options = {'align': 'w',
-                         'cellbackgr': '#F4F4F3',
-                         'cellwidth': 80,
-                         'colheadercolor': '#535b71',
-                         'floatprecision': 2,
-                         'font': 'Arial',
-                         'fontsize': 9,
-                         'fontstyle': '',
-                         'grid_color': '#AAAAAA',
-                         'linewidth': 1,
-                         'rowheight': 18,
-                         'rowselectedcolor': '#E4DED4',
-                         'textcolor': 'black'}
-                config.apply_options(options, self.table)
-                pt.show()
-                return
-
-        app = TestApp()
-        app.mainloop()
-    else:
-        log("no data found in df")
 
 
 # md programs -------------------------------------------------------------------------------------------------------
@@ -1652,13 +1230,12 @@ def md_check(symbol="", p2="", p3=""):
         log("  FinnHub connection ERROR.")
 
 
-
 # wl programs -------------------------------------------------------------------------------------------------------
 
 
 def wl_add(symbol="", p2="", p3=""):
     wl.add(symbol)
-    ndf.check(symbol)
+    # ndf.check(symbol)
     gui.refresh_ui()
 
 
@@ -1704,8 +1281,8 @@ def wl_btn_chart(btn_no):
 
 def wl_btn_show(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
-    log("start: ndf.show.last " + symbol, True, False)
-    ndf_show_last(symbol)
+    log("start: ndf2.show.last " + symbol, True, False)
+    ndf2_show_last(symbol)
     log("ready.", False, False)
 
 # Back_processes -----------------------------------------------------
@@ -1796,27 +1373,32 @@ class ListenWebsocket(QtCore.QThread):
 if __name__ == "__main__":
 
     # 1.
-    ndf2 = n_date_frame2()
+    # Create a DataFrame so 'ta' can be used.
+    # df = pd.DataFrame()
+    # List of all indicators
+    # df.ta.indicators()
+    # help(ta.sma)
+
+
+
+    print("Status: Reading nDot data frame")
     nddf = {}
     nddb = nd_db()
+    ndf2 = n_date_frame2()
     print("Status: GUI Load")
     app = QApplication([])
     gui = gui()
-
     nsys = n_system
-    db = data_base()
+    # db = data_base()
     md = market_data()
     wl = watch_list()
     gui.refresh_ui()
     # gui.showFullScreen()
     gui.showMaximized()
     tools = tools()
-    ndf = n_date_frame()
+    # ndf = n_date_frame()
     nchart = nchart_last()
     trade = trade()
-
-    # nsrg = strategy()
-    # nsrg.add_rsi("APA")
 
     # gui.show()
     print("Status: GUI is running")

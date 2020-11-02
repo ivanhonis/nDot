@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1300</width>
+    <width>1400</width>
     <height>800</height>
    </rect>
   </property>
@@ -24,8 +24,11 @@
   </property>
   <property name="font">
    <font>
-    <family>MS Serif</family>
-    <pointsize>7</pointsize>
+    <family>Tahoma</family>
+    <pointsize>9</pointsize>
+    <weight>75</weight>
+    <bold>true</bold>
+    <kerning>false</kerning>
    </font>
   </property>
   <property name="windowTitle">
@@ -39,7 +42,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>795</width>
+     <width>702</width>
      <height>5</height>
     </rect>
    </property>
@@ -65,10 +68,10 @@ background:rgb(255, 170, 0);
   <widget class="QLabel" name="Status">
    <property name="geometry">
     <rect>
-     <x>23</x>
+     <x>6</x>
      <y>691</y>
-     <width>771</width>
-     <height>16</height>
+     <width>691</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="font">
@@ -89,7 +92,7 @@ background:rgb(255, 170, 0);
     <rect>
      <x>119</x>
      <y>58</y>
-     <width>541</width>
+     <width>491</width>
      <height>25</height>
     </rect>
    </property>
@@ -118,7 +121,7 @@ color: #aaaaaa;
     <rect>
      <x>119</x>
      <y>27</y>
-     <width>541</width>
+     <width>491</width>
      <height>31</height>
     </rect>
    </property>
@@ -148,9 +151,9 @@ padding-left: 10px;
   <widget class="QPushButton" name="Run_Button">
    <property name="geometry">
     <rect>
-     <x>660</x>
+     <x>610</x>
      <y>27</y>
-     <width>121</width>
+     <width>79</width>
      <height>56</height>
     </rect>
    </property>
@@ -189,8 +192,8 @@ QPushButton:pressed {
     <rect>
      <x>5</x>
      <y>370</y>
-     <width>351</width>
-     <height>291</height>
+     <width>290</width>
+     <height>275</height>
     </rect>
    </property>
    <property name="font">
@@ -202,24 +205,19 @@ QPushButton:pressed {
    <property name="styleSheet">
     <string notr="true">QGroupBox {
     border: 1px solid #333333;
-	border-top: 3 px solid #333333;
-    border-color: #333333;
-    margin-top: 27px;
-	margin-left: 7px;
-	margin-right: 3px;
+	margin-left: 0px;
+	margin-right: 0px;
     font-size: 14px;
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 
 QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top center;
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-    padding: 5px 150px;
+    padding: 5px 140px;
     background-color: #333333;
-    color: rgb(255, 255, 255);
+    color: #ffffff;
 }</string>
    </property>
    <property name="title">
@@ -228,16 +226,19 @@ QGroupBox::title {
    <widget class="QCalendarWidget" name="From_D">
     <property name="geometry">
      <rect>
-      <x>26</x>
+      <x>4</x>
       <y>34</y>
-      <width>304</width>
-      <height>211</height>
+      <width>280</width>
+      <height>200</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>Arial</family>
-      <pointsize>9</pointsize>
+      <pointsize>8</pointsize>
+      <weight>50</weight>
+      <bold>false</bold>
+      <kerning>true</kerning>
      </font>
     </property>
     <property name="contextMenuPolicy">
@@ -248,21 +249,21 @@ QGroupBox::title {
     </property>
     <property name="styleSheet">
      <string notr="true">QCalendarWidget QToolButton {
-  	font-size: 14px;
+  	font-size: 12px;
   	icon-size: 20px, 20px;
   	background-color: white;
 	color:rgb(255, 170, 0);
   }
   QCalendarWidget QMenu {
   	width: 150px;
-  	left: 20px;
+  	left: 16px;
   	color: white;
-  	font-size: 18px;
+  	font-size: 16px;
   	background-color: rgb(100, 100, 100);
   }
   QCalendarWidget QSpinBox { 
   	width: 150px; 
-  	font-size:24px; 
+  	font-size:20px; 
   	color: white; 
   	background-color:white; 
   	selection-background-color: rgb(136, 136, 136);
@@ -279,7 +280,7 @@ QGroupBox::title {
   /* normal days */
   QCalendarWidget QAbstractItemView:enabled 
   {
-  	font-size:12px;  
+  	font-size:10px;  
   	color: #555555;  
   	background-color: white;  
   	selection-background-color: rgb(64, 64, 64); 
@@ -311,9 +312,9 @@ color: rgb(64, 64, 64);
    <widget class="QTimeEdit" name="From_T">
     <property name="geometry">
      <rect>
-      <x>23</x>
-      <y>250</y>
-      <width>311</width>
+      <x>3</x>
+      <y>240</y>
+      <width>280</width>
       <height>22</height>
      </rect>
     </property>
@@ -335,10 +336,10 @@ border: 1px solid #aaaaaa;</string>
   <widget class="QGroupBox" name="groupBox_2">
    <property name="geometry">
     <rect>
-     <x>445</x>
+     <x>390</x>
      <y>370</y>
-     <width>351</width>
-     <height>291</height>
+     <width>290</width>
+     <height>275</height>
     </rect>
    </property>
    <property name="font">
@@ -350,24 +351,19 @@ border: 1px solid #aaaaaa;</string>
    <property name="styleSheet">
     <string notr="true">QGroupBox {
     border: 1px solid #333333;
-	border-top: 3 px solid #333333;
-    border-color: #333333;
-    margin-top: 27px;
-	margin-left: 16px;
-	margin-right: 12px;
+	margin-left: 0px;
+	margin-right: 0px;
     font-size: 14px;
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
 }
 
 QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top center;
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
-    padding: 5px 150px;
+    padding: 5px 140px;
     background-color: #333333;
-    color: rgb(255, 255, 255);
+    color: #ffffff;
 }</string>
    </property>
    <property name="title">
@@ -382,16 +378,16 @@ QGroupBox::title {
    <widget class="QCalendarWidget" name="To_D">
     <property name="geometry">
      <rect>
-      <x>26</x>
+      <x>5</x>
       <y>37</y>
-      <width>304</width>
-      <height>211</height>
+      <width>280</width>
+      <height>200</height>
      </rect>
     </property>
     <property name="font">
      <font>
       <family>Arial</family>
-      <pointsize>9</pointsize>
+      <pointsize>6</pointsize>
      </font>
     </property>
     <property name="contextMenuPolicy">
@@ -402,21 +398,21 @@ QGroupBox::title {
     </property>
     <property name="styleSheet">
      <string notr="true">QCalendarWidget QToolButton {
-  	font-size: 14px;
+  	font-size: 12px;
   	icon-size: 20px, 20px;
   	background-color: white;
 	color:rgb(255, 170, 0);
   }
   QCalendarWidget QMenu {
   	width: 150px;
-  	left: 20px;
+  	left: 16px;
   	color: white;
-  	font-size: 18px;
+  	font-size: 16px;
   	background-color: rgb(100, 100, 100);
   }
   QCalendarWidget QSpinBox { 
   	width: 150px; 
-  	font-size:24px; 
+  	font-size:20px; 
   	color: white; 
   	background-color:white; 
   	selection-background-color: rgb(136, 136, 136);
@@ -433,7 +429,7 @@ QGroupBox::title {
   /* normal days */
   QCalendarWidget QAbstractItemView:enabled 
   {
-  	font-size:12px;  
+  	font-size:10px;  
   	color: #555555;  
   	background-color: white;  
   	selection-background-color: rgb(64, 64, 64); 
@@ -465,9 +461,9 @@ color: rgb(64, 64, 64);
    <widget class="QTimeEdit" name="To_T">
     <property name="geometry">
      <rect>
-      <x>24</x>
-      <y>256</y>
-      <width>311</width>
+      <x>5</x>
+      <y>239</y>
+      <width>280</width>
       <height>22</height>
      </rect>
     </property>
@@ -491,16 +487,17 @@ border: 1px solid #aaaaaa;</string>
     <rect>
      <x>0</x>
      <y>103</y>
-     <width>801</width>
+     <width>701</width>
      <height>251</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <family>Fixedsys</family>
-     <pointsize>11</pointsize>
+     <family>Tahoma</family>
+     <pointsize>9</pointsize>
      <weight>50</weight>
      <bold>false</bold>
+     <stylestrategy>PreferAntialias</stylestrategy>
     </font>
    </property>
    <property name="styleSheet">
@@ -533,14 +530,14 @@ pdding-bottom:0px;</string>
     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Fixedsys'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Tahoma'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Arial'; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
   </widget>
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>801</x>
+     <x>702</x>
      <y>-1</y>
      <width>3</width>
      <height>1500</height>
@@ -565,7 +562,7 @@ background-color: none;</string>
     <rect>
      <x>0</x>
      <y>5</y>
-     <width>801</width>
+     <width>702</width>
      <height>3</height>
     </rect>
    </property>
@@ -578,7 +575,7 @@ background-color: none;</string>
     <rect>
      <x>-3</x>
      <y>103</y>
-     <width>804</width>
+     <width>704</width>
      <height>3</height>
     </rect>
    </property>
@@ -597,7 +594,7 @@ background-color: none;</string>
     <rect>
      <x>0</x>
      <y>354</y>
-     <width>800</width>
+     <width>701</width>
      <height>3</height>
     </rect>
    </property>
@@ -608,8 +605,8 @@ background-color: none;</string>
   <widget class="QPushButton" name="Datetime_mod1">
    <property name="geometry">
     <rect>
-     <x>371</x>
-     <y>426</y>
+     <x>309</x>
+     <y>437</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -640,8 +637,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod2">
    <property name="geometry">
     <rect>
-     <x>371</x>
-     <y>476</y>
+     <x>309</x>
+     <y>472</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -672,8 +669,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod3">
    <property name="geometry">
     <rect>
-     <x>371</x>
-     <y>526</y>
+     <x>309</x>
+     <y>507</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -704,8 +701,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod4">
    <property name="geometry">
     <rect>
-     <x>371</x>
-     <y>576</y>
+     <x>309</x>
+     <y>542</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -736,8 +733,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_mod5">
    <property name="geometry">
     <rect>
-     <x>371</x>
-     <y>626</y>
+     <x>309</x>
+     <y>577</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -768,8 +765,8 @@ QPushButton:pressed {
   <widget class="QPushButton" name="Datetime_now">
    <property name="geometry">
     <rect>
-     <x>371</x>
-     <y>376</y>
+     <x>309</x>
+     <y>403</y>
      <width>70</width>
      <height>30</height>
     </rect>
@@ -875,9 +872,9 @@ background:none;</string>
   <widget class="Line" name="line_6">
    <property name="geometry">
     <rect>
-     <x>801</x>
+     <x>702</x>
      <y>41</y>
-     <width>600</width>
+     <width>1000</width>
      <height>20</height>
     </rect>
    </property>
@@ -898,7 +895,7 @@ background-color: none;</string>
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>857</x>
+     <x>747</x>
      <y>6</y>
      <width>160</width>
      <height>37</height>
@@ -923,7 +920,7 @@ background:none;</string>
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>859</x>
+     <x>749</x>
      <y>8</y>
      <width>160</width>
      <height>37</height>
@@ -948,7 +945,7 @@ background:none;</string>
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>858</x>
+     <x>748</x>
      <y>7</y>
      <width>160</width>
      <height>37</height>
@@ -973,7 +970,7 @@ background:none;</string>
   <widget class="QCommandLinkButton" name="WL_refresh">
    <property name="geometry">
     <rect>
-     <x>820</x>
+     <x>710</x>
      <y>6</y>
      <width>181</width>
      <height>41</height>
@@ -1003,16 +1000,246 @@ background: none;</string>
     <bool>false</bool>
    </property>
   </widget>
+  <widget class="Line" name="line_8">
+   <property name="geometry">
+    <rect>
+     <x>705</x>
+     <y>43</y>
+     <width>1000</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #ffffff;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_9">
+   <property name="geometry">
+    <rect>
+     <x>704</x>
+     <y>38</y>
+     <width>1000</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #444444;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_10">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>671</y>
+     <width>702</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #444444;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_11">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>674</y>
+     <width>702</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #999999;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_12">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>676</y>
+     <width>702</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #ffffff;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_5">
+   <property name="geometry">
+    <rect>
+     <x>704</x>
+     <y>0</y>
+     <width>3</width>
+     <height>1500</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #ffffff;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_7">
+   <property name="geometry">
+    <rect>
+     <x>700</x>
+     <y>0</y>
+     <width>3</width>
+     <height>1500</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #444444;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_13">
+   <property name="geometry">
+    <rect>
+     <x>704</x>
+     <y>605</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #ffffff;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_14">
+   <property name="geometry">
+    <rect>
+     <x>705</x>
+     <y>603</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #999999;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>4</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_15">
+   <property name="geometry">
+    <rect>
+     <x>705</x>
+     <y>600</y>
+     <width>800</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #444444;
+background-color: none;</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
   <widget class="QFrame" name="WL_frame">
    <property name="enabled">
     <bool>true</bool>
    </property>
    <property name="geometry">
     <rect>
-     <x>810</x>
-     <y>80</y>
-     <width>221</width>
-     <height>91</height>
+     <x>710</x>
+     <y>60</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1027,19 +1254,26 @@ background: none;</string>
    <widget class="QToolButton" name="WL_btn_chart">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -1049,8 +1283,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -1073,7 +1307,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -1098,8 +1331,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -1121,7 +1354,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -1136,8 +1368,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -1173,8 +1405,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -1204,8 +1436,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -1235,8 +1467,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -1272,8 +1504,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -1309,8 +1541,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -1346,23 +1578,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_2">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_3">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -1372,10 +1701,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>80</y>
-     <width>221</width>
-     <height>91</height>
+     <x>920</x>
+     <y>60</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1390,19 +1719,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_2">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -1412,8 +1748,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_2">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -1436,7 +1772,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -1461,8 +1796,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_2">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -1484,7 +1819,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -1499,8 +1833,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_2">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -1536,8 +1870,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_2">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -1567,8 +1901,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_2">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -1598,8 +1932,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_2">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -1635,8 +1969,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_2">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -1672,8 +2006,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_2">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -1709,23 +2043,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_2">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_4">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_5">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_6">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -1735,10 +2166,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>810</x>
-     <y>170</y>
-     <width>221</width>
-     <height>91</height>
+     <x>1130</x>
+     <y>60</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1753,19 +2184,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_3">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -1775,8 +2213,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_3">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -1799,7 +2237,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -1824,8 +2261,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_3">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -1847,7 +2284,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -1862,8 +2298,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_3">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -1899,8 +2335,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_3">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -1930,8 +2366,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_3">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -1961,8 +2397,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_3">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -1998,8 +2434,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_3">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2035,8 +2471,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_3">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2072,23 +2508,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_3">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_7">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_8">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_9">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -2098,10 +2631,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>1050</x>
+     <x>710</x>
      <y>170</y>
-     <width>221</width>
-     <height>91</height>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -2116,19 +2649,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_4">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -2138,8 +2678,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_4">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -2162,7 +2702,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -2187,8 +2726,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_4">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -2210,7 +2749,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -2225,8 +2763,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_4">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -2262,8 +2800,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_4">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -2293,8 +2831,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_4">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -2324,8 +2862,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_4">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2361,8 +2899,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_4">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2398,8 +2936,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_4">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2435,23 +2973,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_4">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_10">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_11">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_12">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -2461,10 +3096,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>810</x>
-     <y>260</y>
-     <width>221</width>
-     <height>91</height>
+     <x>920</x>
+     <y>170</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -2479,19 +3114,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_5">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -2501,8 +3143,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_5">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -2525,7 +3167,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -2550,8 +3191,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_5">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -2573,7 +3214,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -2588,8 +3228,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_5">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -2625,8 +3265,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_5">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -2656,8 +3296,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_5">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -2687,8 +3327,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_5">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2724,8 +3364,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_5">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2761,8 +3401,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_5">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -2798,23 +3438,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_5">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_13">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_14">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_15">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -2824,10 +3561,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>260</y>
-     <width>221</width>
-     <height>91</height>
+     <x>1130</x>
+     <y>170</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -2842,19 +3579,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_6">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -2864,8 +3608,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_6">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -2888,7 +3632,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -2913,8 +3656,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_6">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -2936,7 +3679,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -2951,8 +3693,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_6">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -2988,8 +3730,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_6">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -3019,8 +3761,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_6">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -3050,8 +3792,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_6">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3087,8 +3829,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_6">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3124,8 +3866,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_6">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3161,23 +3903,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_6">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_16">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_17">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_18">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -3187,10 +4026,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>810</x>
-     <y>350</y>
-     <width>221</width>
-     <height>91</height>
+     <x>710</x>
+     <y>280</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -3205,19 +4044,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_7">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -3227,8 +4073,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_7">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -3251,7 +4097,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -3276,8 +4121,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_7">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -3299,7 +4144,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -3314,8 +4158,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_7">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -3351,8 +4195,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_7">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -3382,8 +4226,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_7">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -3413,8 +4257,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_7">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3450,8 +4294,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_7">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3487,8 +4331,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_7">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3524,23 +4368,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_7">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_19">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_20">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_21">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -3550,10 +4491,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>350</y>
-     <width>221</width>
-     <height>91</height>
+     <x>920</x>
+     <y>280</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -3568,19 +4509,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_8">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -3590,8 +4538,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_8">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -3614,7 +4562,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -3639,8 +4586,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_8">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -3662,7 +4609,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -3677,8 +4623,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_8">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -3714,8 +4660,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_8">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -3745,8 +4691,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_8">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -3776,8 +4722,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_8">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3813,8 +4759,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_8">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3850,8 +4796,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_8">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -3887,23 +4833,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_8">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_22">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_23">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_24">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -3913,10 +4956,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>810</x>
-     <y>440</y>
-     <width>221</width>
-     <height>91</height>
+     <x>1130</x>
+     <y>280</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -3931,19 +4974,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_9">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -3953,8 +5003,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_9">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -3977,7 +5027,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -4002,8 +5051,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_9">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -4025,7 +5074,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -4040,8 +5088,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_9">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -4077,8 +5125,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_9">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -4108,8 +5156,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_9">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -4139,8 +5187,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_9">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4176,8 +5224,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_9">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4213,8 +5261,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_9">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4250,23 +5298,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_9">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_25">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_26">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_27">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -4276,10 +5421,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>440</y>
-     <width>221</width>
-     <height>91</height>
+     <x>710</x>
+     <y>390</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -4294,19 +5439,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_10">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -4316,8 +5468,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_10">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -4340,7 +5492,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -4365,8 +5516,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_10">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -4388,7 +5539,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -4403,8 +5553,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_10">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -4440,8 +5590,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_10">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -4471,8 +5621,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_10">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -4502,8 +5652,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_10">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4539,8 +5689,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_10">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4576,8 +5726,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_10">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4613,23 +5763,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_10">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_28">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_29">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_30">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -4639,10 +5886,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>810</x>
-     <y>530</y>
-     <width>221</width>
-     <height>91</height>
+     <x>920</x>
+     <y>390</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -4657,19 +5904,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_11">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -4679,8 +5933,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_11">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -4703,7 +5957,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -4728,8 +5981,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_11">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -4751,7 +6004,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -4766,8 +6018,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_11">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -4803,8 +6055,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_11">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -4834,8 +6086,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_11">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -4865,8 +6117,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_11">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4902,8 +6154,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_11">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4939,8 +6191,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_11">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -4976,23 +6228,120 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_11">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
      <string>Show</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_31">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_32">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_33">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
     </property>
    </widget>
   </widget>
@@ -5002,10 +6351,10 @@ border-bottom-left-radius: 0px;
    </property>
    <property name="geometry">
     <rect>
-     <x>1050</x>
-     <y>530</y>
-     <width>221</width>
-     <height>91</height>
+     <x>1130</x>
+     <y>390</y>
+     <width>211</width>
+     <height>111</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -5020,19 +6369,26 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_btn_chart_12">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>5</y>
-      <width>51</width>
+      <x>24</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
-border-bottom-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -5042,8 +6398,8 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_symbol_12">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>5</y>
+      <x>24</x>
+      <y>1</y>
       <width>80</width>
       <height>40</height>
      </rect>
@@ -5066,7 +6422,6 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
-border-top-left-radius: 5px;
 border-bottom: 1px solid #aaaaaa;
 background: #ffffff;
 color: #888888;
@@ -5091,8 +6446,8 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QLabel" name="WL_c_12">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>45</y>
+      <x>24</x>
+      <y>41</y>
       <width>60</width>
       <height>20</height>
      </rect>
@@ -5114,7 +6469,6 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-border-bottom-left-radius: 5px;
 background: #ffffff;
 color: #333333
 </string>
@@ -5129,8 +6483,8 @@ color: #333333
    <widget class="QLabel" name="WL_arrow_12">
     <property name="geometry">
      <rect>
-      <x>66</x>
-      <y>45</y>
+      <x>84</x>
+      <y>41</y>
       <width>20</width>
       <height>20</height>
      </rect>
@@ -5166,8 +6520,8 @@ color: rgb(0, 255, 0)
    <widget class="QProgressBar" name="WL_bear_12">
     <property name="geometry">
      <rect>
-      <x>86</x>
-      <y>5</y>
+      <x>104</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -5197,8 +6551,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(255, 
    <widget class="QProgressBar" name="WL_bull_12">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
+      <x>114</x>
+      <y>1</y>
       <width>10</width>
       <height>60</height>
      </rect>
@@ -5228,8 +6582,8 @@ background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgb(0, 25
    <widget class="QLabel" name="WL_nn_long_12">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>5</y>
+      <x>124</x>
+      <y>1</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -5265,8 +6619,8 @@ color: rgb(0, 255, 0)
    <widget class="QLabel" name="WL_nn_neutral_12">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>25</y>
+      <x>124</x>
+      <y>21</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -5302,8 +6656,8 @@ color: #888888
    <widget class="QLabel" name="WL_nn_short_12">
     <property name="geometry">
      <rect>
-      <x>106</x>
-      <y>45</y>
+      <x>124</x>
+      <y>41</y>
       <width>50</width>
       <height>20</height>
      </rect>
@@ -5339,18 +6693,25 @@ color: rgb(255, 0, 0)
    <widget class="QToolButton" name="WL_btn_show_12">
     <property name="geometry">
      <rect>
-      <x>156</x>
-      <y>35</y>
-      <width>51</width>
+      <x>130</x>
+      <y>61</y>
+      <width>44</width>
       <height>30</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:#111111;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:15px;
-border-bottom-right-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
 border-bottom-left-radius: 0px;
 </string>
     </property>
@@ -5358,168 +6719,448 @@ border-bottom-left-radius: 0px;
      <string>Show</string>
     </property>
    </widget>
+   <widget class="QToolButton" name="toolButton_34">
+    <property name="geometry">
+     <rect>
+      <x>1</x>
+      <y>1</y>
+      <width>23</width>
+      <height>60</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#ff8888;
+color:#ffffff;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>S</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_35">
+    <property name="geometry">
+     <rect>
+      <x>175</x>
+      <y>1</y>
+      <width>23</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color:#55aa55;
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;
+</string>
+    </property>
+    <property name="text">
+     <string>L</string>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="toolButton_36">
+    <property name="geometry">
+     <rect>
+      <x>68</x>
+      <y>61</y>
+      <width>62</width>
+      <height>39</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>10</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+</string>
+    </property>
+    <property name="text">
+     <string>STOP</string>
+    </property>
+   </widget>
   </widget>
-  <widget class="Line" name="line_8">
+  <widget class="QToolButton" name="toolButton_37">
    <property name="geometry">
     <rect>
-     <x>804</x>
-     <y>43</y>
-     <width>600</width>
-     <height>20</height>
+     <x>1290</x>
+     <y>630</y>
+     <width>81</width>
+     <height>71</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
    <property name="styleSheet">
-    <string notr="true">color: #ffffff;
-background-color: none;</string>
+    <string notr="true">background: rgb(255, 170, 0);
+color:#ffffff;
+border-top-left-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 15px;
+border:2px solid #ffffff;
+align: left;</string>
    </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
-   </property>
-   <property name="lineWidth">
-    <number>1</number>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
+   <property name="text">
+    <string>STOP 
+  ALL</string>
    </property>
   </widget>
-  <widget class="Line" name="line_9">
+  <widget class="QLabel" name="label_7">
    <property name="geometry">
     <rect>
-     <x>803</x>
-     <y>38</y>
-     <width>600</width>
-     <height>20</height>
+     <x>719</x>
+     <y>630</y>
+     <width>91</width>
+     <height>71</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>16</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
    <property name="styleSheet">
-    <string notr="true">color: #444444;
-background-color: none;</string>
+    <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #888888;
+border-top-left-radius: 15px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 15px;
+padding-left: 15px;
+}</string>
    </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
-   </property>
-   <property name="lineWidth">
-    <number>1</number>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
+   <property name="text">
+    <string>MSFT</string>
    </property>
   </widget>
-  <widget class="Line" name="line_10">
+  <widget class="QLineEdit" name="Command_Line_2">
    <property name="geometry">
     <rect>
-     <x>1</x>
-     <y>671</y>
-     <width>800</width>
-     <height>20</height>
+     <x>881</x>
+     <y>650</y>
+     <width>81</width>
+     <height>51</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
    <property name="styleSheet">
-    <string notr="true">color: #444444;
-background-color: none;</string>
+    <string notr="true">background-color: #eeeeee;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-left: 1px solid #888888;
+</string>
    </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
+   <property name="text">
+    <string>200,50</string>
    </property>
-   <property name="lineWidth">
-    <number>1</number>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
    </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
+   <property name="placeholderText">
+    <string>Price</string>
    </property>
   </widget>
-  <widget class="Line" name="line_11">
+  <widget class="QLabel" name="label_8">
    <property name="geometry">
     <rect>
-     <x>1</x>
-     <y>674</y>
-     <width>800</width>
-     <height>20</height>
+     <x>881</x>
+     <y>630</y>
+     <width>81</width>
+     <height>21</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
    <property name="styleSheet">
-    <string notr="true">color: #999999;
-background-color: none;</string>
+    <string notr="true">border: none;
+border-left: 1px solid #888888;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+</string>
    </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
+   <property name="text">
+    <string>Limit Price</string>
    </property>
-   <property name="lineWidth">
-    <number>4</number>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
    </property>
   </widget>
-  <widget class="Line" name="line_12">
+  <widget class="QLabel" name="label_9">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>676</y>
-     <width>800</width>
-     <height>20</height>
+     <x>962</x>
+     <y>630</y>
+     <width>81</width>
+     <height>21</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
    <property name="styleSheet">
-    <string notr="true">color: #ffffff;
-background-color: none;</string>
+    <string notr="true">border: none;
+border-left: 1px solid #888888;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+</string>
    </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
+   <property name="text">
+    <string>Stop Price</string>
    </property>
-   <property name="lineWidth">
-    <number>1</number>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
    </property>
   </widget>
-  <widget class="Line" name="line_5">
+  <widget class="QLineEdit" name="Command_Line_3">
    <property name="geometry">
     <rect>
-     <x>803</x>
-     <y>0</y>
-     <width>3</width>
-     <height>1500</height>
+     <x>962</x>
+     <y>650</y>
+     <width>81</width>
+     <height>51</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
    <property name="styleSheet">
-    <string notr="true">color: #ffffff;
-background-color: none;</string>
+    <string notr="true">background-color: #eeeeee;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-left: 1px solid #888888;
+</string>
    </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
+   <property name="text">
+    <string>300,25</string>
    </property>
-   <property name="lineWidth">
-    <number>1</number>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
    </property>
-   <property name="orientation">
-    <enum>Qt::Vertical</enum>
+   <property name="placeholderText">
+    <string>Price</string>
    </property>
   </widget>
-  <widget class="Line" name="line_7">
+  <widget class="QLabel" name="label_10">
    <property name="geometry">
     <rect>
-     <x>799</x>
-     <y>0</y>
-     <width>3</width>
-     <height>1500</height>
+     <x>810</x>
+     <y>630</y>
+     <width>71</width>
+     <height>71</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>16</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
    <property name="styleSheet">
-    <string notr="true">color: #444444;
-background-color: none;</string>
+    <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #888888;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-left: 1px solid #888888;
+}</string>
    </property>
-   <property name="frameShadow">
-    <enum>QFrame::Plain</enum>
+   <property name="text">
+    <string>SELL</string>
    </property>
-   <property name="lineWidth">
-    <number>1</number>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Vertical</enum>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
    </property>
   </widget>
+  <widget class="QLineEdit" name="Command_Line_4">
+   <property name="geometry">
+    <rect>
+     <x>1043</x>
+     <y>650</y>
+     <width>81</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: #eeeeee;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-left: 1px solid #888888;
+</string>
+   </property>
+   <property name="text">
+    <string>12500</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+   <property name="placeholderText">
+    <string>Quantity</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_11">
+   <property name="geometry">
+    <rect>
+     <x>1043</x>
+     <y>630</y>
+     <width>81</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;
+border-left: 1px solid #888888;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+</string>
+   </property>
+   <property name="text">
+    <string>Quantity</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="toolButton_38">
+   <property name="geometry">
+    <rect>
+     <x>1124</x>
+     <y>630</y>
+     <width>111</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QToolButton {
+    background-color: #000000;
+	color: #ffffff;
+	border-top-left-radius: 0px;
+	border-top-right-radius:15px;
+	border-bottom-right-radius: 15px;
+	border-bottom-left-radius: 0px;
+}
+QToolButton:pressed {
+    background-color: #ff0000;
+	color: #000000;
+	border-top-left-radius: 0px;
+	border-top-right-radius:15px;
+	border-bottom-right-radius: 15px;
+	border-bottom-left-radius: 0px;
+}</string>
+   </property>
+   <property name="text">
+    <string>Place Order</string>
+   </property>
+  </widget>
+  <zorder>Command_Line_4</zorder>
+  <zorder>label_11</zorder>
+  <zorder>label_9</zorder>
+  <zorder>Command_Line_3</zorder>
   <zorder>label_2</zorder>
   <zorder>Progress_Bar</zorder>
   <zorder>Status</zorder>
@@ -5545,6 +7186,17 @@ background-color: none;</string>
   <zorder>label_5</zorder>
   <zorder>label_6</zorder>
   <zorder>WL_refresh</zorder>
+  <zorder>line_8</zorder>
+  <zorder>line_10</zorder>
+  <zorder>line_12</zorder>
+  <zorder>line_5</zorder>
+  <zorder>line_7</zorder>
+  <zorder>line_6</zorder>
+  <zorder>line_11</zorder>
+  <zorder>line_9</zorder>
+  <zorder>line_13</zorder>
+  <zorder>line_14</zorder>
+  <zorder>line_15</zorder>
   <zorder>WL_frame</zorder>
   <zorder>WL_frame_2</zorder>
   <zorder>WL_frame_3</zorder>
@@ -5557,14 +7209,12 @@ background-color: none;</string>
   <zorder>WL_frame_10</zorder>
   <zorder>WL_frame_11</zorder>
   <zorder>WL_frame_12</zorder>
-  <zorder>line_8</zorder>
-  <zorder>line_10</zorder>
-  <zorder>line_12</zorder>
-  <zorder>line_5</zorder>
-  <zorder>line_7</zorder>
-  <zorder>line_6</zorder>
-  <zorder>line_11</zorder>
-  <zorder>line_9</zorder>
+  <zorder>toolButton_37</zorder>
+  <zorder>label_7</zorder>
+  <zorder>Command_Line_2</zorder>
+  <zorder>label_8</zorder>
+  <zorder>label_10</zorder>
+  <zorder>toolButton_38</zorder>
  </widget>
  <resources/>
  <connections/>
