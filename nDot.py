@@ -17,6 +17,7 @@ import numpy as np
 from functools import partial
 from tkinter import *
 import tables
+import alpaca_trade_api as tradeapi
 # import matplotlib.animation as animation
 # import matplotlib.dates as mdates
 
@@ -123,13 +124,37 @@ class trade():
             'nyse_close': '22:00',
             'trade_from': '16:00',
             'trade_to': '22:00',
+            'stop_margin': 5,
+            'stop_margin_measure': 'Percent',
+            'trade_block_size': 500,
+            'trade_block_size_currency': 'USD',
         }
+
+        self.order = {
+            'symbol': '',
+            'position': '',
+            'qt': 0,
+            'limit_price': 0.0,
+            'stop_price': 0.0,
+        }
+
+        self.usd_huf = 312.12
+
+        self.trade_api = tradeapi.REST('PKXDVPM6UAMJZ1RWFUGJ',
+                            'PvXbjS3TFANJAeROTU5EXtH3JG6BAUv4zSFaIbIY',
+                            base_url='https://paper-api.alpaca.markets')
 
     def time_filter(self, df):
         # self.config['nyse_open']
         i_intime = df.between_time(self.config['nyse_open'], self.config['nyse_close'])
         i_outtime = df.between_time(self.config['nyse_close'], self.config['nyse_open'])
         return i_intime, i_outtime
+
+    def go_short(self):
+        pass
+
+    def go_long(self):
+        pass
 
 
 class nd_db:
@@ -463,6 +488,7 @@ class gui(QWidget):
         self.load_ui()
         self.commands = pd.DataFrame(None)
         self.load_commands()
+        self.pause_trader_frame_calculation = True
         # self.thread = ListenWebsocket()
         # self.thread.start()
         return
@@ -515,6 +541,28 @@ class gui(QWidget):
             log(" - " + i_row["hint"])
         QApplication.processEvents()
 
+    def set_trade_frame(self):
+        self.pause_trader_frame_calculation = True
+        self.Tr_symbol.setText(trade.order["symbol"])
+        if trade.order["position"] == "SHORT":
+            self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
+                                           'border-bottom-left-radius: 15px;' + \
+                                           'color: #ff3333;')
+            self.Tr_set_order.setText("SET\nSHORT")
+        else:
+            self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
+                                           'border-bottom-left-radius: 15px;' + \
+                                           'color: #078F12;')
+            self.Tr_set_order.setText("SET\nLONG")
+
+        self.Tr_position.setText(trade.order["position"])
+        self.Tr_limit_price.setValue(trade.order["limit_price"])
+        self.Tr_stop_price.setValue(trade.order["stop_price"])
+        self.Tr_qt.setValue(trade.order["qt"])
+        self.pause_trader_frame_calculation = False
+        self.tr_change_data()
+        self.Tr_frame.show()
+        QApplication.processEvents()
 
     def get_command(self, command):
         i_search = self.commands.loc[self.commands['command'] == command, 'program']
@@ -561,6 +609,22 @@ class gui(QWidget):
         self.WL_btn_show_10.clicked.connect(partial(wl_btn_show, 10))
         self.WL_btn_show_11.clicked.connect(partial(wl_btn_show, 11))
         self.WL_btn_show_12.clicked.connect(partial(wl_btn_show, 12))
+        # Trade frame ----------------------------------------
+        self.Tr_cancel.clicked.connect(tr_cancel)
+        self.WL_trade_short.clicked.connect(partial(wl_trade_short, 1))
+        self.WL_trade_short_2.clicked.connect(partial(wl_trade_short, 2))
+        self.WL_trade_short_3.clicked.connect(partial(wl_trade_short, 3))
+        self.WL_trade_short_4.clicked.connect(partial(wl_trade_short, 4))
+
+        self.WL_trade_long.clicked.connect(partial(wl_trade_long, 1))
+        self.WL_trade_long_2.clicked.connect(partial(wl_trade_long, 2))
+        self.WL_trade_long_3.clicked.connect(partial(wl_trade_long, 3))
+        self.WL_trade_long_4.clicked.connect(partial(wl_trade_long, 4))
+
+        self.Tr_limit_price.valueChanged.connect(self.tr_change_data)
+        self.Tr_stop_price.valueChanged.connect(self.tr_change_data)
+        self.Tr_qt.valueChanged.connect(self.tr_change_data)
+
         self.WL_refresh.clicked.connect(wl_refresh_close)
         self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
         self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
@@ -574,10 +638,22 @@ class gui(QWidget):
         app_icon.addFile('./images/ndot_icon_x2.png', QtCore.QSize(16, 16))
         app.setWindowIcon(app_icon)
         i_now = datetime.now()
-        self.From_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
-        self.To_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
+        self.From_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
+        self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
         self.From_T.setTime(QTime(i_now.hour, i_now.minute))
         self.To_T.setTime(QTime(i_now.hour, i_now.minute))
+        self.Tr_frame.hide()
+
+    def tr_change_data(self):
+        if not self.pause_trader_frame_calculation:
+            trade.order["limit_price"] = round(self.Tr_limit_price.value(), 2)
+            trade.order["stop_price"] = round(self.Tr_stop_price.value(), 2)
+            trade.order["qt"] = int(self.Tr_qt.value())
+            i_value_usd = round(trade.order["qt"] * trade.order["limit_price"], 2)
+            i_value_huf = round(i_value_usd * trade.usd_huf, 2)
+            i_value_text = '{0:,.2f}'.format(i_value_usd) + " USD\n" + '{0:,.2f}'.format(i_value_huf) + " HUF"
+            self.Tr_value.setText(i_value_text)
+            QApplication.processEvents()
 
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
@@ -610,33 +686,33 @@ class gui(QWidget):
             i_wl_frame_object[i_no].findChild(QLabel, "WL_symbol"+i_noid[i_no]).setText(row['symbol'])
             i_wl_frame_object[i_no].findChild(QLabel, "WL_symbol"+i_noid[i_no]).setToolTip(row['profil'])
             i_wl_frame_object[i_no].findChild(QLabel, "WL_c"+i_noid[i_no]).setText(str(round(row['c'], 2)))
-            if row['c'] > row['pc']:
-                i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setText("▲")
-                i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setStyleSheet("color: green; background: #ffffff;")
-            else:
-                i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setText("▼")
-                i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setStyleSheet("color: red; background: #ffffff;")
+            # if row['c'] > row['pc']:
+            #     i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setText("▲")
+            #     i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setStyleSheet("color: green; background: #ffffff;")
+            # else:
+            #     i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setText("▼")
+            #     i_wl_frame_object[i_no].findChild(QLabel, "WL_arrow"+i_noid[i_no]).setStyleSheet("color: red; background: #ffffff;")
 
-            nn_drop1 = random.randint(0, 50)
-            nn_drop2 = random.randint(0, 50)
-            nn_drop3 = 100 - nn_drop1 - nn_drop2
-
-            i_wl_frame_object[i_no].findChild(QLabel, "WL_nn_long"+i_noid[i_no]).setText("L:"+str(nn_drop1) + "%")
-            i_wl_frame_object[i_no].findChild(QLabel, "WL_nn_neutral"+i_noid[i_no]).setText("N:"+str(nn_drop3) + "%")
-            i_wl_frame_object[i_no].findChild(QLabel, "WL_nn_short"+i_noid[i_no]).setText("S:"+str(nn_drop2) + "%")
-            i_wl_frame_object[i_no].findChild(QProgressBar, "WL_bull"+i_noid[i_no]).setValue(int(row['snt_bullish']*100))
+            # nn_drop1 = random.randint(0, 50)
+            # nn_drop2 = random.randint(0, 50)
+            # nn_drop3 = 100 - nn_drop1 - nn_drop2
+            #
+            # i_wl_frame_object[i_no].findChild(QLabel, "WL_nn_long"+i_noid[i_no]).setText("L:"+str(nn_drop1) + "%")
+            # i_wl_frame_object[i_no].findChild(QLabel, "WL_nn_neutral"+i_noid[i_no]).setText("N:"+str(nn_drop3) + "%")
+            # i_wl_frame_object[i_no].findChild(QLabel, "WL_nn_short"+i_noid[i_no]).setText("S:"+str(nn_drop2) + "%")
+            # i_wl_frame_object[i_no].findChild(QProgressBar, "WL_bull"+i_noid[i_no]).setValue(int(row['snt_bullish']*100))
             i_wl_frame_object[i_no].findChild(QProgressBar, "WL_bear"+i_noid[i_no]).setValue(int(row['snt_bearish']*100))
             i_wl_frame_object[i_no].show()
             i_no = i_no + 1
 
     def date_now(self):
         i_now = datetime.now()
-        self.To_D.setSelectedDate(QDate(i_now.year, i_now.month, i_now.day))
+        self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
         self.To_T.setTime(QTime(i_now.hour, i_now.minute))
 
     def date_modifier(self, interval_type, interval_num):
         i_nowp = datetime.now() - timedelta(**{interval_type: interval_num})
-        self.From_D.setSelectedDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
+        self.From_D.setDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
         self.From_T.setTime(QTime(i_nowp.hour, i_nowp.minute))
 
     def progress_action(self):
@@ -820,6 +896,47 @@ def log(add_text, line=False, indent=True):
         i_log_text = gui.Logs_Browser.toPlainText() + time.strftime("%m-%d %H:%M:%S") + " > " + i_ind + one_line + " \r"
         gui.Logs_Browser.setText(i_log_text)
         gui.Logs_Browser.moveCursor(QtGui.QTextCursor.End)
+        QApplication.processEvents()
+
+
+def tlog(add_text, line=False, indent=True, color="normal" ):
+
+    if color == "long":
+        i_web_color = "#078f12"
+    elif color == "short":
+        i_web_color = "#ff3333"
+    elif color == "stop":
+        i_web_color = "#ff9100"
+    else:
+        i_web_color = "#0000"
+
+    if indent:
+        i_ind = "│  "
+    else:
+        i_ind = ""
+
+    if line:
+        i_log_text = gui.Logs_Trade.toPlainText() \
+                     + " <font color='#000000'>" \
+                     + "─" * 65 \
+                     + "</font>" \
+                     + "\r"
+        gui.Logs_Trade.setText(i_log_text)
+
+    lines = add_text.splitlines()
+
+    for one_line in lines:
+        i_log_text = gui.Logs_Trade.toHtml() \
+                     + " <font color='#000000'>" \
+                     + time.strftime("%m-%d %H:%M:%S") + " > "\
+                     + i_ind \
+                     + "</font>" \
+                     + " <font color='" + i_web_color + "'>"\
+                     + one_line \
+                     + "</font>" \
+                     + " \r"
+        gui.Logs_Trade.setText(i_log_text)
+        gui.Logs_Trade.moveCursor(QtGui.QTextCursor.End)
         QApplication.processEvents()
 
 
@@ -1272,6 +1389,28 @@ def bp_stop(p1="", p2="", p3=""):
 # PROGRAMS fo wl buttons----------------------------------------------------------------------------
 
 
+def wl_trade_short(btn_no):
+    symbol = wl.df.loc[btn_no-1]['symbol']
+    trade.order['symbol'] = symbol
+    trade.order['position'] = "SHORT"
+    trade.order['limit_price'] = 123.123
+    trade.order['qt'] = int(trade.config["trade_block_size"] / trade.order['limit_price'])
+    i_stop_margin = round(trade.order['limit_price'] * (trade.config["stop_margin"] / 100), 2)
+    trade.order['stop_price'] = trade.order['limit_price'] + i_stop_margin
+    gui.set_trade_frame()
+
+
+def wl_trade_long(btn_no):
+    symbol = wl.df.loc[btn_no-1]['symbol']
+    trade.order['symbol'] = symbol
+    trade.order['position'] = "LONG"
+    trade.order['limit_price'] = 123.123
+    trade.order['qt'] = int(trade.config["trade_block_size"] / trade.order['limit_price'])
+    i_stop_margin = round(trade.order['limit_price'] * (trade.config["stop_margin"] / 100), 2)
+    trade.order['stop_price'] = trade.order['limit_price'] - i_stop_margin
+    gui.set_trade_frame()
+
+
 def wl_btn_chart(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
     log("start: ndf.chart.last " + symbol, True, False)
@@ -1284,6 +1423,12 @@ def wl_btn_show(btn_no):
     log("start: ndf2.show.last " + symbol, True, False)
     ndf2_show_last(symbol)
     log("ready.", False, False)
+
+# PROGRAMS fo Tr buttons----------------------------------------------------------------------------
+
+
+def tr_cancel():
+    gui.Tr_frame.hide()
 
 # Back_processes -----------------------------------------------------
 
@@ -1399,7 +1544,12 @@ if __name__ == "__main__":
     # ndf = n_date_frame()
     nchart = nchart_last()
     trade = trade()
-
+    tlog("MSFT SET LONG", line=True, indent=False, color="long")
+    tlog("MSFT LONG Qt:15000 Limit price: 253.12 Stop price: 260.12", line=False, indent=True, color="stop")
+    tlog("MSFT LONG Qt:15000 Limit price: 253.12 Stop price: 260.12", line=False, indent=True, color="normal")
+    tlog("MSFT LONG Qt:15000 Limit price: 253.12 Stop price: 260.12", line=False, indent=True, color="long")
+    tlog("MSFT LONG Qt:15000 Limit price: 253.12 Stop price: 260.12", line=False, indent=True, color="short")
+    tlog("MSFT LONG Qt:15000 Limit price: 253.12 Stop price: 260.12", line=False, indent=True, color="stop")
     # gui.show()
     print("Status: GUI is running")
     # ws.on_open = on_open
@@ -1582,3 +1732,511 @@ if __name__ == "__main__":
 #     plt.subplot(1,2,2)
 #     plot_value_array(i, predictions[0],  test_labels)
 #     plt.show()
+
+
+import alpaca_trade_api as tradeapi
+import pandas as pd
+
+
+class trade:
+
+    def __init__(self):
+        self.trade_api = tradeapi.REST('PKSJI4DQMLN4IQ8L6KFT',
+                                       '8CUv1fVN3s9Vl5hkxojTuDChZiXIe7E3qvbC147F',
+                                       base_url='https://paper-api.alpaca.markets')
+        self.account = self.trade_api.get_account()
+        # self.target_positions = {}
+        self.orders = []
+        self.positions = []
+        # target position data frame
+        self.tp = pd.DataFrame(None)
+        # decision matrix data frame
+        self.dm_df = pd.DataFrame(None)
+
+    def create_decision_matrix(self, target_position):
+        # add target position to decision matrix: dm_df
+        self.dm_df = pd.DataFrame.from_dict(target_position, orient='index')
+        self.dm_df.columns = ['target_position']
+
+        # add actual position to decision matrix: dm_df
+        i_positions = self.get_all_positions()
+        i_positions_dic = {}
+        for i_p in i_positions:
+            i_positions_dic[i_p.symbol] = i_p.qty
+        self.dm_df = self.dm_df.join(pd.Series(i_positions_dic).to_frame('position'),how='outer')
+
+        # add orders to decision matrix: dm_df
+        i_orders_market, i_orders_trailing, i_orders_other = self.get_all_sum_orders()
+        self.dm_df = self.dm_df.join(pd.Series(i_orders_market).to_frame('order_market'), how='outer')
+        self.dm_df = self.dm_df.join(pd.Series(i_orders_trailing).to_frame('order_trailing'), how='outer')
+        self.dm_df = self.dm_df.join(pd.Series(i_orders_other).to_frame('order_other'), how='outer')
+
+        # fixing mf_df
+        self.dm_df = self.dm_df.fillna(0)
+        self.dm_df['position'] = pd.to_numeric(self.dm_df['position'])
+        self.dm_df['target_position'] = pd.to_numeric(self.dm_df['target_position'])
+        self.dm_df['order_market'] = pd.to_numeric(self.dm_df['order_market'])
+        self.dm_df['order_trailing'] = pd.to_numeric(self.dm_df['order_trailing'])
+        self.dm_df['order_other'] = pd.to_numeric(self.dm_df['order_other'])
+
+        self.dm_df['total_trade'] = self.dm_df['target_position'] - self.dm_df['position']
+
+        self.dm_df['stop_trade'] = 0
+        self.dm_df['position_trade'] = 0
+        self.dm_df['trade_chk_ok'] = False
+        for i_index in self.dm_df.index:
+            if self.dm_df.loc[i_index, 'target_position'] == self.dm_df.loc[i_index, 'position']:
+                self.dm_df.loc[i_index, 'stop_trade'] = 0
+                self.dm_df.loc[i_index, 'position_trade'] = 0
+            else:
+                ix_tp = self.dm_df.loc[i_index, 'target_position']
+                ix_p = self.dm_df.loc[i_index, 'position']
+                ix_tt = self.dm_df.loc[i_index, 'total_trade']
+                if (ix_tp > 0 and ix_p < 0) or (ix_tp < 0 and ix_p > 0) or (ix_tp == 0):
+                    self.dm_df.loc[i_index, 'stop_trade'] = ix_tt - ix_tp
+                    self.dm_df.loc[i_index, 'position_trade'] = ix_tt - (ix_tt - ix_tp)
+                else:
+                    self.dm_df.loc[i_index, 'stop_trade'] = 0
+                    self.dm_df.loc[i_index, 'position_trade'] = ix_tp - ix_p
+
+        # Trade Matrix Check
+        self.dm_df['trade_chk_ok'] = self.dm_df['target_position'] == (self.dm_df['position'] +\
+                                      self.dm_df['stop_trade'] + self.dm_df['position_trade'])
+
+        # döntés generátor
+
+        self.dm_df['to_do'] = ""
+        self.dm_df['to_do_type'] = ""
+        self.dm_df['to_do_qty'] = 0
+
+        for i_index in self.dm_df.index:
+            if self.dm_df.loc[i_index, 'trade_chk_ok']:
+                if self.dm_df.loc[i_index, 'stop_trade'] != 0:
+                    if self.dm_df.loc[i_index, 'stop_trade'] < 0:
+                        self.dm_df.loc[i_index, 'to_do'] = "sell"
+                    else:
+                        self.dm_df.loc[i_index, 'to_do'] = "buy"
+                    self.dm_df.loc[i_index, 'to_do_type'] = "stop"
+                    self.dm_df.loc[i_index, 'to_do_qty'] = abs(self.dm_df.loc[i_index, 'stop_trade'])
+                elif self.dm_df.loc[i_index, 'position_trade'] != 0:
+                    if self.dm_df.loc[i_index, 'position_trade'] < 0:
+                        self.dm_df.loc[i_index, 'to_do'] = "sell"
+                    else:
+                        self.dm_df.loc[i_index, 'to_do'] = "buy"
+                    self.dm_df.loc[i_index, 'to_do_type'] = "trade"
+                    self.dm_df.loc[i_index, 'to_do_qty'] = abs(self.dm_df.loc[i_index, 'position_trade'])
+                else:
+                    self.dm_df.loc[i_index, 'to_do'] = "wait"
+                    self.dm_df.loc[i_index, 'to_do_type'] = ""
+                    self.dm_df.loc[i_index, 'to_do_qty'] = 0
+            else:
+                self.dm_df.loc[i_index, 'to_do'] = "error"
+                self.dm_df.loc[i_index, 'to_do_type'] = ""
+                self.dm_df.loc[i_index, 'to_do_qty'] = 0
+
+        # lehet, hogy a szükséges döntés már megszületett és az orderek ki lettek adva
+        # ha az orderek száma rendben akkor vár
+        # ha nincs rendben akkor törtli az ordeket és beteszi a helyes ordert
+
+        self.dm_df['to_do_order_clear'] = False
+
+        for i_index in self.dm_df.index:
+            if self.dm_df.loc[i_index, 'to_do'] == "buy":
+                if self.dm_df.loc[i_index, 'order_market'] == self.dm_df.loc[i_index, 'to_do_qty']:
+                    self.dm_df.loc[i_index, 'to_do'] = "wait"
+                    self.dm_df.loc[i_index, 'to_do_type'] = ""
+                    self.dm_df.loc[i_index, 'to_do_qty'] = 0
+                else:
+                    if self.dm_df.loc[i_index, 'order_market'] == 0:
+                        self.dm_df['to_do_order_clear'] = False
+                    else:
+                        self.dm_df['to_do_order_clear'] = True
+            elif self.dm_df.loc[i_index, 'to_do'] == "sell":
+                if self.dm_df.loc[i_index, 'order_market'] == -1 * self.dm_df.loc[i_index, 'to_do_qty']:
+                    self.dm_df.loc[i_index, 'to_do'] = "wait"
+                    self.dm_df.loc[i_index, 'to_do_type'] = ""
+                    self.dm_df.loc[i_index, 'to_do_qty'] = 0
+                else:
+                    if self.dm_df.loc[i_index, 'order_market'] == 0:
+                        self.dm_df['to_do_order_clear'] = False
+                    else:
+                        self.dm_df['to_do_order_clear'] = True
+            elif self.dm_df.loc[i_index, 'to_do'] == "wait":
+                pass
+            elif self.dm_df.loc[i_index, 'to_do'] == "error":
+                pass
+        return self.dm_df
+
+    def broker(self, target_positions):
+        self.create_decision_matrix(target_positions)
+        self.get_account()
+        i_is_mo = self.is_market_open()
+        i_is_tb = self.is_trading_blocked()
+        i_pb = self.get_buying_power()
+
+        for i_index in self.dm_df.index:
+
+            if self.dm_df.loc[i_index, 'to_do_order_clear']:
+                self.cancel_orders_by_symbol(i_index)
+
+            if self.dm_df.loc[i_index, 'to_do'] == "buy" or self.dm_df.loc[i_index, 'to_do'] == "sell":
+                i_qty = abs(self.dm_df.loc[i_index, 'to_do_qty'])
+                i_side = self.dm_df.loc[i_index, 'to_do']
+                if self.dm_df.loc[i_index, 'to_do_type'] == "stop":
+                    self.order_market(i_index, i_side, i_qty)
+                else:
+                    self.order_market(i_index, i_side, i_qty)
+            elif self.dm_df.loc[i_index, 'to_do'] == "error":
+                print("error")
+
+    def order_market(self, symbol, side, qty):
+        print(f'Submit market order: {symbol} , {side}, {int(qty)}')
+        self.trade_api.submit_order(
+                symbol=symbol,
+                qty=int(qty),
+                side=side,
+                type='market',
+                time_in_force='gtc'
+            )
+
+    def order_trailing_stop(self, symbol, side, qty):
+        print(f'Submit trailing stop order: {symbol} , {side}, {int(qty)}')
+        self.trade_api.submit_order(
+                side=side,
+                symbol=symbol,
+                type="trailing_stop",
+                qty=int(qty),
+                time_in_force="day",
+                trail_percent="10"
+        )
+
+# Target position methods
+
+    def set_tp_position_by_symbol(self, symbol, qty):
+        self.tp.loc[symbol, 'position'] = qty
+        self.tp.loc[symbol, 'ready'] = False
+
+    def set_tp_ready_by_symbol(self, symbol, qty):
+        self.tp.loc[symbol, 'ready'] = True
+
+    def get_tp_by_symbol(self, symbol):
+        return self.tp.loc[symbol, 'position']
+
+    def is_tp_ready_by_symbol(self, symbol):
+        return self.tp.loc[symbol, 'ready']
+
+    # def check_position(self):
+    #
+    #     # def trade_maker(tp, p, o):
+    #     #     i_corr = tp - p
+    #     #     if i_corr == 0 and o != 0:
+    #     #         print ("clear orders")
+    #     #     else:
+    #     #         # átmenő akkor kell stop
+    #     #         # különben
+    #     #     i_stop = i_corr - self.target_positions[i_p2]
+    #     #     i_new_pos = i_corr - i_stop
+    #     #     print(f" -> Correction needed. stop: {i_stop} new: {i_new_pos} ")
+    #
+    #
+    #     i_positions = self.get_all_positions()
+    #     i_checked_symbol = {}
+    #     for i_p in i_positions:
+    #         i_target_position = int(self.get_target_position_by_symbol(i_p.symbol))
+    #         i_order_sum_qty = int(self.get_sum_order_by_symbol(i_p.symbol))
+    #         print("Symbol: ", i_p.symbol, "TP: ", i_target_position, "P: ", i_p.qty, "O: ", i_order_sum_qty)
+    #         if int(i_p.qty) + i_order_sum_qty != i_target_position:
+    #             print("  Trade bug (correction needed): ", (i_target_position-int(i_p.qty)))
+    #         i_checked_symbol[i_p.symbol] = 0
+    #     for i_p2 in self.target_positions:
+    #         if i_p2 not in i_checked_symbol:
+    #             i_order_sum_qty2 = int(self.get_sum_order_by_symbol(i_p2))
+    #             print("Symbol: ", i_p2, "TP: ", self.target_positions[i_p2], "P: ", 0, "O: ", i_order_sum_qty2)
+    #             i_corr = self.target_positions[i_p2] - i_order_sum_qty2
+    #             i_stop = i_corr - self.target_positions[i_p2]
+    #             i_new_pos = i_corr - i_stop
+    #             print(f" -> Correction needed. stop: {i_stop} new: {i_new_pos} ")
+
+    def get_all_sum_orders(self):
+        order_list_market = {}
+        order_list_trailing_stop = {}
+        order_list_other = {}
+        i_orders = self.get_all_open_orders()
+        for i_o in i_orders:
+            if i_o.order_type == 'market':
+                if i_o.symbol in order_list_market:
+                    if i_o.side == "buy":
+                        order_list_market[i_o.symbol] += int(i_o.qty)
+                    else:
+                        order_list_market[i_o.symbol] -= int(i_o.qty)
+                else:
+                    if i_o.side == "buy":
+                        order_list_market[i_o.symbol] = int(i_o.qty)
+                    else:
+                        order_list_market[i_o.symbol] = int(i_o.qty) * -1
+            elif i_o.order_type == 'trailing_stop':
+                if i_o.symbol in order_list_trailing_stop:
+                    if i_o.side == "buy":
+                        order_list_trailing_stop[i_o.symbol] += int(i_o.qty)
+                    else:
+                        order_list_trailing_stop[i_o.symbol] -= int(i_o.qty)
+                else:
+                    if i_o.side == "buy":
+                        order_list_trailing_stop[i_o.symbol] = int(i_o.qty)
+                    else:
+                        order_list_trailing_stop[i_o.symbol] = int(i_o.qty) * -1
+            else:
+                if i_o.symbol in order_list_other:
+                    if i_o.side == "buy":
+                        order_list_other[i_o.symbol] += int(i_o.qty)
+                    else:
+                        order_list_other[i_o.symbol] -= int(i_o.qty)
+                else:
+                    if i_o.side == "buy":
+                        order_list_other[i_o.symbol] = int(i_o.qty)
+                    else:
+                        order_list_other[i_o.symbol] = int(i_o.qty) * -1
+        return order_list_market, order_list_trailing_stop, order_list_other
+
+    def get_sum_order_by_symbol(self, symbol):
+        orders_qty_list = {}
+        i_orders = trade.get_all_open_orders()
+
+        for i_o in i_orders:
+            if i_o.symbol in orders_qty_list:
+                if i_o.side == "buy":
+                    orders_qty_list[i_o.symbol] += int(i_o.qty)
+                else:
+                    orders_qty_list[i_o.symbol] -= int(i_o.qty)
+            else:
+                if i_o.side == "buy":
+                    orders_qty_list[i_o.symbol] = int(i_o.qty)
+                else:
+                    orders_qty_list[i_o.symbol] = int(i_o.qty) * -1
+
+        if symbol in orders_qty_list:
+            i_return = orders_qty_list[symbol]
+        else:
+            i_return = 0
+        return i_return
+
+    def get_all_open_orders(self):
+        i_orders = self.trade_api.list_orders(
+            status='open',
+            limit=500,
+            nested=True
+        )
+        self.orders = i_orders
+        return i_orders
+
+    def get_open_orders_by_symbol(self, symbol):
+        i_orders = self.trade_api.list_orders(
+            status='open',
+            limit=500,
+            nested=True
+        )
+        self.orders = i_orders
+        i_symbol_orders = [o for o in i_orders if o.symbol == symbol]
+        return i_symbol_orders
+
+    def get_account(self):
+        self.account = self.trade_api.get_account()
+
+    def get_buying_power(self):
+        return self.account.buying_power
+
+    def is_trading_blocked(self):
+        return self.account.trading_blocked
+
+    def is_tradable(self, symbol):
+        try:
+            i_asset = self.trade_api.get_asset(symbol)
+        except:
+            i_return = False
+        else:
+            if i_asset.tradable:
+                i_return = True
+            else:
+                i_return = False
+        return i_return
+
+    def is_shortable(self, symbol):
+        try:
+            i_asset = self.trade_api.get_asset(symbol)
+        except:
+            i_return = False
+        else:
+            if i_asset.shortable:
+                i_return = True
+            else:
+                i_return = False
+        return i_return
+
+    def is_marginable(self, symbol):
+        try:
+            i_asset = self.trade_api.get_asset(symbol)
+        except:
+            i_return = False
+        else:
+            if i_asset.marginable:
+                i_return = True
+            else:
+                i_return = False
+        return i_return
+
+    def get_asset(self, symbol):
+        return self.trade_api.get_asset(symbol)
+
+    def is_market_open(self):
+        try:
+            i_clock = self.trade_api.get_clock()
+        except:
+            i_return = False
+        else:
+            if i_clock.is_open:
+                i_return = True
+            else:
+                i_return = False
+        return i_return
+
+    def get_ids(self, list_of_orders):
+        # Internal use
+        i_return = []
+        for i_t1 in list_of_orders:
+            i_return.append(i_t1.id)
+        return i_return
+
+    def get_all_positions(self):
+        i_positions = self.trade_api.list_positions()
+        self.positions = i_positions
+        return i_positions
+
+    def get_position_by_symbol(self, symbol):
+        try:
+            i_position = self.trade_api.get_position(symbol)
+        except:
+            i_position = []
+            self.positions = []
+        else:
+            self.positions = i_position
+        return i_position
+
+    def cancel_orders_by_symbol(self, symbol):
+        i_orders = self.get_open_orders_by_symbol(symbol)
+        for i_o in i_orders:
+            self.cancel_order_by_id(i_o.id)
+        i_orders2 = self.get_open_orders_by_symbol(symbol)
+        if len(i_orders2) == 0:
+            i_return = True
+        else:
+            i_return = False
+        return i_return
+
+    def cancel_order_by_id(self, order_id):
+        try:
+            self.trade_api.cancel_order(order_id)
+        except:
+            i_all_open_orders = self.get_all_open_orders()
+            if order_id in i_all_open_orders:
+                i_return = False
+            else:
+                i_return = True
+        else:
+            i_return = True
+        return i_return
+
+    def cancel_all_orders(self):
+        try:
+            self.trade_api.cancel_all_orders()
+        except:
+            i_all_open_orders = self.get_all_open_orders()
+            if len(i_all_open_orders) == 0:
+                i_return = True
+            else:
+                i_return = False
+        else:
+            i_return = True
+        return i_return
+
+    def close_all_position(self):
+        try:
+            self.trade_api.close_all_positions()
+        except:
+            i_position = self.get_all_positions()
+            if len(i_position) == 0:
+                i_return = True
+            else:
+                i_return = False
+        else:
+            i_return = True
+        return i_return
+
+    # def close_position_by_symbol(self, symbol):
+    #     try:
+    #
+    #         self.trade_api.close_position(symbol)
+    #
+    #     except:
+    #         i_position = self.get_position_by_symbol(symbol)
+    #         print(i_position)
+    #         if (i_position) == 0:
+    #             i_return = True
+    #         else:
+    #             i_return = False
+    #     else:
+    #         i_return = True
+    #     return i_return
+
+    def STOP_ALL(self, symbol):
+        # if self.cancel_all_orders():
+        #     i_ok1 = True
+        # else:
+        #     i_ok1 = False
+
+        if self.close_all_position():
+            i_ok2 = True
+        else:
+            i_ok2 = False
+        return i_ok1 and i_ok2
+
+
+trade = trade()
+target_positions = {}
+target_positions["MSFT"] = 1
+target_positions["AAPL"] = 2
+target_positions["IBM"] = 3
+target_positions["CLS"] = 4
+target_positions["APA"] = 5
+# print(target_positions)
+
+# om, ot, oo = trade.get_all_sum_orders()
+#
+# print("om")
+# print(om)
+#
+# print("ot")
+# print(ot)
+#
+# print("oo")
+# print(oo)
+
+# trade.order_trailing_stop("IBM", "sell", 1)
+# trade.broker(target_positions)
+
+dfx = pd.DataFrame(None)
+dfx['position'] = 0
+dfx['ready'] = False
+dfx.loc["IBM", 'position'] = 1
+dfx.loc["IBM", 'ready'] = False
+print(dfx)
+dfx.loc["IBM", 'position'] = 10
+dfx.loc["IBM", 'ready'] = False
+print(dfx)
+
+# print(trade.create_decision_matrix(target_positions).T)
+
+
+
+# trade.check_position()
+
+
