@@ -1,8 +1,11 @@
 import alpaca_trade_api as tradeapi
 import pandas as pd
+import tables
 import threading
 from time import sleep, gmtime
+# azért használom, hogy a rendszres lekérdezések nem pont ugyan olyan ütemben történjenek, ne tűnjek junk nak
 from random import randint
+
 
 class trade():
 
@@ -23,7 +26,7 @@ class trade():
         self.positions = []
 
         # target position data frame
-        self.tp_df = pd.DataFrame(None)
+        self.tp_df = self.read_tp_df()
         # decision matrix data frame
         self.dm_df = pd.DataFrame(None)
 
@@ -33,6 +36,7 @@ class trade():
         self.broker_thread = ""
         self.broker_refresh_rate = 5
         self.broker_is_working = False
+        self.broker_break = False
 
         self.monitor_thread = ""
         self.monitor_refresh_rate = 25
@@ -54,12 +58,27 @@ class trade():
             'trade_block_size_currency': 'USD',
         }
 
+        # ez egy kommunikációs dictionary a ui és a trade objektum között az ui ebbe állítja be amit be adar adni
         self.order = {
             'symbol': '',
             'position': '',
             'qty': 0,
             'stop_trailing ': False
         }
+
+    def write_tp_df(self):
+        self.tp_df.to_csv('target_position.csv', index=True)
+
+    def read_tp_df(self):
+        try:
+            i_return = pd.read_csv('target_position.csv', sep=',')
+        except:
+            i_return = pd.DataFrame(None)
+        else:
+            i_return = pd.DataFrame(i_return)
+        i_return = i_return.set_index("symbol")
+        # print(i_return)
+        return i_return
 
     def call_alphaca(self, function_name, args=[], kwargs={}):
         obj = self.trade_api
@@ -83,17 +102,18 @@ class trade():
 
     def create_decision_matrix(self):
         # add target position to decision matrix: dm_df
-        self.dm_df = self.tp_df
+        self.dm_df = self.tp_df.copy()
         self.dm_df['position'] = 0
+
         # add actual position to decision matrix: dm_df
         i_positions = self.get_all_positions()
+
         for i_p in i_positions:
             if i_p.symbol in self.dm_df.index:
                 self.dm_df.loc[i_p.symbol, 'position'] = int(i_p.qty)
             else:
                 self.dm_df.loc[i_p.symbol, 'position'] = int(i_p.qty)
                 self.dm_df.loc[i_p.symbol, 'trading'] = True
-
         # add orders to decision matrix: dm_df
         i_orders_market, i_orders_trailing, i_orders_other = self.get_all_sum_orders()
         self.dm_df = self.dm_df.join(pd.Series(i_orders_market).to_frame('order_market'), how='outer')
@@ -167,7 +187,6 @@ class trade():
                 self.dm_df.loc[i_index, 'to_do'] = "error"
                 self.dm_df.loc[i_index, 'to_do_type'] = ""
                 self.dm_df.loc[i_index, 'to_do_qty'] = 0
-
         # 3. szint
         # lehet, hogy a szükséges döntés már megszületett előzőleg és az orderek ki lettek adva
         #  - ha az orderek száma rendben akkor vár
@@ -221,6 +240,9 @@ class trade():
     def monitor_stop(self):
         self.monitor_break = True
 
+    def broker_stop(self):
+        self.broker_break = True
+
     def monitor_while(self):
         i_wait_sec = self.monitor_refresh_rate + randint(-5, 5)
         while not self.monitor_break:
@@ -232,7 +254,8 @@ class trade():
             while i_wait_no < i_wait_sec and not self.monitor_break:
                 sleep(1)
                 i_wait_no += 1
-
+        if self.monitor_break:
+            print("Status: Monitor stopped!")
         self.monitor_break = False
         self.monitor_is_working = False
 
@@ -283,57 +306,59 @@ class trade():
     def broker_while(self):
         self.gui.tlog("Start: Broker", line=True, indent=False, color="normal")
         is_broker_action = True
-        while is_broker_action:
+        while is_broker_action and not self.broker_break:
             is_broker_action = self.broker_action()
-            # print("DM")
-            # print(self.dm_df.T)
-            # print("TP")
-            # print(self.tp_df.T)
-            if is_broker_action:
-                sleep(self.broker_refresh_rate)
+            # várakozik egy adott ideig, de ki tud belőle szállni menet közben is így esc re azonnal leáll
+            i_wait_no = 0
+            while i_wait_no < self.broker_refresh_rate and not self.broker_break:
+                sleep(1)
+                i_wait_no += 1
+        if self.broker_break:
+            print("Status: Broker stopped!")
+        else:
+            self.gui.tlog("Ready.", line=False, indent=False, color="normal")
         self.broker_is_working = False
-        self.gui.tlog("Ready.", line=False, indent=False, color="normal")
+
 
     def broker_action(self):
         self.create_decision_matrix()
-        if not self.is_trading_blocked():
-            for i_index in self.dm_df.index:
+        for i_index in self.dm_df.index:
 
-                # 1. szint
-                # végrehajtja az utasítáokat
+            # 1. szint
+            # végrehajtja az utasítáokat
 
-                if self.dm_df.loc[i_index, 'trading']:
+            if self.dm_df.loc[i_index, 'trading']:
 
-                    if self.dm_df.loc[i_index, 'to_do_order_clear']:
+                if self.dm_df.loc[i_index, 'to_do_order_clear']:
+                    i_is_canceled = self.cancel_orders_by_symbol(i_index)
+                    while not i_is_canceled:
                         i_is_canceled = self.cancel_orders_by_symbol(i_index)
-                        while not i_is_canceled:
-                            i_is_canceled = self.cancel_orders_by_symbol(i_index)
 
-                    if self.dm_df.loc[i_index, 'to_do'] == "buy" or self.dm_df.loc[i_index, 'to_do'] == "sell":
-                        i_qty = abs(self.dm_df.loc[i_index, 'to_do_qty'])
-                        i_side = self.dm_df.loc[i_index, 'to_do']
-                        if self.dm_df.loc[i_index, 'to_do_type'] == "stop":
-                            # stop hoz market ordert használok
-                            self.order_market(i_index, i_side, i_qty)
-                        else:
-                            # trade hez is market ordert használok
-                            # majd ehhez kell hozzá kapcsolni a OTO -
-                            self.order_market(i_index, i_side, i_qty)
-                    elif self.dm_df.loc[i_index, 'to_do'] == "wait":
-                        # 2. sint
-                        # megvizsgálja, hogy a target állpot beállt-e, aza position == tartget position
-                        # és nincsenek orderek bent ha minden ok, akkor befejeződött a trading iteráció
-                        i_x = (self.dm_df.loc[i_index, 'target_position'] - self.dm_df.loc[i_index, 'position']) == 0
-                        i_ox = self.dm_df.loc[i_index, 'order_market'] == 0
-                        if i_x and i_ox:
-                            self.set_tp_done(i_index)
-                    elif self.dm_df.loc[i_index, 'to_do'] == "error":
-                        # ha a bróker egy pozícióra errort kap
-                        print("Broker error")
-            # ha van legalább egy trading true, akkor true val tér vissza
-            # azaz legalább 1 olyan symbol van amivel még foglalkozni kell addig nem fog lállni a broker_wait
-        else:
-            print("Trading blocked")
+                if self.dm_df.loc[i_index, 'to_do'] == "buy" or self.dm_df.loc[i_index, 'to_do'] == "sell":
+                    i_qty = abs(self.dm_df.loc[i_index, 'to_do_qty'])
+                    i_side = self.dm_df.loc[i_index, 'to_do']
+                    if self.dm_df.loc[i_index, 'to_do_type'] == "stop":
+                        # stop hoz market ordert használok
+                        self.order_market(i_index, i_side, i_qty)
+                    else:
+                        # TODO: trailer trade order
+                        # trade hez is market ordert használok
+                        # majd ehhez kell hozzá kapcsolni a OTO -
+                        self.order_market(i_index, i_side, i_qty)
+                elif self.dm_df.loc[i_index, 'to_do'] == "wait":
+                    # 2. sint
+                    # megvizsgálja, hogy a target állpot beállt-e, aza position == tartget position
+                    # és nincsenek orderek bent ha minden ok, akkor befejeződött a trading iteráció
+                    i_x = (self.dm_df.loc[i_index, 'target_position'] - self.dm_df.loc[i_index, 'position']) == 0
+                    i_ox = self.dm_df.loc[i_index, 'order_market'] == 0
+                    if i_x and i_ox:
+                        self.set_tp_done(i_index)
+                elif self.dm_df.loc[i_index, 'to_do'] == "error":
+                    # ha a bróker egy pozícióra errort kap
+                    # TODO: bokeren végig kell vezetni az errort
+                    print("Broker error")
+        # ha van legalább egy trading true, akkor true val tér vissza
+        # azaz legalább 1 olyan symbol van amivel még foglalkozni kell addig nem fog lállni a broker_wait
         # ha a tp_df ben azaz a target positionban minden trading False akkor meg fog állni a bróker while
         i_return = self.tp_df["trading"].sum() > 0
         return i_return
@@ -341,20 +366,38 @@ class trade():
 # Ordering methods -----------------------------------------------
 
     def order_market(self, symbol, side, qty):
-        if side == "buy":
-            self.gui.tlog(f"Submit order: {symbol} {side} {int(qty)}", line=False, indent=True, color="long")
-        else:
-            self.gui.tlog(f"Submit order: {symbol} {side} {int(qty)}", line=False, indent=True, color="short")
+        i_is_trading_blocked = self.is_trading_blocked()
+        i_is_market_open = self.is_market_open()
+        if i_is_trading_blocked:
+            self.gui.tlog(f"Trading blocked! Set:Refresh time: 60 sec (Slow down)",
+                          line=False,
+                          indent=True,
+                          color="long")
+            self.broker_refresh_rate = 60
+        if not i_is_market_open:
+            self.gui.tlog(f"Market is closed! Set:Refresh time: 60 sec (Slow down)",
+                          line=False,
+                          indent=True,
+                          color="long")
+            self.broker_refresh_rate = 60
+        if not i_is_trading_blocked and i_is_market_open:
+            if self.broker_refresh_rate != 5:
+                self.gui.tlog(f"Set:Refresh time: 5 sec (Speed down)", line=False, indent=True, color="long")
+                self.broker_refresh_rate = 5
+            if side == "buy":
+                self.gui.tlog(f"Submit order: {symbol} {side} {int(qty)}", line=False, indent=True, color="long")
+            else:
+                self.gui.tlog(f"Submit order: {symbol} {side} {int(qty)}", line=False, indent=True, color="short")
 
-        self.call_alphaca("submit_order",
-                          [],
-                          {"symbol": symbol,
-                           "qty": int(qty),
-                           "side": side,
-                           "type": 'market',
-                           "time_in_force": 'gtc'
-                           }
-                          )
+            self.call_alphaca("submit_order",
+                              [],
+                              {"symbol": symbol,
+                               "qty": int(qty),
+                               "side": side,
+                               "type": 'market',
+                               "time_in_force": 'gtc'
+                               }
+                              )
 
     def order_trailing_stop(self, symbol, side, qty):
         print(f'Submit trailing stop order: {symbol} , {side}, {int(qty)}')
@@ -383,6 +426,7 @@ class trade():
     def set_tp_position(self, symbol, qty):
         self.tp_df.loc[symbol, 'target_position'] = int(qty)
         self.tp_df.loc[symbol, 'trading'] = True
+        self.write_tp_df()
 
         # a trade log on beljebb teszem ha éppen bokering közben állítgat
         i_indent = self.broker_is_working
@@ -396,9 +440,11 @@ class trade():
 
     def drop_tp_symbol(self, symbol):
         self.tp_df = self.tp_df.drop([symbol], errors='ignore')
+        self.write_tp_df()
 
     def set_tp_done(self, symbol):
         self.tp_df.loc[symbol, 'trading'] = False
+        self.write_tp_df()
 
     def get_tp_position(self, symbol):
         return self.tp_df.loc[symbol, 'target_position']
@@ -620,14 +666,14 @@ class trade():
     def get_symbol(self, symbol):
         return self.call_alphaca("get_asset", [symbol], {})
 
-    # market infos
+# market infos
 
     def is_market_open(self):
         # i_clock = self.trade_api.get_clock()
         i_clock = self.call_alphaca("get_clock", [], {})
         return i_clock.is_open
 
-    # position methods
+# position methods
 
     def get_all_positions(self):
         # i_positions = self.trade_api.list_positions()

@@ -757,7 +757,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>702</x>
-     <y>41</y>
+     <y>128</y>
      <width>1000</width>
      <height>20</height>
     </rect>
@@ -780,7 +780,7 @@ background-color: none;</string>
    <property name="geometry">
     <rect>
      <x>719</x>
-     <y>6</y>
+     <y>-2</y>
      <width>160</width>
      <height>37</height>
     </rect>
@@ -798,14 +798,14 @@ background-color: none;</string>
 background:none;</string>
    </property>
    <property name="text">
-    <string>Watch list</string>
+    <string>nTrade</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
      <x>721</x>
-     <y>8</y>
+     <y>0</y>
      <width>160</width>
      <height>37</height>
     </rect>
@@ -823,14 +823,14 @@ background:none;</string>
 background:none;</string>
    </property>
    <property name="text">
-    <string>Watch list</string>
+    <string>nTrade</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
      <x>720</x>
-     <y>7</y>
+     <y>-1</y>
      <width>160</width>
      <height>37</height>
     </rect>
@@ -848,14 +848,14 @@ background:none;</string>
 background:none;</string>
    </property>
    <property name="text">
-    <string>Watch list</string>
+    <string>nTrade</string>
    </property>
   </widget>
   <widget class="Line" name="line_8">
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>43</y>
+     <y>130</y>
      <width>1000</width>
      <height>20</height>
     </rect>
@@ -878,7 +878,7 @@ background-color: none;</string>
    <property name="geometry">
     <rect>
      <x>704</x>
-     <y>38</y>
+     <y>125</y>
      <width>1000</width>
      <height>20</height>
     </rect>
@@ -1016,7 +1016,7 @@ background-color: none;</string>
    <property name="geometry">
     <rect>
      <x>704</x>
-     <y>545</y>
+     <y>632</y>
      <width>800</width>
      <height>20</height>
     </rect>
@@ -1039,7 +1039,7 @@ background-color: none;</string>
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>543</y>
+     <y>630</y>
      <width>800</width>
      <height>20</height>
     </rect>
@@ -1062,7 +1062,7 @@ background-color: none;</string>
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>540</y>
+     <y>627</y>
      <width>800</width>
      <height>20</height>
     </rect>
@@ -1081,11 +1081,11 @@ background-color: none;</string>
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QToolButton" name="toolButton_37">
+  <widget class="QToolButton" name="Tr_stop_all">
    <property name="geometry">
     <rect>
      <x>1290</x>
-     <y>566</y>
+     <y>653</y>
      <width>81</width>
      <height>51</height>
     </rect>
@@ -1117,9 +1117,9 @@ align: left;</string>
    <property name="geometry">
     <rect>
      <x>710</x>
-     <y>563</y>
+     <y>650</y>
      <width>571</width>
-     <height>71</height>
+     <height>63</height>
     </rect>
    </property>
    <property name="frameShape">
@@ -1809,8 +1809,8 @@ background: none;</string>
    <property name="geometry">
     <rect>
      <x>920</x>
-     <y>16</y>
-     <width>141</width>
+     <y>8</y>
+     <width>71</width>
      <height>17</height>
     </rect>
    </property>
@@ -1829,7 +1829,7 @@ background: none;</string>
 }</string>
    </property>
    <property name="text">
-    <string>Portfolio monitor</string>
+    <string>Monitor</string>
    </property>
    <property name="iconSize">
     <size>
@@ -1845,7 +1845,7 @@ background: none;</string>
    <property name="geometry">
     <rect>
      <x>713</x>
-     <y>60</y>
+     <y>147</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -2187,7 +2187,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>933</x>
-     <y>60</y>
+     <y>147</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -2520,7 +2520,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>1153</x>
-     <y>60</y>
+     <y>147</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -2853,7 +2853,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>713</x>
-     <y>180</y>
+     <y>267</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -3186,7 +3186,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>933</x>
-     <y>180</y>
+     <y>267</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -3519,7 +3519,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>1153</x>
-     <y>180</y>
+     <y>267</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -3852,7 +3852,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>713</x>
-     <y>300</y>
+     <y>387</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -4185,7 +4185,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>933</x>
-     <y>300</y>
+     <y>387</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -4518,7 +4518,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>1153</x>
-     <y>300</y>
+     <y>387</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -4851,7 +4851,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>713</x>
-     <y>420</y>
+     <y>507</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -5184,7 +5184,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>933</x>
-     <y>420</y>
+     <y>507</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -5517,7 +5517,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>1153</x>
-     <y>420</y>
+     <y>507</y>
      <width>220</width>
      <height>121</height>
     </rect>
@@ -5847,7 +5847,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>284</y>
+     <y>371</y>
      <width>691</width>
      <height>21</height>
     </rect>
@@ -5863,7 +5863,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>404</y>
+     <y>491</y>
      <width>691</width>
      <height>21</height>
     </rect>
@@ -5879,7 +5879,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>163</y>
+     <y>250</y>
      <width>691</width>
      <height>21</height>
     </rect>
@@ -5895,7 +5895,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>918</x>
-     <y>52</y>
+     <y>139</y>
      <width>20</width>
      <height>498</height>
     </rect>
@@ -5911,7 +5911,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>1138</x>
-     <y>52</y>
+     <y>139</y>
      <width>20</width>
      <height>498</height>
     </rect>
@@ -5927,7 +5927,7 @@ Ichi:1</string>
    <property name="geometry">
     <rect>
      <x>1240</x>
-     <y>16</y>
+     <y>8</y>
      <width>121</width>
      <height>20</height>
     </rect>
@@ -6025,6 +6025,49 @@ pading-bottom:5px;
     </layout>
    </widget>
   </widget>
+  <widget class="QLabel" name="nTrade_info">
+   <property name="geometry">
+    <rect>
+     <x>720</x>
+     <y>40</y>
+     <width>641</width>
+     <height>81</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Tahoma</family>
+     <pointsize>9</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="text">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="textFormat">
+    <enum>Qt::RichText</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_27">
+   <property name="geometry">
+    <rect>
+     <x>705</x>
+     <y>35</y>
+     <width>700</width>
+     <height>3</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background: none;</string>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
   <zorder>LT_scrollArea</zorder>
   <zorder>label_16</zorder>
   <zorder>label_15</zorder>
@@ -6062,7 +6105,7 @@ pading-bottom:5px;
   <zorder>line_13</zorder>
   <zorder>line_14</zorder>
   <zorder>line_15</zorder>
-  <zorder>toolButton_37</zorder>
+  <zorder>Tr_stop_all</zorder>
   <zorder>Tr_frame</zorder>
   <zorder>label_13</zorder>
   <zorder>line_16</zorder>
@@ -6092,6 +6135,8 @@ pading-bottom:5px;
   <zorder>line_25</zorder>
   <zorder>line_26</zorder>
   <zorder>USDHUF</zorder>
+  <zorder>nTrade_info</zorder>
+  <zorder>line_27</zorder>
  </widget>
  <resources/>
  <connections/>

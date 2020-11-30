@@ -1,30 +1,29 @@
 # This Python file uses the following encoding: utf-8
 # GUI -----------------------------------------------
-import pandas as pd
 from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QScrollArea, QProgressBar, QToolButton, QMessageBox, QFrame
 from PyQt5 import QtGui, QtCore, QtWebEngineWidgets, uic
 from PyQt5.QtCore import QTime, QDate
-from functools import partial
-from datetime import datetime, timedelta
-import numpy as np
 
 # other checked ----------------------------------------------------
+import pandas as pd
 import os  # for test command
 import psutil  # for test command
 import pandas_ta as ta  # technical indicators for ndf2.tech
+from functools import partial  # a kattintás hozzá rendeléséhez használom
+from datetime import datetime, timedelta  # a log ban használom
+import sys  # a test parancs használja hdd szabad hely kiíratására
+
 
 # User classes ------------------------------------------------------
 from classes.trade import trade
 from classes.market_data import market_data
 from classes.nd_db import nd_db
-# from classes.gui import gui
-# import pandas as pd
-# from PyQt5.QtWidgets import QApplication
-import sys
+
+
 import websocket
 
 import time
-import random
+# import random
 # from pandas import DataFrame
 # import threading
 from tkinter import *
@@ -186,7 +185,6 @@ class gui(QWidget, object):
                     object_group[i_o].clicked.connect(partial(tr_stop, i + 1))
 
         uic.loadUi("./qt_ui/form.ui", self)
-
         # self.Command_Line.setText("")
 
         # Connections ----------------------------------------------------------
@@ -216,6 +214,7 @@ class gui(QWidget, object):
         self.Tr_cancel.clicked.connect(self.tr_cancel)
         self.Tr_qty.valueChanged.connect(self.tr_change_data)
         self.Tr_set_order.clicked.connect(tr_set_order)
+        self.Tr_stop_all.clicked.connect(tr_stop_all)
 
         # watch list up area ----------------------------------------
         self.Tr_portfolio_monitor.stateChanged.connect(tr_portfolio_monitor)
@@ -240,6 +239,26 @@ class gui(QWidget, object):
         self.To_T.setTime(QTime(i_now.hour, i_now.minute))
         self.Tr_frame.hide()
 
+    def create_tr_info_string(self):
+        def nbs(no):
+            return "&nbsp;" * no
+        s = 10
+        a = f"""
+        <html><head/><body>
+        <table border="0" cellspacing="5" cellpadding="0">
+            <tr>
+                <td>Monitor: </td><td>Off</td><td>{nbs(s)}</td><td>Blocked:</td><td>No</td><td>{nbs(s)}</td><td>P&L:</td><td>315.517 USD 125.125 HUF</td>
+            </tr>
+            <tr>
+                <td>Broker:</td><td>Off</td><td>{nbs(s)}</td><td>Reguests:</td><td>125 / min</td><td>{nbs(s)}</td><td>Tradinh hours:</td><td>8:00-12:00 UTC+2</td>
+            </tr>
+            <tr>
+                <td>Market:</td><td>Open</td><td>{nbs(s)}</td><td>USD / HUF:</td><td>321.15</td><td>{nbs(s)}</td><td>Blocked:</td><td>No</td>
+            </tr>
+        </table>
+        </body></html>
+        """
+        return a
 
     def tr_cancel(self):
         self.Tr_frame.hide()
@@ -259,6 +278,7 @@ class gui(QWidget, object):
     def keyPressEvent(self, e):
         if e.key() == QtCore.Qt.Key_Escape:
             trade.monitor_stop()
+            trade.broker_stop()
             print("Status: GUI Closed")
             # self.thread.ws.close()
             self.close()
@@ -275,7 +295,7 @@ class gui(QWidget, object):
                 wl_frame_list[i_n] = self.findChild(QFrame, i_src)
             return wl_frame_list
 
-        i_noid = np.array(['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12'])
+        i_noid = ['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12']
         if mode == "full":
             i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
             for i_obj in i_wl_frame_list:
@@ -419,19 +439,17 @@ class gui(QWidget, object):
             self.mark_command_line("", False)
 
     def tlog(self, add_text, line=False, indent=True, color="normal"):
-        i_for_cut = "<html>\n<head/>\n<body>\n<p>\n<br/>\n</p>\n</body>\n</html>"
+        i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
         i_for_cut = i_for_cut.splitlines()
         i_cut_html = self.Logs_Trade.text()
-        for ifc in i_for_cut:
-            i_cut_html = i_cut_html.replace(ifc, "")
-        if color == "long":
-            i_web_color = "#078f12"
-        elif color == "short":
-            i_web_color = "#ff3333"
-        elif color == "stop":
-            i_web_color = "#ff9100"
-        else:
-            i_web_color = "#0000"
+        for i_c in i_for_cut:
+            i_cut_html = i_cut_html.replace(i_c, "")
+
+        i_colors = {'long': "#078F12",
+                    'short': "#ff3333",
+                    'stop': "#ff9100",
+                    'normal': "#333333"}
+        i_web_color = i_colors[color]
 
         if indent:
             i_ind = "│  "
@@ -462,7 +480,6 @@ class gui(QWidget, object):
         i_vbar = self.LT_scrollArea.verticalScrollBar()
         i_vbar.setValue(i_vbar.maximum())
         QApplication.processEvents()
-
 
 
 class n_date_frame2():
@@ -741,8 +758,7 @@ def help2(p1="", p2="", p3=""):
 
 
 def do(symbol="", p2="", p3=""):
-    gui.tlog(f"Set position STOP", line=True, indent=True, color="stop")
-
+    gui.nTrade_info.setText(gui.create_tr_info_string())
 
 
 def s(msg_str):
@@ -1269,6 +1285,34 @@ def tr_stop(btn_no):
         gui.refresh_ui("info")
         trade.broker_run()
 
+
+def tr_stop_all():
+    gui.Tr_frame.hide()
+    QApplication.processEvents()
+    if gui.confirm("Stop all!", "Are you sure? Stop all position?"):
+        gui.tlog(f"Start: STOP ALL!", line=True, indent=False, color="normal")
+        i_open_orders = trade.get_all_open_orders()
+        i_symbol_dic = {}
+        for i_o1 in i_open_orders:
+            i_symbol_dic[i_o1.symbol] = 1
+        for i_o2 in i_symbol_dic:
+            gui.tlog(f"Clear orders: {i_o2}", line=False, indent=True, color="normal")
+            trade.cancel_orders_by_symbol(i_o2)
+
+        for i_s in tuple(wl.df["symbol"]):
+            trade.set_tp_position(i_s, 0)
+
+        i_pos = trade.get_all_positions()
+        for i_s2 in i_pos:
+            if i_s2.symbol not in tuple(wl.df["symbol"]):
+                trade.set_tp_position(i_s2.symbol, 0)
+
+        gui.refresh_ui("info")
+        gui.tlog(f"Ready.", line=False, indent=False, color="normal")
+
+        # QApplication.processEvents()
+
+        # trade.broker_run()
 
 def tr_portfolio_monitor():
     if gui.Tr_portfolio_monitor.checkState():
