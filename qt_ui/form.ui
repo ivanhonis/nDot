@@ -779,9 +779,9 @@ background-color: none;</string>
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>719</x>
+     <x>712</x>
      <y>-2</y>
-     <width>160</width>
+     <width>102</width>
      <height>37</height>
     </rect>
    </property>
@@ -804,9 +804,9 @@ background:none;</string>
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>721</x>
+     <x>714</x>
      <y>0</y>
-     <width>160</width>
+     <width>102</width>
      <height>37</height>
     </rect>
    </property>
@@ -829,9 +829,9 @@ background:none;</string>
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>720</x>
+     <x>713</x>
      <y>-1</y>
-     <width>160</width>
+     <width>102</width>
      <height>37</height>
     </rect>
    </property>
@@ -1084,7 +1084,7 @@ background-color: none;</string>
   <widget class="QToolButton" name="Tr_stop_all">
    <property name="geometry">
     <rect>
-     <x>1290</x>
+     <x>1288</x>
      <y>653</y>
      <width>81</width>
      <height>51</height>
@@ -1093,7 +1093,7 @@ background-color: none;</string>
    <property name="font">
     <font>
      <family>Arial</family>
-     <pointsize>10</pointsize>
+     <pointsize>8</pointsize>
      <weight>75</weight>
      <bold>true</bold>
     </font>
@@ -1110,7 +1110,7 @@ align: left;</string>
    </property>
    <property name="text">
     <string>STOP 
-  ALL</string>
+  ALL (F12)</string>
    </property>
   </widget>
   <widget class="QFrame" name="Tr_frame">
@@ -1808,10 +1808,10 @@ background: none;</string>
   <widget class="QCheckBox" name="Tr_portfolio_monitor">
    <property name="geometry">
     <rect>
-     <x>920</x>
-     <y>8</y>
-     <width>71</width>
-     <height>17</height>
+     <x>857</x>
+     <y>10</y>
+     <width>101</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="font">
@@ -1824,9 +1824,23 @@ background: none;</string>
    </property>
    <property name="styleSheet">
     <string notr="true">QCheckBox {
-    spacing: 5px;
-	color: #555555
-}</string>
+	color:#555555;
+}
+
+QCheckBox::indicator {
+    width: 40px;
+    height: 40px;
+}
+
+QCheckBox::indicator:unchecked {
+    image: url(images/switch-off.png);
+}
+
+QCheckBox::indicator:checked {
+    image: url(images/switch-on.png);
+}
+
+</string>
    </property>
    <property name="text">
     <string>Monitor</string>
@@ -5923,30 +5937,6 @@ Ichi:1</string>
     <enum>Qt::Vertical</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="USDHUF">
-   <property name="geometry">
-    <rect>
-     <x>1240</x>
-     <y>8</y>
-     <width>121</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>Arial</family>
-     <pointsize>9</pointsize>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">color: #555555</string>
-   </property>
-   <property name="text">
-    <string>USD/HUF:    :)</string>
-   </property>
-  </widget>
   <widget class="QScrollArea" name="LT_scrollArea">
    <property name="geometry">
     <rect>
@@ -6068,6 +6058,47 @@ pading-bottom:5px;
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
+  <widget class="QToolButton" name="Tr_info_refresh">
+   <property name="geometry">
+    <rect>
+     <x>815</x>
+     <y>5</y>
+     <width>40</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QToolButton {
+	padding: 3px;
+	border-radius: 3px;
+	border: 1px solid #333333;
+}
+QToolButton:pressed {
+	padding: 0px;
+	border-radius: 3px;
+	border: 1px solid #333333;
+}</string>
+   </property>
+   <property name="text">
+    <string>Refresh nTrade Info</string>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/rf.png</normaloff>../images/rf.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>16</width>
+     <height>16</height>
+    </size>
+   </property>
+  </widget>
   <zorder>LT_scrollArea</zorder>
   <zorder>label_16</zorder>
   <zorder>label_15</zorder>
@@ -6134,9 +6165,9 @@ pading-bottom:5px;
   <zorder>line_24</zorder>
   <zorder>line_25</zorder>
   <zorder>line_26</zorder>
-  <zorder>USDHUF</zorder>
   <zorder>nTrade_info</zorder>
   <zorder>line_27</zorder>
+  <zorder>Tr_info_refresh</zorder>
  </widget>
  <resources/>
  <connections/>

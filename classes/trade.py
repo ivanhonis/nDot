@@ -2,7 +2,7 @@ import alpaca_trade_api as tradeapi
 import pandas as pd
 import tables
 import threading
-from time import sleep, gmtime
+from time import sleep, gmtime, time
 # azért használom, hogy a rendszres lekérdezések nem pont ugyan olyan ütemben történjenek, ne tűnjek junk nak
 from random import randint
 
@@ -12,13 +12,23 @@ class trade():
     def __init__(self, gui):
         self.gui = gui
         self.request_count = {}
+        self.request_count_max = 0
         self.trade_api = tradeapi.REST('PKSJI4DQMLN4IQ8L6KFT',
                                        '8CUv1fVN3s9Vl5hkxojTuDChZiXIe7E3qvbC147F',
                                        base_url='https://paper-api.alpaca.markets')
 
-        # self.account = ""
-        # self.account = self.call_alphaca("get_account")
-        # self.account = self.trade_api.get_account()
+        self.clock = ""
+        # alpaca accountot csak iylen időközönként kérem le.
+        self.clock_refresh_time = 600
+        # utolsó alpaca accunt lekérés ideje
+        self.last_time_get_clock = 0
+
+
+        self.account = ""
+        # alpaca accountot csak iylen időközönként kérem le.
+        self.account_refresh_time = 240
+        # utolsó alpaca accunt lekérés ideje
+        self.last_time_get_account = 0
 
         # result by last get orders in apaca object
         self.orders = []
@@ -43,8 +53,8 @@ class trade():
         self.monitor_is_working = False
         self.monitor_break = False
 
-        # self.last_time_get_account = 0
-        # self.account_refresh_time = 60  # sec
+        self.refresh_info_string = ""
+        self.refresh_info_thread = ""
 
         self.config = {
             'time_zone': 'UTC+2',
@@ -80,12 +90,12 @@ class trade():
         # print(i_return)
         return i_return
 
-    def call_alphaca(self, function_name, args=[], kwargs={}):
+    def call_alpaca(self, function_name, args=[], kwargs={}):
         obj = self.trade_api
         try:
             i_return = getattr(obj, function_name)(*args, **kwargs)
         except:
-            print("Error")
+            print("Alpaca error")
             i_return = ""
         else:
             i_now = gmtime()
@@ -94,10 +104,11 @@ class trade():
                 self.request_count[i_now_str] += 1
             else:
                 self.request_count[i_now_str] = 1
+            self.request_count_max = max(self.request_count_max, self.request_count[i_now_str])
         return i_return
 
     def get_market_price_by_symbol(self, symbol):
-        symbol_bars = self.call_alphaca("get_barset", [symbol, 'minute', 1], {})
+        symbol_bars = self.call_alpaca("get_barset", [symbol, 'minute', 1], {})
         return symbol_bars[symbol][0].c
 
     def create_decision_matrix(self):
@@ -229,6 +240,16 @@ class trade():
                 print("!! ERROR !!")
         return self.dm_df
 
+# trade info methods ----------------------------------------------------------
+    def refresh_tr_info(self):
+        self.refresh_info_string = ""
+        self.refresh_info_thread = threading.Thread(target=self.refresh_tr_info_job)
+        self.refresh_info_thread.start()
+
+    def refresh_tr_info_job(self):
+        self.refresh_info_string = self.gui.create_tr_info_string()
+        self.gui.nTrade_info.setText(self.refresh_info_string)
+
 # monitor methods ---------------------------------------------------------------
 
     def monitor_run(self):
@@ -236,12 +257,10 @@ class trade():
             self.monitor_is_working = True
             self.monitor_thread = threading.Thread(target=self.monitor_while)
             self.monitor_thread.start()
+            self.refresh_tr_info()
 
     def monitor_stop(self):
         self.monitor_break = True
-
-    def broker_stop(self):
-        self.broker_break = True
 
     def monitor_while(self):
         i_wait_sec = self.monitor_refresh_rate + randint(-5, 5)
@@ -251,15 +270,17 @@ class trade():
             # várakozik egy adott ideig de ki tud belőle szállni menet közben is így esc re azonnal leáll
             # teszek hozzá +-5 másodpercet, hogy a várakozás a lekérdezési ütem ne legyen szabályos
             i_wait_no = 0
-            while i_wait_no < i_wait_sec and not self.monitor_break:
-                sleep(1)
+            while i_wait_no < (i_wait_sec * 2) and not self.monitor_break:
+                sleep(0.5)
                 i_wait_no += 1
         if self.monitor_break:
             print("Status: Monitor stopped!")
         self.monitor_break = False
         self.monitor_is_working = False
+        self.refresh_tr_info()
 
     def monitor_action(self):
+        self.cp_df = pd.DataFrame(None)
         i_positions = self.get_all_positions()
         # print(i_positions)
         for i_p in i_positions:
@@ -270,55 +291,34 @@ class trade():
             self.cp_df.loc[i_p.symbol, 'unrealized_pl'] = float(i_p.unrealized_pl)
         self.gui.refresh_ui("info")
 
-    def get_monitor_info_by_symbol(self, symbol):
-        if symbol in self.tp_df.index:
-            i_qt = int(self.tp_df.loc[symbol, "target_position"])
-        else:
-            i_qt = 0
-        if symbol in self.cp_df.index:
-            i_qc = int(self.cp_df.loc[symbol, "qty"])
-            i_p = float(self.cp_df.loc[symbol, "current_price"])
-            i_v = float(self.cp_df.loc[symbol, "market_value"])
-            i_return = f"q: {i_qt} / {i_qc}\np: {i_p}$\nv: {i_v}$"
-        else:
-            i_qc = 0
-            i_p = 0
-            i_v = 0
-            i_return = f"q: {i_qt} / {i_qc}\np: {i_p}$\nv: {i_v}$"
-        return i_return
-
-    def get_pl_by_symbol(self, symbol):
-        if symbol in self.cp_df.index:
-            i_p = float(self.cp_df.loc[symbol, "unrealized_pl"])
-            i_return = f"STOP {i_p}$"
-        else:
-            i_return = "STOP"
-        return i_return
-
 # broker methods
 
     def broker_run(self):
         if not self.broker_is_working:
             self.broker_is_working = True
+            self.refresh_tr_info()
             self.broker_thread = threading.Thread(target=self.broker_while)
             self.broker_thread.start()
 
+    def broker_stop(self):
+        self.broker_break = True
+
     def broker_while(self):
         self.gui.tlog("Start: Broker", line=True, indent=False, color="normal")
-        is_broker_action = True
+        is_broker_action = self.broker_action()
         while is_broker_action and not self.broker_break:
-            is_broker_action = self.broker_action()
             # várakozik egy adott ideig, de ki tud belőle szállni menet közben is így esc re azonnal leáll
             i_wait_no = 0
-            while i_wait_no < self.broker_refresh_rate and not self.broker_break:
-                sleep(1)
+            while i_wait_no < (self.broker_refresh_rate * 2) and not self.broker_break:
+                sleep(0.5)
                 i_wait_no += 1
+            is_broker_action = self.broker_action()
         if self.broker_break:
             print("Status: Broker stopped!")
         else:
             self.gui.tlog("Ready.", line=False, indent=False, color="normal")
         self.broker_is_working = False
-
+        self.refresh_tr_info()
 
     def broker_action(self):
         self.create_decision_matrix()
@@ -389,15 +389,15 @@ class trade():
             else:
                 self.gui.tlog(f"Submit order: {symbol} {side} {int(qty)}", line=False, indent=True, color="short")
 
-            self.call_alphaca("submit_order",
-                              [],
-                              {"symbol": symbol,
+            self.call_alpaca("submit_order",
+                             [],
+                             {"symbol": symbol,
                                "qty": int(qty),
                                "side": side,
                                "type": 'market',
                                "time_in_force": 'gtc'
                                }
-                              )
+                             )
 
     def order_trailing_stop(self, symbol, side, qty):
         print(f'Submit trailing stop order: {symbol} , {side}, {int(qty)}')
@@ -410,16 +410,16 @@ class trade():
         #     trail_percent="10"
         # )
 
-        self.call_alphaca("submit_order",
-                          [],
-                          {"side": side,
+        self.call_alpaca("submit_order",
+                         [],
+                         {"side": side,
                            "symbol": symbol,
                            "type": "trailing_stop",
                            "qty": int(qty),
                            "time_in_force": "day",
                            "trail_percent": "10"
                            }
-                          )
+                         )
 
 # Target position methods -----------------------------------------
 
@@ -451,40 +451,6 @@ class trade():
 
     def is_tp_done(self, symbol):
         return self.tp_df.loc[symbol, 'target_position']
-
-    # def check_position(self):
-    #
-    #     # def trade_maker(tp, p, o):
-    #     #     i_corr = tp - p
-    #     #     if i_corr == 0 and o != 0:
-    #     #         print ("clear orders")
-    #     #     else:
-    #     #         # átmenő akkor kell stop
-    #     #         # különben
-    #     #     i_stop = i_corr - self.target_positions[i_p2]
-    #     #     i_new_pos = i_corr - i_stop
-    #     #     print(f" -> Correction needed. stop: {i_stop} new: {i_new_pos} ")
-    #
-    #
-    #     i_positions = self.get_all_positions()
-    #     i_checked_symbol = {}
-    #     for i_p in i_positions:
-    #         i_target_position = int(self.get_target_position_by_symbol(i_p.symbol))
-    #         i_order_sum_qty = int(self.get_sum_order_by_symbol(i_p.symbol))
-    #         print("Symbol: ", i_p.symbol, "TP: ", i_target_position, "P: ", i_p.qty, "O: ", i_order_sum_qty)
-    #         if int(i_p.qty) + i_order_sum_qty != i_target_position:
-    #             print("  Trade bug (correction needed): ", (i_target_position-int(i_p.qty)))
-    #         i_checked_symbol[i_p.symbol] = 0
-    #     for i_p2 in self.target_positions:
-    #         if i_p2 not in i_checked_symbol:
-    #             i_order_sum_qty2 = int(self.get_sum_order_by_symbol(i_p2))
-    #             print("Symbol: ", i_p2, "TP: ", self.target_positions[i_p2], "P: ", 0, "O: ", i_order_sum_qty2)
-    #             i_corr = self.target_positions[i_p2] - i_order_sum_qty2
-    #             i_stop = i_corr - self.target_positions[i_p2]
-    #             i_new_pos = i_corr - i_stop
-    #             print(f" -> Correction needed. stop: {i_stop} new: {i_new_pos} ")
-
-    # orders method
 
     def get_all_sum_orders(self):
         order_list_market = {}
@@ -550,18 +516,12 @@ class trade():
     #     return i_return
 
     def get_all_open_orders(self):
-        # i_orders = self.trade_api.list_orders(
-        #     status='open',
-        #     limit=500,
-        #     nested=True
-        # )
-
-        i_orders = self.call_alphaca("list_orders",
-                                     [],
-                                     {"status": 'open',
+        i_orders = self.call_alpaca("list_orders",
+                                    [],
+                                    {"status": 'open',
                                       "limit": 500,
                                       "nested": True}
-                                     )
+                                    )
         self.orders = i_orders
         return i_orders
 
@@ -584,7 +544,7 @@ class trade():
     def cancel_order_by_id(self, order_id):
         try:
             # self.trade_api.cancel_order(order_id)
-            self.call_alphaca("cancel_order", [order_id], {})
+            self.call_alpaca("cancel_order", [order_id], {})
         except:
             i_all_open_orders = self.get_all_open_orders()
             if order_id in i_all_open_orders:
@@ -599,20 +559,20 @@ class trade():
 
     def get_account_now(self):
         # self.account = self.trade_api.get_account()
-        self.account = self.call_alphaca("get_account", [], {})
+        self.account = self.call_alpaca("get_account", [], {})
 
-    # def get_account(self):
-    #     if self.last_time_get_account > 0:
-    #         i_now = time.time()
-    #         i_last = self.last_time_get_account
-    #         i_time_dif = int(i_now - i_last)
-    #         if i_time_dif > self.account_refresh_time:
-    #             self.account = self.trade_api.get_account()
-    #             self.last_time_get_account = time.time()
-    #     else:
-    #         self.account = self.trade_api.get_account()
-    #         self.last_time_get_account = time.time()
-    #     return self.account
+    def get_account(self):
+        if self.last_time_get_account > 0:
+            i_now = time()
+            i_last = self.last_time_get_account
+            i_time_dif = int(i_now - i_last)
+            if i_time_dif > self.account_refresh_time:
+                self.account = self.call_alpaca("get_account", [], {})
+                self.last_time_get_account = time()
+        else:
+            self.account = self.call_alpaca("get_account", [], {})
+            self.last_time_get_account = time()
+        return self.account
 
     def get_buying_power(self):
         self.get_account_now()
@@ -627,7 +587,7 @@ class trade():
     def is_tradable(self, symbol):
         try:
             # i_asset = self.trade_api.get_asset(symbol)
-            i_asset = self.call_alphaca("get_asset", [symbol], {})
+            i_asset = self.call_alpaca("get_asset", [symbol], {})
         except:
             i_return = False
         else:
@@ -640,7 +600,7 @@ class trade():
     def is_shortable(self, symbol):
         try:
             # i_asset = self.trade_api.get_asset(symbol)
-            i_asset = self.call_alphaca("get_asset", [symbol], {})
+            i_asset = self.call_alpaca("get_asset", [symbol], {})
         except:
             i_return = False
         else:
@@ -653,7 +613,7 @@ class trade():
     def is_marginable(self, symbol):
         try:
             # i_asset = self.trade_api.get_asset(symbol)
-            i_asset = self.call_alphaca("get_asset", [symbol], {})
+            i_asset = self.call_alpaca("get_asset", [symbol], {})
         except:
             i_return = False
         else:
@@ -664,27 +624,40 @@ class trade():
         return i_return
 
     def get_symbol(self, symbol):
-        return self.call_alphaca("get_asset", [symbol], {})
+        return self.call_alpaca("get_asset", [symbol], {})
 
 # market infos
-
     def is_market_open(self):
         # i_clock = self.trade_api.get_clock()
-        i_clock = self.call_alphaca("get_clock", [], {})
+        i_clock = self.call_alpaca("get_clock", [], {})
         return i_clock.is_open
+
+    def get_clock(self):
+        if self.last_time_get_clock > 0:
+            i_now = time()
+            i_last = self.last_time_get_clock
+            i_time_dif = int(i_now - i_last)
+            if i_time_dif > self.clock_refresh_time:
+                self.clock = self.call_alpaca("get_clock", [], {})
+                self.last_time_get_clock = time()
+        else:
+            self.clock = self.call_alpaca("get_clock", [], {})
+            self.last_time_get_clock = time()
+        return self.clock
+
 
 # position methods
 
     def get_all_positions(self):
         # i_positions = self.trade_api.list_positions()
-        i_positions = self.call_alphaca("list_positions", [], {})
+        i_positions = self.call_alpaca("list_positions", [], {})
         self.positions = i_positions
         return i_positions
 
     def get_position_by_symbol(self, symbol):
         try:
             # i_position = self.trade_api.get_position(symbol)
-            i_position = self.call_alphaca("get_position", [symbol], {})
+            i_position = self.call_alpaca("get_position", [symbol], {})
         except:
             i_position = []
             self.positions = []

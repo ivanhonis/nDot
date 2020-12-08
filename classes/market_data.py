@@ -29,7 +29,7 @@ class market_data():
         return i_return
 
     def get_usdhuf(self):
-        self.log("md-> get_usdhuf")
+        # self.log("md-> get_usdhuf")
         try:
             i_result = self.finnhub_client.forex_rates(base='USD')
         except:
