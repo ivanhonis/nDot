@@ -14,13 +14,15 @@ from datetime import datetime, timedelta  # a log ban használom
 import sys  # a test parancs használja hdd szabad hely kiíratására
 # from multiprocessing import Process
 import threading  # refresh info párhuzamosítva van
+import webbrowser  # az elkészült chartokat itt nyitom meg azért hogy mindíg ugyan azon a tabon legyen
+import numpy as np
 
 
 # User classes ------------------------------------------------------
 from classes.trade import trade
 from classes.market_data import market_data
 from classes.nd_db import nd_db
-
+from classes.nchart import nchart
 
 import websocket
 
@@ -590,6 +592,7 @@ class n_date_frame2():
         # nddf[symbol].sort_index(inplace=True)
         nddf[symbol].drop_duplicates(inplace=True)
         nddf[symbol].set_index('Date')
+        nddf[symbol] = nddf[symbol].reset_index(drop=True)
 
     def add(self, symbol):
         log("ndf2-> add " + symbol)
@@ -600,21 +603,25 @@ class n_date_frame2():
         for i_i in range(len(i_datetime_series)-1):
             i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
             i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-            nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True))
+            nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True), ignore_index=True)
         self.set_dt_order(symbol)
         log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
         log("Number of rows: " + str(nddf[symbol].shape[0]))
+
+        print(nddf[symbol])
         nddb.write(symbol)
 
     def load_indicators(self):
         i_i = [
-            ['SMA30', ['SMA_30']],
-            ['SMA60', ['SMA_60']],
-            ['SMA90', ['SMA_90']],
-            ['ADX', ['ADX_90']],
-            ['ICHIMOKU', ['ISA_9',      'ISB_26',    'ITS_9',           'IKS_26',    'ICS_26']]
-        #   ['ICHIMOKU', ['ICHI_LEAD1', ICHI_LEAD2', 'ICHI_CONVERSION', 'ICHI_BASE', 'ICHI_LAGGING']]
+            ['SMA30',   ['SMA_30']],
+            ['SMA60',   ['SMA_60']],
+            ['SMA90',   ['SMA_90']],
+            ['ADX8',    ['ADX_8', 'DMP_8', 'DMN_8']],
+            ['ICHIMOKU', ['ISA_9', 'ISB_26', 'ITS_9', 'IKS_26', 'ICS_26',
+                          'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST',
+                          'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST']]
         ]
+
         self.indicators = pd.DataFrame(i_i)
         self.indicators.columns = ['indicator', 'fields']
         self.indicators.set_index('indicator')
@@ -652,6 +659,25 @@ class n_date_frame2():
 
     def add_tech(self, symbol, tech_indicator="SMA60"):
 
+        def find_first_signal(symbol, col, new_col, n):
+
+            def find_pattern(df):
+                i_o = tuple([1.0])
+                i_z = tuple([0.0])
+                i_pattern = i_z + (i_o * (n-1))
+                i_data = tuple(df)
+                # print(i_pattern, i_data)
+                if i_pattern == i_data:
+                    i_return = True
+                else:
+                    i_return = False
+                return i_return
+
+            nddf[symbol][new_col] = nddf[symbol][col] \
+                .rolling(window=n, center=False) \
+                .apply(lambda x: find_pattern(x)) \
+                .astype(bool)
+
         def case_set_back(symbol):
             # a pandas ta elállítgatja a neveket, ezért minden
             # hívás után szépen vissza állítom a neveket :)
@@ -675,8 +701,36 @@ class n_date_frame2():
                 nddf[symbol].ta.sma(length=90, append=True)
             elif tech_indicator == "ICHIMOKU":
                 nddf[symbol].ta.ichimoku(append=True)
-            elif tech_indicator == "ADX":
+                nddf[symbol]["conv_over_base"] = nddf[symbol]["ITS_9"] > nddf[symbol]["IKS_26"]
+                nddf[symbol]["conv_under_base"] = nddf[symbol]["ITS_9"] < nddf[symbol]["IKS_26"]
+                nddf[symbol]["cloud_top"] = nddf[symbol][['ISA_9', 'ISB_26']].max(axis=1)
+                nddf[symbol]["cloud_bottom"] = nddf[symbol][['ISA_9', 'ISB_26']].min(axis=1)
+                nddf[symbol]["ohlc4_over_cloud"] = nddf[symbol]["ohlc4"] > nddf[symbol]["cloud_top"]
+                nddf[symbol]["ohlc4_under_cloud"] = nddf[symbol]["ohlc4"] < nddf[symbol]["cloud_bottom"]
+
+                nddf[symbol]["lagging_over_cloud"] = nddf[symbol]["ICS_26"] > nddf[symbol]["cloud_top"]
+                nddf[symbol]["lagging_under_cloud"] = nddf[symbol]["ICS_26"] < nddf[symbol]["cloud_bottom"]
+
+                nddf[symbol]["SIG_ICHI_LONG_ALL"] = nddf[symbol]["conv_over_base"] \
+                                                    & nddf[symbol]["ohlc4_over_cloud"] \
+                                                    & nddf[symbol]["lagging_over_cloud"]
+                find_first_signal(symbol, 'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST', 3)
+                nddf[symbol]["SIG_ICHI_SHORT_ALL"] = nddf[symbol]["conv_under_base"] \
+                                                     & nddf[symbol]["ohlc4_under_cloud"] \
+                                                     & nddf[symbol]["lagging_under_cloud"]
+                find_first_signal(symbol, 'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST', 3)
+
+                nddf[symbol] = nddf[symbol].drop(['conv_over_base',
+                                                  'conv_under_base',
+                                                   'cloud_top',
+                                                   'cloud_bottom',
+                                                   'ohlc4_over_cloud',
+                                                   'ohlc4_under_cloud',
+                                                   ], axis=1)
+
+            elif tech_indicator == "ADX8":
                 nddf[symbol].ta.adx(length=8, append=True)
+
 
             case_set_back(symbol)
             nddb.write(symbol)
@@ -854,7 +908,9 @@ def help2(p1="", p2="", p3=""):
 
 
 def do(symbol="", p2="", p3=""):
-    trade.refresh_tr_info()
+    print(nddf['MSFT'])
+    print(nddf['IBM'])
+    print(nddf['APA'])
 
 
 def s(msg_str):
@@ -1009,268 +1065,6 @@ def ndf2_show_last(symbol="", xminute="60", p3=""):
         log("nddf key not exist: " + symbol)
 
 
-
-
-# def ndf_chart(symbol, p2="", p3=""):
-#     stock = n_date_frame()
-#     stock.get_time_frame(symbol)
-#     if db.row_count > 0:
-#         log("ndf_chart-> plot chart")
-#         i_chart_df = stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close",
-#                                                 "v": "Volume"},errors="raise")
-#         quote = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
-#         import matplotlib.pyplot as plt
-#         import mplfinance as mpf
-#         mpf.plot(quote, type='line', volume=True, mav=(20, 40))
-#         # fig = mpf.figure(style='yahoo', figsize=(20, 10), dpi=60, facecolor='white', edgecolor='k', tight_layout=True,
-#         #                  num=symbol)
-#         # ax1 = fig.add_subplot(4, 1, (1, 3))
-#         # ax2 = fig.add_subplot(4, 1, 4, sharex=ax1)
-#         # # plt.subplots_adjust(hspace=.001)
-#         # mpf.plot(quote, ax=ax1, volume=ax2, axtitle='')
-#         mpf.show()
-#     else:
-#         log("no data found in df")
-
-
-class NewTool1(ToolBase):
-    image = r"./images/ndot_icon_x2.png"
-
-    def trigger(self, sender, event, data=None):
-        # print(nddf[nchart.symbol]["Close"].iloc[nchart.window_from:nchart.window_to])
-        for i_i in range(1, 5):
-            for ax in nchart.axes:
-                ax.clear()
-            nchart.window_minus(3)
-            ap = [mpf.make_addplot(nchart.df.iloc[nchart.window_from:nchart.window_to],
-                                   type='candle',
-                                   ax=nchart.ax2,
-                                   ylabel='OHLC Price')
-                  # mpf.make_addplot(nddf[self.symbol].iloc[self.window_from:self.window_to][['Low', 'High']], ax=ax1)
-                  ]
-
-            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to],
-                     type='candle',
-                     ax=nchart.ax1,
-                     volume=nchart.ax3,
-                     addplot=ap,
-                     tight_layout=True)
-
-            for ax in nchart.axes[:-1]:
-                plt.setp(ax.get_xticklabels(), visible=False)
-
-            nchart.fig.canvas.draw()
-            QApplication.processEvents()
-
-
-class NewTool2(ToolBase):
-    image = r"./images/ndot_icon_x2.png"
-
-    def trigger(self, sender, event, data=None):
-
-        for i_i in range(1, 5):
-            for ax in nchart.axes:
-                ax.clear()
-            nchart.window_plus(3)
-
-            ap = [mpf.make_addplot(nchart.df.iloc[nchart.window_from:nchart.window_to],
-                                   type='candle',
-                                   ax=nchart.ax2,
-                                   ylabel='OHLC Price')
-                  # mpf.make_addplot(nddf[self.symbol].iloc[self.window_from:self.window_to][['Low', 'High']], ax=ax1)
-                  ]
-            mpf.plot(nchart.df.iloc[nchart.window_from:nchart.window_to],
-                     type='candle',
-                     ax=nchart.ax1,
-                     volume=nchart.ax3,
-                     addplot=ap,
-                     tight_layout=True)
-            nchart.fig.subplots_adjust(hspace=0.001, wspace=0, left=0.07)
-
-            for ax in nchart.axes[:-1]:
-                plt.setp(ax.get_xticklabels(), visible=False)
-
-            nchart.fig.canvas.draw()
-            QApplication.processEvents()
-
-
-class nchart_last():
-
-    def __init__(self):
-        self.symbol = ""
-        self.row_count = 0
-        self.window_size = 120
-        self.window_to = 0
-        self.window_from = 0
-        self.fig = ""
-        self.axes = ""
-        self.last_block_count = 2
-        self.df = pd.DataFrame(None)
-        self.add_plots = []
-        self.ax1 = ""
-        self.ax2 = ""
-        self.ax3 = ""
-
-    def show(self):
-        print(self.symbol)
-        self.df = pd.DataFrame(None)
-        print(nddf[self.symbol])
-        self.df = nddf[self.symbol]
-        self.df = self.df.set_index("date")
-        self.row_count = self.df.shape[0]
-        self.window_to = self.row_count
-        self.window_from = self.row_count - self.window_size
-        print(self.df)
-
-        self.fig = mpf.figure(style='yahoo',
-                              figsize=(16, 8),
-                              tight_layout=False,
-                              dpi=80)
-
-        self.fig.subplots_adjust(hspace=0.001, wspace=0, left=0.07)
-        self.fig.patch.set_facecolor('#d8d5ca')
-        self.fig.suptitle(self.symbol, fontsize=16)
-
-        self.ax1 = self.fig.add_subplot(6, 1, (1, 4))
-        self.ax1.set_facecolor('#ffffff')
-        self.ax1.patch.set_edgecolor('black')
-        self.ax1.patch.set_linewidth('1')
-
-        self.ax2 = self.fig.add_subplot(6, 1, 5, sharex=self.ax1)
-        self.ax2.set_facecolor('#efefef')
-        self.ax2.patch.set_edgecolor('black')
-        self.ax2.patch.set_linewidth('1')
-
-        self.ax3 = self.fig.add_subplot(6, 1, 6, sharex=self.ax1)
-        self.ax3.set_facecolor('#ffffff')
-        self.ax3.patch.set_edgecolor('#000000')
-        self.ax3.patch.set_linewidth('1')
-
-        ap = [mpf.make_addplot(self.df.iloc[self.window_from:self.window_to],
-                               type='candle',
-                               ax=self.ax2,
-                               ylabel='OHLC Price')
-              # mpf.make_addplot(nddf[self.symbol].iloc[self.window_from:self.window_to][['Low', 'High']], ax=ax1)
-              ]
-
-        mpf.plot(self.df.iloc[self.window_from:self.window_to],
-                 ax=self.ax1,
-                 volume=self.ax3,
-                 addplot=ap,
-                 xrotation=10,
-                 type='candle')
-        # fill_between=dict(y1=df['senkou_a'].values, y2=df['senkou_b'].values,
-        #                   color='#f2ad73', alpha=0.20),
-
-        tm = self.fig.canvas.manager.toolmanager
-        tm.add_tool("<-", NewTool1)
-        tm = self.fig.canvas.manager.toolmanager
-        tm.add_tool("->", NewTool2)
-        self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
-        self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
-
-        self.axes = self.fig.axes
-        self.fig.show()
-
-    def window_minus(self, step):
-        self.window_to = self.window_to - step
-        self.window_from = self.window_to - self.window_size
-        if self.window_from <= 0:
-            self.window_from = 0
-            self.window_to = self.window_from + self.window_size
-
-    def window_plus(self, step):
-        self.window_to = self.window_to + step
-        if self.window_to > self.row_count:
-            self.window_to = self.row_count
-        self.window_from = self.window_to - self.window_size
-
-
-
-
-# class nchart_last():
-#
-#     def __init__(self):
-#         self.symbol = ""
-#         self.df = pd.DataFrame(None)
-#         self.row_count = 0
-#         self.window_size = 120
-#         self.window_to = 0
-#         self.window_from = 0
-#         self.fig = ""
-#         self.axes = ""
-#         self.last_block_count = 2
-#         self.stock = n_date_frame()
-#
-#     def show(self):
-#         self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
-#         if db.row_count > 0:
-#             i_chart_df = self.stock.df.rename(columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"}, errors="raise")
-#             self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
-#             i_in_time, i_out_time = trade.time_filter(self.df)
-#             self.df = i_in_time
-#             # self.ap = [mpf.make_addplot(self.df['Close'], panel=2, type='line', ylabel='Line', mav=(5, 10)),
-#             #       mpf.make_addplot(self.df['Open'], panel=3, type='bar', ylabel='Line2')]
-#             # self.fig, self.axes = mpf.plot(self.df, mav=10, type='candle', ylabel='Candle', addplot=self.ap, panel_ratios=(3, 1, 1, 1), figratio=(11, 5),
-#             #          figscale=1, volume=True, tight_layout=True, title=self.symbol, returnfig=True)
-#
-#             self.row_count = self.df.shape[0]
-#             self.window_to = self.row_count
-#             self.window_from = self.row_count - self.window_size
-#             self.fig, self.axes = mpf.plot(self.df.iloc[self.window_from:self.window_to], type='candle', figratio=(17, 6), figscale=.8,
-#                                            volume=True, show_nontrading=True, tight_layout=True, title=self.symbol, returnfig=True)
-#             tm = self.fig.canvas.manager.toolmanager
-#             tm.add_tool("<-", NewTool1)
-#             tm = self.fig.canvas.manager.toolmanager
-#             tm.add_tool("->", NewTool2)
-#             self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("<-"), "toolgroup")
-#             self.fig.canvas.manager.toolbar.add_tool(tm.get_tool("->"), "toolgroup")
-#
-#             self.ax_main = self.axes[0]
-#             self.ax_volu = self.axes[2]
-#
-#             self.fig.show()
-#
-#         else:
-#             log("no data found in df")
-#
-#     def window_minus(self, step):
-#         self.window_to = self.window_to - step
-#         self.window_from = self.window_to - self.window_size
-#         if self.window_from < ((step*2)+1):
-#             log("start: db.get_last_m for chart " + self.symbol, True, False)
-#             old_row_count = self.row_count
-#             self.last_block_count += 1
-#             self.stock.get_last_m(self.symbol, str(self.window_size * self.last_block_count))
-#             if db.row_count > 0:
-#
-#                 i_chart_df = self.stock.df.rename(
-#                     columns={"datetime": "Date", "o": "Open", "h": "High", "l": "Low", "c": "Close", "v": "Volume"},
-#                     errors="raise")
-#                 self.df = tools.convert_df_to_csvdf(i_chart_df[['Date', 'Open', 'Close', 'High', 'Low', 'Volume']])
-#                 i_in_time, i_out_time = trade.time_filter(self.df)
-#                 self.df = i_in_time
-#                 self.row_count = self.df.shape[0]
-#                 groving = self.row_count - old_row_count
-#                 self.window_from = self.window_from + groving
-#                 self.window_to = self.window_to + groving
-#             log("ready.", False, False)
-#
-#
-#     def window_plus(self, step):
-#         self.window_to = self.window_to + step
-#         if self.window_to > self.row_count:
-#             self.window_to = self.row_count
-#         self.window_from = self.window_to - self.window_size
-
-
-
-
-def ndf_chart_last(symbol="", xminute="60", p3=""):
-    nchart.symbol = symbol
-    nchart.show()
-
-
 # md programs -------------------------------------------------------------------------------------------------------
 
 
@@ -1342,8 +1136,14 @@ def wl_trade_long(btn_no):
 
 def wl_btn_chart(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
-    log("start: ndf.chart.last " + symbol, True, False)
-    ndf_chart_last(symbol)
+    log("start: nchart " + symbol, True, False)
+    i_indecators = ndf2.get_added_indicators(symbol)
+    i_df = nddf[symbol].tail(3000)
+    nchart.fit(i_df, symbol, i_indecators)
+    nchart.show()
+
+    i_url = 'http://localhost:63342/nDot/nchart.html'
+    webbrowser.open(i_url, 2)
     log("ready.", False, False)
 
 
@@ -1457,7 +1257,7 @@ def tr_info_refresh(symbol="", p2="", p3=""):
 
 # Socket ----------------------------------------------------
 
-from PyQt5 import QtCore
+# from PyQt5 import QtCore
 class ListenWebsocket(QtCore.QThread):
     def __init__(self, parent=None):
         super(ListenWebsocket, self).__init__(parent)
@@ -1522,7 +1322,7 @@ if __name__ == "__main__":
     gui.showMaximized()
 
     # ndf = n_date_frame()
-    nchart = nchart_last()
+    nchart = nchart()
 
 
     # gui.show()
