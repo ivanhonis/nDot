@@ -1,10 +1,10 @@
 # importing the modules
 import pandas as pd
 import datetime
-from bokeh.io import output_file, save
+from bokeh.io import output_file, show
 from bokeh.plotting import figure
 from bokeh.layouts import column
-from bokeh.models import HoverTool, ColumnDataSource, BooleanFilter, CDSView, Range1d, Span, CrosshairTool
+from bokeh.models import HoverTool, ColumnDataSource, BooleanFilter, CDSView, Range1d, Span
 from bokeh.models.callbacks import CustomJS
 
 output_file("nchart.html")
@@ -76,7 +76,7 @@ class nchart():
         for e in self.elements:
             plots.append(e)
         c = column(self.elements)
-        save(c)
+        show(c)
 
     def chart_candlestick(self, df, name):
         # print(df)

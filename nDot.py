@@ -14,7 +14,6 @@ from datetime import datetime, timedelta  # a log ban használom
 import sys  # a test parancs használja hdd szabad hely kiíratására
 # from multiprocessing import Process
 import threading  # refresh info párhuzamosítva van
-import webbrowser  # az elkészült chartokat itt nyitom meg azért hogy mindíg ugyan azon a tabon legyen
 import numpy as np
 
 
@@ -585,6 +584,8 @@ class n_date_frame2():
     def __init__(self):
         self.indicators = pd.DataFrame(None)
         self.load_indicators()
+        self.tech_qualify_block_size = 10000  # one deal is 10.000 USD
+        self.tech_qualify_min_profit = 250  # profit on one deal
 
     def set_dt_order(self, symbol, ascending=True):
         nddf[symbol]['Date'] = pd.to_datetime(nddf[symbol]['Date'])
@@ -678,6 +679,30 @@ class n_date_frame2():
                 .apply(lambda x: find_pattern(x)) \
                 .astype(bool)
 
+        def gualify_signal(symbol, col, new_col, side):
+
+            def gualify(df):
+                i_pattern = tuple([1.0])
+                i_data = tuple(df)
+
+                if i_pattern == i_data:
+                    print(df.index)
+                    start_index = df.index
+                    for i_i in range (0,10):
+
+
+
+Token próba
+
+
+                i_return = True
+                return i_return
+
+            nddf[symbol][new_col] = nddf[symbol][col] \
+                .rolling(window=1, center=False) \
+                .apply(lambda x: gualify(x)) \
+                .astype(bool)
+
         def case_set_back(symbol):
             # a pandas ta elállítgatja a neveket, ezért minden
             # hívás után szépen vissza állítom a neveket :)
@@ -701,6 +726,7 @@ class n_date_frame2():
                 nddf[symbol].ta.sma(length=90, append=True)
             elif tech_indicator == "ICHIMOKU":
                 nddf[symbol].ta.ichimoku(append=True)
+                log("Finding signals...", False, True)
                 nddf[symbol]["conv_over_base"] = nddf[symbol]["ITS_9"] > nddf[symbol]["IKS_26"]
                 nddf[symbol]["conv_under_base"] = nddf[symbol]["ITS_9"] < nddf[symbol]["IKS_26"]
                 nddf[symbol]["cloud_top"] = nddf[symbol][['ISA_9', 'ISB_26']].max(axis=1)
@@ -712,21 +738,28 @@ class n_date_frame2():
                 nddf[symbol]["lagging_under_cloud"] = nddf[symbol]["ICS_26"] < nddf[symbol]["cloud_bottom"]
 
                 nddf[symbol]["SIG_ICHI_LONG_ALL"] = nddf[symbol]["conv_over_base"] \
-                                                    & nddf[symbol]["ohlc4_over_cloud"] \
-                                                    & nddf[symbol]["lagging_over_cloud"]
+                                                    & nddf[symbol]["ohlc4_over_cloud"]
+
+                                                    # & nddf[symbol]["lagging_over_cloud"]
                 find_first_signal(symbol, 'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST', 3)
                 nddf[symbol]["SIG_ICHI_SHORT_ALL"] = nddf[symbol]["conv_under_base"] \
-                                                     & nddf[symbol]["ohlc4_under_cloud"] \
-                                                     & nddf[symbol]["lagging_under_cloud"]
+                                                     & nddf[symbol]["ohlc4_under_cloud"]
+                                                     # & nddf[symbol]["lagging_under_cloud"]
                 find_first_signal(symbol, 'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST', 3)
 
-                nddf[symbol] = nddf[symbol].drop(['conv_over_base',
-                                                  'conv_under_base',
-                                                   'cloud_top',
-                                                   'cloud_bottom',
-                                                   'ohlc4_over_cloud',
-                                                   'ohlc4_under_cloud',
-                                                   ], axis=1)
+                nddf[symbol] = nddf[symbol].drop(
+                    ['conv_over_base',
+                     'conv_under_base',
+                     'cloud_top',
+                     'cloud_bottom',
+                     'ohlc4_over_cloud',
+                     'ohlc4_under_cloud',
+                     'lagging_over_cloud',
+                     'lagging_under_cloud',
+                    ], axis=1)
+
+                log("Qualifying signals... ", False, True)
+                gualify_signal(symbol, 'SIG_ICHI_LONG_FIRST', 'SIG_QFY_ICHI_LONG', 'LONG')
 
             elif tech_indicator == "ADX8":
                 nddf[symbol].ta.adx(length=8, append=True)
@@ -1039,9 +1072,10 @@ def ndf2_show_last(symbol="", xminute="60", p3=""):
                 self.main.title(symbol)
                 f = Frame(self.main)
                 f.pack(fill=BOTH, expand=1)
-
-                self.table = pt = Table(f, dataframe=nddf[symbol].iloc[::-1],
+                self.table = pt = Table(f, dataframe=nddf[symbol],
                                         showtoolbar=True, showstatusbar=True)
+                # self.table = pt = Table(f, dataframe=nddf[symbol].iloc[::-1],
+                #                         showtoolbar=True, showstatusbar=True)
                 options = {'align': 'w',
                          'cellbackgr': '#F4F4F3',
                          'cellwidth': 80,
@@ -1141,10 +1175,6 @@ def wl_btn_chart(btn_no):
     i_df = nddf[symbol].tail(3000)
     nchart.fit(i_df, symbol, i_indecators)
     nchart.show()
-
-    i_url = 'http://localhost:63342/nDot/nchart.html'
-    webbrowser.open(i_url, 2)
-    log("ready.", False, False)
 
 
 def wl_btn_show(btn_no):
