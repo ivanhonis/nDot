@@ -336,9 +336,9 @@ class nchart():
                 alpha=0.2,
                 # hatch_alpha=ha,
                 source=stock)
-        p.vbar(x='index', width=1, top='ISA_9', bottom='ISB_26', fill_color=self.red, line_color=self.red,
-               source=stock, view=view_inc, name="price", fill_alpha=0.5, line_width=0)
         p.vbar(x='index', width=1, top='ISA_9', bottom='ISB_26', fill_color=self.green, line_color=self.green,
+               source=stock, view=view_inc, name="price", fill_alpha=0.5, line_width=0)
+        p.vbar(x='index', width=1, top='ISA_9', bottom='ISB_26', fill_color=self.red, line_color=self.red,
                source=stock, view=view_dec, name="price", fill_alpha=0.5, line_width=0)
 
         p.line('index', 'ITS_9', color=self.orange, line_width=2, legend_label="Conversion Line", source=stock)
@@ -352,6 +352,15 @@ class nchart():
         sig = tuple(df['SIG_ICHI_LONG_FIRST'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_QFY_ICHI_LONG'])
+        view_sig_qty = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.segment(x0='index', x1='index', y0=0, y1='ohlc4', color=self.orange, line_width=3, source=stock, view=view_sig_qty)
+
+        sig = tuple(df['SIG_QFY_ICHI_SHORT'])
+        view_sig_qty = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.segment(x0='index', x1='index', y0=0, y1='ohlc4', color=self.orange, line_width=3, source=stock, view=view_sig_qty)
+
 
         sig = tuple(df['SIG_ICHI_SHORT_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])

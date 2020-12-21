@@ -108,7 +108,7 @@ class gui(QWidget, object):
                     object_group[i_o].clicked.connect(partial(tr_stop, i + 1))
 
         uic.loadUi("./qt_ui/form.ui", self)
-        # self.Command_Line.setText("")
+        self.Command_Line.setText("ndf2.tech APA ICHIMOKU")
 
         # Csoportos hozzárendelések ----------------------------------------------------------
 
@@ -414,8 +414,6 @@ class gui(QWidget, object):
             i_return = "-"
         return i_return
 
-
-
     def create_tr_info_string(self):
 
         def nbs(no):
@@ -584,8 +582,7 @@ class n_date_frame2():
     def __init__(self):
         self.indicators = pd.DataFrame(None)
         self.load_indicators()
-        self.tech_qualify_block_size = 10000  # one deal is 10.000 USD
-        self.tech_qualify_min_profit = 250  # profit on one deal
+
 
     def set_dt_order(self, symbol, ascending=True):
         nddf[symbol]['Date'] = pd.to_datetime(nddf[symbol]['Date'])
@@ -608,8 +605,7 @@ class n_date_frame2():
         self.set_dt_order(symbol)
         log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
         log("Number of rows: " + str(nddf[symbol].shape[0]))
-
-        print(nddf[symbol])
+        # print(nddf[symbol])
         nddb.write(symbol)
 
     def load_indicators(self):
@@ -620,7 +616,8 @@ class n_date_frame2():
             ['ADX8',    ['ADX_8', 'DMP_8', 'DMN_8']],
             ['ICHIMOKU', ['ISA_9', 'ISB_26', 'ITS_9', 'IKS_26', 'ICS_26',
                           'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST',
-                          'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST']]
+                          'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST',
+                          'SIG_QFY_ICHI_LONG']]
         ]
 
         self.indicators = pd.DataFrame(i_i)
@@ -660,6 +657,10 @@ class n_date_frame2():
 
     def add_tech(self, symbol, tech_indicator="SMA60"):
 
+        tech_qualify_block_size = 10000  # one deal is 10.000 USD
+        tech_qualify_min_profit = 250  # profit on one deal
+        tech_qualify_stop = -50  # stop loss
+
         def find_first_signal(symbol, col, new_col, n):
 
             def find_pattern(df):
@@ -679,29 +680,52 @@ class n_date_frame2():
                 .apply(lambda x: find_pattern(x)) \
                 .astype(bool)
 
-        def gualify_signal(symbol, col, new_col, side):
+        def qualify_signal(symbol, col, new_col, side):
 
-            def gualify(df):
+            i_all_signals = 0
+            i_good_signals = 0
+
+            def qualify(df):
+                nonlocal i_all_signals, i_good_signals
                 i_pattern = tuple([1.0])
                 i_data = tuple(df)
-
                 if i_pattern == i_data:
-                    print(df.index)
-                    start_index = df.index
-                    for i_i in range (0,10):
-
-
-
-Token próba 2
-
-
-                i_return = True
+                    i_all_signals += 1
+                    i_start_index = df.index.values.astype(int)[0]
+                    i_start_ohlc4 = nddf[symbol].loc[[i_start_index]].ohlc4.values[0]
+                    i_qty = int(tech_qualify_block_size / i_start_ohlc4)
+                    i_i = 1
+                    i_profit = 0
+                    i_stop = False
+                    # print('----------------------------')
+                    while i_i < 90 and i_profit < tech_qualify_min_profit and not i_stop:
+                        i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
+                        # print(i_start_ohlc4, i_act_ohlc4)
+                        if side == 'LONG':
+                            i_profit = int((i_act_ohlc4 - i_start_ohlc4) * i_qty)
+                        else:
+                            i_profit = int((i_start_ohlc4 - i_act_ohlc4) * i_qty)
+                        i_date =  nddf[symbol].loc[[i_start_index + i_i]].Date.values[0]
+                        # print(i_i, ' Profit: ', i_profit, "Date: ", i_date)
+                        if i_profit < tech_qualify_stop:
+                            i_stop = True
+                            # print('Stop')
+                        i_i += 1
+                    if i_profit > tech_qualify_min_profit:
+                        i_return = True
+                        i_good_signals += 1
+                    else:
+                        i_return = False
+                else:
+                    i_return = False
                 return i_return
 
             nddf[symbol][new_col] = nddf[symbol][col] \
                 .rolling(window=1, center=False) \
-                .apply(lambda x: gualify(x)) \
+                .apply(lambda x: qualify(x)) \
                 .astype(bool)
+
+            return i_all_signals, i_good_signals
 
         def case_set_back(symbol):
             # a pandas ta elállítgatja a neveket, ezért minden
@@ -714,18 +738,35 @@ Token próba 2
                                                         "date": "Date"
                                                         })
 
+        def add_to_nddf(symbol, df, col):
+            new_ser = pd.Series(df[col], name=col)
+            i_df_temp = nddf[symbol]
+            i_df_temp = i_df_temp.set_index('Date')
+            i_df_temp = i_df_temp.drop([col], axis=1, errors='ignore')
+            i_df_temp = i_df_temp.join(new_ser)
+            i_df_temp.sort_values(by=['Date'], inplace=True, ascending=True)
+            i_df_temp.drop_duplicates(inplace=True)
+            i_df_temp = i_df_temp.reset_index(drop=True)
+            nddf[symbol][col] = i_df_temp[col]
+            nddf[symbol][col].fillna(False, inplace=True)
+
         log("ndf2-> add_tech " + symbol + " - " + str(tech_indicator))
 
         if self.is_indicator(tech_indicator):
 
             if tech_indicator == "SMA30":
                 nddf[symbol].ta.sma(length=30, append=True)
+                case_set_back(symbol)
             elif tech_indicator == "SMA60":
                 nddf[symbol].ta.sma(length=60, append=True)
+                case_set_back(symbol)
             elif tech_indicator == "SMA90":
                 nddf[symbol].ta.sma(length=90, append=True)
+                case_set_back(symbol)
             elif tech_indicator == "ICHIMOKU":
+                log("Adding ICHIMOKU...", False, True)
                 nddf[symbol].ta.ichimoku(append=True)
+                case_set_back(symbol)
                 log("Finding signals...", False, True)
                 nddf[symbol]["conv_over_base"] = nddf[symbol]["ITS_9"] > nddf[symbol]["IKS_26"]
                 nddf[symbol]["conv_under_base"] = nddf[symbol]["ITS_9"] < nddf[symbol]["IKS_26"]
@@ -737,16 +778,24 @@ Token próba 2
                 nddf[symbol]["lagging_over_cloud"] = nddf[symbol]["ICS_26"] > nddf[symbol]["cloud_top"]
                 nddf[symbol]["lagging_under_cloud"] = nddf[symbol]["ICS_26"] < nddf[symbol]["cloud_bottom"]
 
-                nddf[symbol]["SIG_ICHI_LONG_ALL"] = nddf[symbol]["conv_over_base"] \
-                                                    & nddf[symbol]["ohlc4_over_cloud"]
-
+                # LONG SIGNALS -----------------------------------------------------------------
+                # A szignálokat csak intime ban csinálom meg
+                nddfx_intime, nddfx_outtime = trade.time_filter(nddf[symbol])
+                nddfx_intime["SIG_ICHI_LONG_ALL"] = nddfx_intime["conv_over_base"] \
+                                                    & nddfx_intime["ohlc4_over_cloud"]
                                                     # & nddf[symbol]["lagging_over_cloud"]
-                find_first_signal(symbol, 'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST', 3)
-                nddf[symbol]["SIG_ICHI_SHORT_ALL"] = nddf[symbol]["conv_under_base"] \
-                                                     & nddf[symbol]["ohlc4_under_cloud"]
-                                                     # & nddf[symbol]["lagging_under_cloud"]
-                find_first_signal(symbol, 'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST', 3)
+                add_to_nddf(symbol, nddfx_intime, 'SIG_ICHI_LONG_ALL')
+                find_first_signal(symbol, 'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST', 5)
 
+                # SHORT SIGNALS -----------------------------------------------------------------
+
+                nddfx_intime["SIG_ICHI_SHORT_ALL"] = nddfx_intime["conv_under_base"] \
+                                                     & nddfx_intime["ohlc4_under_cloud"]
+                                                     # & nddf[symbol]["lagging_under_cloud"]
+                add_to_nddf(symbol, nddfx_intime, 'SIG_ICHI_SHORT_ALL')
+                find_first_signal(symbol, 'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST', 5)
+
+                # DROP REST -----------------------------------------------------------------
                 nddf[symbol] = nddf[symbol].drop(
                     ['conv_over_base',
                      'conv_under_base',
@@ -756,16 +805,19 @@ Token próba 2
                      'ohlc4_under_cloud',
                      'lagging_over_cloud',
                      'lagging_under_cloud',
-                    ], axis=1)
-
-                log("Qualifying signals... ", False, True)
-                gualify_signal(symbol, 'SIG_ICHI_LONG_FIRST', 'SIG_QFY_ICHI_LONG', 'LONG')
+                    ], axis=1, errors='ignore')
+                # Qualifying  -----------------------------------------------------------------
+                log("Qualifying LONG signals... ", False, True)
+                i_all_signals, i_good_signals = qualify_signal(symbol, 'SIG_ICHI_LONG_FIRST', 'SIG_QFY_ICHI_LONG', 'LONG')
+                log(f"All / good: {i_all_signals} / {i_good_signals}", False, True)
+                log("Qualifying SHORT signals... ", False, True)
+                i_all_signals, i_good_signals = qualify_signal(symbol, 'SIG_ICHI_SHORT_FIRST', 'SIG_QFY_ICHI_SHORT', 'SHORT')
+                log(f"All / good: {i_all_signals} / {i_good_signals}", False, True)
 
             elif tech_indicator == "ADX8":
                 nddf[symbol].ta.adx(length=8, append=True)
+                case_set_back(symbol)
 
-
-            case_set_back(symbol)
             nddb.write(symbol)
 
         else:
@@ -1172,7 +1224,7 @@ def wl_btn_chart(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
     log("start: nchart " + symbol, True, False)
     i_indecators = ndf2.get_added_indicators(symbol)
-    i_df = nddf[symbol].tail(3000)
+    i_df = nddf[symbol].tail(20000)
     nchart.fit(i_df, symbol, i_indecators)
     nchart.show()
 

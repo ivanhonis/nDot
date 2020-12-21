@@ -2,6 +2,7 @@ import alpaca_trade_api as tradeapi
 import pandas as pd
 import tables
 import threading
+from datetime import time as dt_time
 from time import sleep, gmtime, time
 # azért használom, hogy a rendszres lekérdezések nem pont ugyan olyan ütemben történjenek, ne tűnjek junk nak
 from random import randint
@@ -58,8 +59,8 @@ class trade():
 
         self.config = {
             'time_zone': 'UTC+2',
-            'nyse_open': '15:30',
-            'nyse_close': '22:00',
+            'nyse_open': dt_time(15, 30, 0),
+            'nyse_close': dt_time(22, 00, 0),
             'trade_from': '16:00',
             'trade_to': '22:00',
             'stop_margin': 5,
@@ -666,7 +667,7 @@ class trade():
         return i_position
 
     def time_filter(self, df):
-        # self.config['nyse_open']
+        df = df.set_index('Date')
         i_intime = df.between_time(self.config['nyse_open'], self.config['nyse_close'])
         i_outtime = df.between_time(self.config['nyse_close'], self.config['nyse_open'])
         return i_intime, i_outtime
