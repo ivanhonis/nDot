@@ -41,10 +41,15 @@ class nchart():
         if len(indecators) > 0:
             if 'SMA60' in indecators:
                 self.elements.append(self.chart_sma(i_df, "SMA60"))
+            if 'SMA5813' in indecators:
+                self.elements.append(self.chart_sma5813(i_df, "SMA5813"))
             if 'ICHIMOKU' in indecators:
                 self.elements.append(self.chart_ichimoku(i_df, "ICHIMOKU"))
             if 'ADX8' in indecators:
-                self.elements.append(self.chart_adx(i_df, "ADX"))
+                self.elements.append(self.chart_adx(i_df, "ADX8"))
+            if 'RSI14' in indecators:
+                self.elements.append(self.chart_rsi(i_df, "RSI14"))
+
 
     def show(self):
 
@@ -59,7 +64,7 @@ class nchart():
                 e.xaxis.visible = False
                 e.min_border_top = 0
             else:
-                if e.title.text != "ADX":
+                if e.title.text != "ADX8" and e.title.text != "RSI14":
                     e.y_range = self.elements[0].y_range
                 e.xaxis.visible = False
                 e.x_range = self.elements[0].x_range
@@ -417,21 +422,26 @@ class nchart():
         # p.line('index', 'DMP_8', color=self.green, legend_label="DI+", source=stock)
         # p.line('index', 'DMN_8', color=self.red, legend_label="DI-", source=stock)
         # # Vertical line
-        vline = Span(location=20, dimension='width', line_color=self.black, line_width=1)
-        p.renderers.extend([vline])
+        vline1 = Span(location=20, dimension='width', line_color=self.black, line_width=1)
+        vline2 = Span(location=0, dimension='width', line_color=self.black, line_width=2)
+        vline3 = Span(location=-20, dimension='width', line_color=self.black, line_width=1)
+        p.renderers.extend([vline1])
+        p.renderers.extend([vline2])
+        p.renderers.extend([vline3])
 
-        inc = df['DMN_8'] > df['DMP_8']
+        inc = df['DMN_8'] < df['DMP_8']
         inc = tuple(inc)
-        dec = df['DMN_8'] < df['DMP_8']
+        dec = df['DMN_8'] > df['DMP_8']
         dec = tuple(dec)
 
         view_inc = CDSView(source=stock, filters=[BooleanFilter(inc)])
         view_dec = CDSView(source=stock, filters=[BooleanFilter(dec)])
 
-        p.vbar(x='index', width=0.7, top='ADX_8', bottom=0, fill_color=self.red, line_color=self.red,
-               source=stock, view=view_inc, name="ADX_8")
-        p.vbar(x='index', width=0.7, top='ADX_8', bottom=0, fill_color=self.green, line_color=self.green,
-               source=stock, view=view_dec, name="ADX_8", legend_label=name)
+
+        p.vbar(x='index', width=0.7, top='ADX_8_ONE', bottom=0, fill_color=self.red, line_color=self.red,
+               source=stock, view=view_dec, name="ADX_8")
+        p.vbar(x='index', width=0.7, top='ADX_8_ONE', bottom=0, fill_color=self.green, line_color=self.green,
+               source=stock, view=view_inc, name="ADX_8", legend_label=name)
 
         p.legend.visible = False
 
@@ -449,8 +459,101 @@ class nchart():
         p.outline_line_color = self.gray2
         # end default settings ------------------------------------------------------------------------------------
 
-        i_max = df['ADX_8'].max()
-        i_min = 0
+        i_max = df['ADX_8_ONE'].max()
+        i_min = df['ADX_8_ONE'].min()
         desired_range2 = (i_min, i_max)
         p.y_range = Range1d(*desired_range2)
         return p
+
+    def chart_rsi(self, df, name):
+        stock = ColumnDataSource(df)
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=150,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+
+        vline1 = Span(location=20, dimension='width', line_color=self.black, line_width=1)
+        vline2 = Span(location=80, dimension='width', line_color=self.black, line_width=1)
+        p.renderers.extend([vline1])
+        p.renderers.extend([vline2])
+
+        p.line('index', 'RSI_14', color=self.blue, source=stock, legend_label=name)
+
+        p.legend.visible = False
+
+        # start default settings  ----------------------------------------------------------------------------------
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+
+        i_max = df['RSI_14'].max()
+        i_min = df['RSI_14'].min()
+        desired_range2 = (i_min, i_max)
+        p.y_range = Range1d(*desired_range2)
+        return p
+
+    def chart_sma5813(self, df, name):
+
+        stock = ColumnDataSource(df)
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=220,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+        # print ohlc4 price
+        p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        p.line('index', 'ohlc4', color=self.blue, source=stock)
+
+        p.line('index', 'SMA_5', color=self.green, legend_label="SMA_5", line_width=1, source=stock)
+        p.line('index', 'SMA_8', color=self.orange, legend_label="SMA_8", line_width=2, source=stock)
+        p.line('index', 'SMA_13', color=self.red, legend_label="SMA_13", line_width=3, source=stock)
+
+        sig = tuple(df['SIG_SMA5813_LONG_ALL'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_SMA5813_LONG_FIRST'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_SMA5813_SHORT_ALL'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_SMA5813_SHORT_FIRST'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4', color=self.red, size=15, source=stock, view=view_sig)
+
+        p.legend.visible = False
+
+        # start default settings  ----------------------------------------------------------------------------------
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+        return p
+

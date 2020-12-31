@@ -666,8 +666,8 @@ class trade():
             self.positions = i_position
         return i_position
 
-    def time_filter(self, df):
+    def time_filter(self, df, time_open, time_close):
         df = df.set_index('Date')
-        i_intime = df.between_time(self.config['nyse_open'], self.config['nyse_close'])
-        i_outtime = df.between_time(self.config['nyse_close'], self.config['nyse_open'])
+        i_intime = df.between_time(time_open, time_close)
+        i_outtime = df.between_time(time_close, time_open)
         return i_intime, i_outtime

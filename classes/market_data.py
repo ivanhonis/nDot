@@ -78,7 +78,13 @@ class market_data():
         return i_df
 
     def company_profile(self, symbol):
-        return self.finnhub_client.company_profile(symbol=symbol)
+        try:
+            i_return = self.finnhub_client.company_profile2(symbol=symbol)
+        except:
+            i_return = {}
+            i_return['name'] = symbol
+            i_return['description'] = "No data :("
+        return i_return
 
     def news_sentiment(self, symbol):
         return self.finnhub_client.news_sentiment(symbol=symbol)

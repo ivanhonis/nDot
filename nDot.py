@@ -8,13 +8,14 @@ from PyQt5.QtCore import QTime, QDate
 import pandas as pd
 import os  # for test command
 import psutil  # for test command
-import pandas_ta as ta  # technical indicators for ndf2.tech
+import pandas_ta as ta  # technical indicators for ndf.tech
 from functools import partial  # a kattintás hozzá rendeléséhez használom
 from datetime import datetime, timedelta  # a log ban használom
 import sys  # a test parancs használja hdd szabad hely kiíratására
 # from multiprocessing import Process
 import threading  # refresh info párhuzamosítva van
 import numpy as np
+import random  ## a image előállításához kell random mintavétel
 
 
 # User classes ------------------------------------------------------
@@ -22,11 +23,11 @@ from classes.trade import trade
 from classes.market_data import market_data
 from classes.nd_db import nd_db
 from classes.nchart import nchart
+from classes.n_images import n_images
 
 import websocket
 
 import time
-# import random
 # from pandas import DataFrame
 # import threading
 from tkinter import *
@@ -50,6 +51,7 @@ from matplotlib.backend_tools import ToolBase
 
 
 class gui(QWidget, object):
+    start_command = "ndf.images PLAY ICX1"
 
     def __init__(self):
         super(gui, self).__init__()
@@ -108,7 +110,7 @@ class gui(QWidget, object):
                     object_group[i_o].clicked.connect(partial(tr_stop, i + 1))
 
         uic.loadUi("./qt_ui/form.ui", self)
-        self.Command_Line.setText("ndf2.tech APA ICHIMOKU")
+        self.Command_Line.setText(self.start_command)
 
         # Csoportos hozzárendelések ----------------------------------------------------------
 
@@ -284,17 +286,18 @@ class gui(QWidget, object):
             ['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
             # ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
             # ['ndf.add', 'ndf_add', 'ndf.add <symbol>', 1],
-            ['ndf2.add', 'ndf2_add', 'ndf2.add <symbol>', 1],
-            ['ndf2.tech', 'ndf2_tech', 'ndf2.tech <symbol> <technical indicator>', 2],
-            ['ndf2.tech.remove', 'ndf2_tech_remove', 'ndf2.tech.remove <symbol> <technical indicator>', 2],
-            ['ndf2.tech.refresh', 'ndf2_tech_refresh', 'ndf2.tech.refresh <symbol>', 1],
-            ['ndf2.tech.refresh.all', 'ndf2_tech_refresh_all', 'ndf2.tech.refresh.all', 0],
-            ['ndf2.remove', 'ndf2_remove', 'ndf2.remove <symbol>', 1],
-            ['ndf2.refresh', 'ndf2_refresh', 'ndf2.refresh <symbol>', 1],
-            ['ndf2.info', 'ndf2_info', 'ndf2.info', 0],
-            ['ndf2.columns', 'ndf2_columns', 'ndf2.columns', 0],
-            ['ndf2.show.last', 'ndf2_show_last', 'ndf2.show.last <symbol> <numbers / optional>', 1],
-
+            ['ndf.add', 'ndf_add', 'ndf.add <symbol>', 1],
+            ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
+            ['ndf.tech.remove', 'ndf_tech_remove', 'ndf.tech.remove <symbol> <technical indicator>', 2],
+            ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
+            ['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
+            ['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
+            ['ndf.images', 'ndf_images', 'ndf.image <symbol> <image>', 1],
+            ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
+            ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
+            ['ndf.info', 'ndf_info', 'ndf.info', 0],
+            ['ndf.columns', 'ndf_columns', 'ndf.columns', 0],
+            ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
             # ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
             # ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
             # ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
@@ -583,7 +586,6 @@ class n_date_frame2():
         self.indicators = pd.DataFrame(None)
         self.load_indicators()
 
-
     def set_dt_order(self, symbol, ascending=True):
         nddf[symbol]['Date'] = pd.to_datetime(nddf[symbol]['Date'])
         nddf[symbol].sort_values(by=['Date'], inplace=True, ascending=True)
@@ -593,7 +595,7 @@ class n_date_frame2():
         nddf[symbol] = nddf[symbol].reset_index(drop=True)
 
     def add(self, symbol):
-        log("ndf2-> add " + symbol)
+        log("ndf-> add " + symbol)
         i_now = datetime.now() + timedelta(days=1)
         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
         i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-93d')
@@ -610,14 +612,17 @@ class n_date_frame2():
 
     def load_indicators(self):
         i_i = [
+            ['GOOD', ['SMA_30']],
             ['SMA30',   ['SMA_30']],
             ['SMA60',   ['SMA_60']],
             ['SMA90',   ['SMA_90']],
-            ['ADX8',    ['ADX_8', 'DMP_8', 'DMN_8']],
+            ['SMA5813', ['SMA_5', 'SMA_8', 'SMA_13']],
+            ['RSI14', ['RSI_14']],
+            ['ADX8',    ['ADX_8', 'DMP_8', 'DMN_8', 'ADX_8_ONE']],
             ['ICHIMOKU', ['ISA_9', 'ISB_26', 'ITS_9', 'IKS_26', 'ICS_26',
                           'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST',
                           'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST',
-                          'SIG_QFY_ICHI_LONG']]
+                          'SIG_QFY_ICHI_LONG',  'SIG_QFY_ICHI_SHORT']]
         ]
 
         self.indicators = pd.DataFrame(i_i)
@@ -641,13 +646,13 @@ class n_date_frame2():
         return i_found
 
     def tech_remove(self, symbol, tech_indicator):
-        log("ndf2-> remove_tech " + symbol + " - " + str(tech_indicator))
+        log("ndf-> remove_tech " + symbol + " - " + str(tech_indicator))
         i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
         if self.is_indicator(tech_indicator):
             i_fields = eval(str(i_search["fields"].iloc[0]))
             for i_drop_c in i_fields:
                 if i_drop_c in nddf[symbol].columns:
-                    nddf[symbol].drop(i_drop_c, axis=1, inplace=True)
+                    nddf[symbol].drop(i_drop_c, axis=1, inplace=True, errors='ignore')
             nddb.write(symbol)
         else:
             log(tech_indicator + " - " + "technical indicator does not exist!")
@@ -655,10 +660,146 @@ class n_date_frame2():
             tech_indictor_str = ', '.join(tech_indictor_tuple)
             log("Indicators: " + tech_indictor_str)
 
+    def check_indicators(self, symbol, needed_indicators):
+        i_return = True
+        i_indicators = self.get_added_indicators(symbol)
+        for i_ni in needed_indicators:
+            if i_ni not in i_indicators:
+                log('Missing indicator: '+i_ni)
+                i_return = False
+        return i_return
+
+    def create_images(self, symbol, images_for):
+
+        def time_gap_section(symbol, i_il, time_frame_size):
+
+            i_int_to = int(i_il)
+            i_int_from = i_int_to - time_frame_size + 1
+            time_data = tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Date'])
+            base = time_data[0]
+            time_gap = []
+            for i_td in time_data:
+                time_gap.append((i_td - base).total_seconds() / 60)
+            # print(time_gap)
+
+            i_int_to = int(i_il)
+            i_int_from = i_int_to - time_frame_size + 1
+            time_data = tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Date'])
+            base = time_data[0]
+            base_mod = datetime(base.year, base.month, base.day, 0, 0, 0)
+            # print(base_mod)
+            time_section = []
+            for i_td in time_data:
+                time_section.append((i_td - base_mod).total_seconds() / 60)
+            # print(time_section)
+
+            return tuple(time_gap), tuple(time_section)
+
+        def array_diff(from_array, this_array):
+            for i_nx in this_array:
+                from_array.remove((i_nx))
+            return from_array
+
+        def array_random_select(from_array, no):
+            no = min(no, len(from_array))
+            return random.choices(from_array, k=no)
+
+
+        if images_for == 'ICX1':
+
+            time_frame_size = 45
+
+            def images_constructor(symbol, indexes, time_frame_size, q):
+
+                def r_v(i_tuple):  ## relative view
+                    mod_array = []
+                    last = i_tuple[len(i_tuple)-1]
+                    for i_t in i_tuple:
+                        mod_array.append(round(i_t/last,6))
+                    return mod_array
+                # print("indexes", len(indexes))
+                for i_il in indexes:
+                    i_int_to = int(i_il)
+                    i_int_from = i_int_to - time_frame_size + 1
+
+                    if i_int_from > 0:
+                        time_gap, time_section = time_gap_section(symbol, i_il, time_frame_size)
+                        i_data_dict = {
+                            # 'ohlc4': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ohlc4']),
+                            # 'Low': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Low'])),
+                            # 'High': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'High'])),
+                            # 'Open': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Open'])),
+                            # 'Close': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Close'])),
+                            # 'ADX_8_ONE': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ADX_8_ONE'])),
+                            'Low': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Low']),
+                            'High': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'High']),
+                            # 'Close': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Close']),
+                            'ADX_8_ONE': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ADX_8_ONE']),
+                            'RSI_14': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'RSI_14']),
+                            # 'DMP_8': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'DMP_8']),
+                            # 'DMN_8': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'DMN_8']),
+                            # 'Volume': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Volume']),
+                            # 'time_gap': time_gap,
+                            # 'time_section': time_section,
+                                       }
+                        n_img.add_image(i_data_dict, q)
+
+
+            i_indicators_need = ['ICHIMOKU', 'ADX8']
+            if self.check_indicators(symbol, i_indicators_need):
+                log('Creating nDot images...')
+                n_img = n_images()
+                n_img.set_name(symbol+"_ICX1")
+                n_img.set_symbol(symbol)
+                n_img.set_source("nDot.py->n_data_frame2->create_images <ICX1>")
+                n_img.set_description("""
+                Ötlet: Ichimoku szignálok közül kiválasztottam a 200/10.000 USD teljesítményüeket.
+                ezek előtti bekövetkezése előtti 45 percet(ticket) kiszedem és megpróbálom bennük felfedeztetni a közöset
+                ha sikerül akkor ezzel tudom erősítem az indikátort
+                """)
+
+                target_names = {'1': "Good LONG signal",
+                                '2': "Good SHORT signal",
+                                '3': "Bad LONG signal",
+                                '4': "Bad SHORT signal"
+                                }
+
+                n_img.add_target_names(target_names)
+
+
+                i_index_long = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_ICHI_LONG']].index))
+                i_index_short = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_ICHI_SHORT']].index))
+                average_element_no = int((len(i_index_long) + len(i_index_short))/2)
+
+                images_constructor(symbol, i_index_long, time_frame_size, 1)  ## a constructor teszi bele az images-ek közé
+                images_constructor(symbol, i_index_short, time_frame_size, 2)  ## a constructor teszi bele az images-ek közé
+
+                i_index_long_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_ICHI_LONG_FIRST']].index))
+                i_index_long_first_m = array_diff(i_index_long_first_m, i_index_long)  # kiveszem a qualified elemeket
+                i_index_long_first_m = array_random_select(i_index_long_first_m, average_element_no + 2)
+                images_constructor(symbol, i_index_long_first_m, time_frame_size, 3)  ## a constructor teszi bele az images-ek közé
+
+                i_index_short_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_ICHI_SHORT_FIRST']].index))
+                i_index_short_first_m = array_diff(i_index_short_first_m, i_index_short)  # kiveszem a qualified elemeket
+                i_index_short_first_m = array_random_select(i_index_short_first_m, average_element_no + 2)
+                images_constructor(symbol, i_index_short_first_m, time_frame_size, 4)  ## a constructor teszi bele az images-ek közé
+
+                n_img.save()
+                del n_img
+                # n_img2 = n_img.load('APA_ICX1')
+                # print(n_img2)
+
+        elif images_for == 'ADX_Ai':
+            i_indicators_need = ['ADX8']
+            if self.check_indicators(symbol, i_indicators_need):
+                log('minden okmehet')
+        else:
+            log("Image style is missing...")
+
     def add_tech(self, symbol, tech_indicator="SMA60"):
 
         tech_qualify_block_size = 10000  # one deal is 10.000 USD
-        tech_qualify_min_profit = 250  # profit on one deal
+        tech_qualify_min_profit = 300  # profit on one deal
         tech_qualify_stop = -50  # stop loss
 
         def find_first_signal(symbol, col, new_col, n):
@@ -698,15 +839,19 @@ class n_date_frame2():
                     i_profit = 0
                     i_stop = False
                     # print('----------------------------')
-                    while i_i < 90 and i_profit < tech_qualify_min_profit and not i_stop:
+                    # i_date = nddf[symbol].loc[[i_start_index + i_i]].Date.values[0]
+                    # i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
+                    # print(i_i, ' Profit: ', i_profit, "Date: ", i_date, " Act price: ", i_act_ohlc4, "Side: ", side)
+                    while i_i < 90 and i_profit < tech_qualify_min_profit and not i_stop and nddf[symbol].shape[0] > i_start_index + i_i:
+                        # print(nddf[symbol].shape, i_start_index + i_i)
                         i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
+
                         # print(i_start_ohlc4, i_act_ohlc4)
                         if side == 'LONG':
                             i_profit = int((i_act_ohlc4 - i_start_ohlc4) * i_qty)
                         else:
                             i_profit = int((i_start_ohlc4 - i_act_ohlc4) * i_qty)
-                        i_date =  nddf[symbol].loc[[i_start_index + i_i]].Date.values[0]
-                        # print(i_i, ' Profit: ', i_profit, "Date: ", i_date)
+                        # print(i_i, ' Profit: ', i_profit, "Date: ", i_date," Act price: ", i_act_ohlc4 )
                         if i_profit < tech_qualify_stop:
                             i_stop = True
                             # print('Stop')
@@ -716,6 +861,10 @@ class n_date_frame2():
                         i_good_signals += 1
                     else:
                         i_return = False
+
+                    i_date = nddf[symbol].loc[[i_start_index + i_i]].Date.values[0]
+                    i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
+                    # print(i_i, ' Profit: ', i_profit, "Date: ", i_date, " Act price: ", i_act_ohlc4, "Side: ", side)
                 else:
                     i_return = False
                 return i_return
@@ -750,7 +899,7 @@ class n_date_frame2():
             nddf[symbol][col] = i_df_temp[col]
             nddf[symbol][col].fillna(False, inplace=True)
 
-        log("ndf2-> add_tech " + symbol + " - " + str(tech_indicator))
+        log("ndf-> add_tech " + symbol + " - " + str(tech_indicator))
 
         if self.is_indicator(tech_indicator):
 
@@ -763,11 +912,36 @@ class n_date_frame2():
             elif tech_indicator == "SMA90":
                 nddf[symbol].ta.sma(length=90, append=True)
                 case_set_back(symbol)
+            elif tech_indicator == "SMA5813":
+                nddf[symbol].ta.sma(length=5, append=True)
+                nddf[symbol].ta.sma(length=8, append=True)
+                nddf[symbol].ta.sma(length=13, append=True)
+                nddf[symbol]["long_set_tec1"] = nddf[symbol]['SMA_5'] > nddf[symbol]['SMA_8']
+                nddf[symbol]["long_set_tec2"] = nddf[symbol]['SMA_8'] > nddf[symbol]['SMA_13']
+                nddf[symbol]["SIG_SMA5813_LONG_ALL"] = nddf[symbol]['long_set_tec1'] & nddf[symbol]['long_set_tec2']
+                find_first_signal(symbol, 'SIG_SMA5813_LONG_ALL', 'SIG_SMA5813_LONG_FIRST', 2)
+
+                nddf[symbol]["short_set_tec1"] = nddf[symbol]['SMA_5'] < nddf[symbol]['SMA_8']
+                nddf[symbol]["short_set_tec2"] = nddf[symbol]['SMA_8'] < nddf[symbol]['SMA_13']
+                nddf[symbol]["SIG_SMA5813_SHORT_ALL"] = nddf[symbol]['short_set_tec1'] & nddf[symbol]['short_set_tec2']
+                find_first_signal(symbol, 'SIG_SMA5813_SHORT_ALL', 'SIG_SMA5813_SHORT_FIRST', 2)
+
+                nddf[symbol] = nddf[symbol].drop(
+                    ['long_set_tec1',
+                     'long_set_tec2',
+                     'short_set_tec1',
+                     'short_set_tec2',
+                       ], axis=1, errors='ignore')
+
+                case_set_back(symbol)
+            elif tech_indicator == "RSI14":
+                nddf[symbol].ta.rsi(append=True)
+                case_set_back(symbol)
             elif tech_indicator == "ICHIMOKU":
-                log("Adding ICHIMOKU...", False, True)
+                log("  Adding ICHIMOKU...", False, True)
                 nddf[symbol].ta.ichimoku(append=True)
                 case_set_back(symbol)
-                log("Finding signals...", False, True)
+                log("  Finding signals...", False, True)
                 nddf[symbol]["conv_over_base"] = nddf[symbol]["ITS_9"] > nddf[symbol]["IKS_26"]
                 nddf[symbol]["conv_under_base"] = nddf[symbol]["ITS_9"] < nddf[symbol]["IKS_26"]
                 nddf[symbol]["cloud_top"] = nddf[symbol][['ISA_9', 'ISB_26']].max(axis=1)
@@ -780,12 +954,12 @@ class n_date_frame2():
 
                 # LONG SIGNALS -----------------------------------------------------------------
                 # A szignálokat csak intime ban csinálom meg
-                nddfx_intime, nddfx_outtime = trade.time_filter(nddf[symbol])
+                nddfx_intime, nddfx_outtime = trade.time_filter(nddf[symbol], "17:30", "21:00")
                 nddfx_intime["SIG_ICHI_LONG_ALL"] = nddfx_intime["conv_over_base"] \
                                                     & nddfx_intime["ohlc4_over_cloud"]
                                                     # & nddf[symbol]["lagging_over_cloud"]
                 add_to_nddf(symbol, nddfx_intime, 'SIG_ICHI_LONG_ALL')
-                find_first_signal(symbol, 'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST', 5)
+                find_first_signal(symbol, 'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST', 6)
 
                 # SHORT SIGNALS -----------------------------------------------------------------
 
@@ -793,7 +967,7 @@ class n_date_frame2():
                                                      & nddfx_intime["ohlc4_under_cloud"]
                                                      # & nddf[symbol]["lagging_under_cloud"]
                 add_to_nddf(symbol, nddfx_intime, 'SIG_ICHI_SHORT_ALL')
-                find_first_signal(symbol, 'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST', 5)
+                find_first_signal(symbol, 'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST', 6)
 
                 # DROP REST -----------------------------------------------------------------
                 nddf[symbol] = nddf[symbol].drop(
@@ -807,16 +981,30 @@ class n_date_frame2():
                      'lagging_under_cloud',
                     ], axis=1, errors='ignore')
                 # Qualifying  -----------------------------------------------------------------
-                log("Qualifying LONG signals... ", False, True)
+                log("  Qualifying LONG signals... ", False, True)
                 i_all_signals, i_good_signals = qualify_signal(symbol, 'SIG_ICHI_LONG_FIRST', 'SIG_QFY_ICHI_LONG', 'LONG')
-                log(f"All / good: {i_all_signals} / {i_good_signals}", False, True)
-                log("Qualifying SHORT signals... ", False, True)
+                log(f"  All / good: {i_all_signals} / {i_good_signals}  {round(i_good_signals/i_all_signals*100,2)}%", False, True)
+                log("  Qualifying SHORT signals... ", False, True)
                 i_all_signals, i_good_signals = qualify_signal(symbol, 'SIG_ICHI_SHORT_FIRST', 'SIG_QFY_ICHI_SHORT', 'SHORT')
-                log(f"All / good: {i_all_signals} / {i_good_signals}", False, True)
+                log(f"  All / good: {i_all_signals} / {i_good_signals} {round(i_good_signals/i_all_signals*100,2)}%", False, True)
 
             elif tech_indicator == "ADX8":
                 nddf[symbol].ta.adx(length=8, append=True)
+                nddf[symbol]["adx_inc"] = nddf[symbol]["DMN_8"] < nddf[symbol]["DMP_8"]
+                nddf[symbol]["ADX_8_ONE"] = 0
+
+                def set_adx8_one(row):
+                    if row["adx_inc"]:
+                        return row["ADX_8"]
+                    else:
+                        return row["ADX_8"] * -1
+
+                nddf[symbol] = nddf[symbol].assign(ADX_8_ONE=nddf[symbol].apply(set_adx8_one, axis=1))
+                nddf[symbol] = nddf[symbol].drop(
+                    ['adx_inc'
+                    ], axis=1, errors='ignore')
                 case_set_back(symbol)
+
 
             nddb.write(symbol)
 
@@ -827,13 +1015,13 @@ class n_date_frame2():
             log("Indicators: " + tech_indictor_str)
 
     def remove(self, symbol):
-        log("ndf2-> remove " + symbol)
+        log("ndf-> remove " + symbol)
         if symbol in nddf:
             del nddf[symbol]
         i_log = nddb.remove(symbol)
 
     def refresh(self, symbol):
-        log("ndf2-> refresh " + symbol)
+        log("ndf-> refresh " + symbol)
         log("Time frame (before refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
         log("Number of rows (before refresh): " + str(nddf[symbol].shape[0]))
         to_dbdt = datetime.now() + timedelta(days=1)
@@ -875,7 +1063,6 @@ class watch_list:
         return
 
     def refresh_profile(self):
-        s("Refresh Wl Data")
         for index, row in self.df.iterrows():
             i_symbol = row['symbol']
             i_company_profile = md.company_profile(i_symbol)
@@ -884,7 +1071,7 @@ class watch_list:
                 self.df.loc[self.df['symbol'] == i_symbol, 'profil'] = i_symbol
             else:
                 self.df.loc[self.df['symbol'] == i_symbol, 'name'] = i_company_profile['name']
-                self.df.loc[self.df['symbol'] == i_symbol, 'profil'] = "Description: " + i_company_profile['description']
+                self.df.loc[self.df['symbol'] == i_symbol, 'profil'] = "Web: " + i_company_profile['weburl']
         self.write()
         return
 
@@ -912,7 +1099,7 @@ class watch_list:
         self.refresh_sentiment()
         self.write()
         gui.refresh_ui()
-        ndf2.add(symbol)
+        ndf.add(symbol)
         return
 
     def remove(self, symbol):
@@ -993,9 +1180,23 @@ def help2(p1="", p2="", p3=""):
 
 
 def do(symbol="", p2="", p3=""):
-    print(nddf['MSFT'])
-    print(nddf['IBM'])
-    print(nddf['APA'])
+    nDot_image = {}
+    nDot_image['name'] = "APA - Ichimoku Signal qualification"
+    nDot_image['description'] = """
+    Ichimoku szigálokat keresek azokból kiválasztom azokat melyeken lehetett keresni minimum 200 USD / 10.000 USD
+    Aminősített szinálok előző 60 nek adatait adom vissza.
+    egy szignál előéletét nevezem image nak
+      """
+    nDot_image['images'] = {}
+    i_index_long = (tuple(nddf['APA'].loc[nddf['APA']['SIG_QFY_ICHI_LONG']].index))
+    i_index_short = (tuple(nddf['APA'].loc[nddf['APA']['SIG_QFY_ICHI_SHORT']].index))
+    print(i_index_long)
+    for i_il in i_index_long:
+        i_int_to = int(i_il)
+        i_int_from = i_int_to - 60
+        print(nddf['APA'].loc[i_int_from:i_int_to, 'Close'])
+
+    print(i_index_short)
 
 
 def s(msg_str):
@@ -1040,7 +1241,7 @@ def test(p1="", p2="", p3=""):
     else:
         log("  FinnHub connection ERROR.")
 
-    ndf2_info()
+    ndf_info()
 
     process = psutil.Process(os.getpid())
     log("Memory usage: " + str(round(process.memory_percent(),2)) + " %")
@@ -1055,43 +1256,58 @@ def exit_program(p1="", p2="", p3=""):
 # ndf programs  ----------------------------------------------------------------------------
 
 
-def ndf2_add(symbol="", p2="", p3=""):
-    ndf2.add(symbol)
+def ndf_add(symbol="", p2="", p3=""):
+    ndf.add(symbol)
 
 
-def ndf2_tech(symbol, tech_indicator, p3=""):
-    ndf2.add_tech(symbol, tech_indicator)
+def ndf_tech(symbol, tech_indicator, p3=""):
+    ndf.add_tech(symbol, tech_indicator)
 
 
-def ndf2_tech_remove(symbol, tech_indicator, p3=""):
-    ndf2.tech_remove(symbol, tech_indicator)
+def ndf_tech_info(p="", p2="", p3=""):
+    for symbol in nddf:
+
+        i_indicators = ndf.get_added_indicators(symbol)
+        if len(i_indicators) > 0:
+            i_str = ', '.join(i_indicators)
+            log(symbol+": "+i_str)
+        else:
+            log(symbol+": -")
 
 
-def ndf2_tech_refresh(symbol, p2="", p3=""):
-    i_indicators = ndf2.get_added_indicators(symbol)
-    print(i_indicators)
+def ndf_tech_remove(symbol, tech_indicator, p3=""):
+    ndf.tech_remove(symbol, tech_indicator)
+
+
+def ndf_tech_refresh(symbol, p2="", p3=""):
+    i_indicators = ndf.get_added_indicators(symbol)
+    # print(i_indicators)
     for i_i in i_indicators:
-        ndf2.add_tech(symbol, i_i)
+        ndf.add_tech(symbol, i_i)
 
 
-def ndf2_tech_refresh_all(p1="", p2="", p3=""):
+def ndf_tech_refresh_all(p1="", p2="", p3=""):
     i_symbols = tuple(nddf.keys())
     for i_s in i_symbols:
         log("Refresh indicators in dataframe: " + i_s)
-        i_indicators = ndf2.get_added_indicators(i_s)
+        i_indicators = ndf.get_added_indicators(i_s)
         for i_i in i_indicators:
-            ndf2.add_tech(i_s, i_i)
+            ndf.add_tech(i_s, i_i)
 
 
-def ndf2_remove(symbol="", p2="", p3=""):
-    ndf2.remove(symbol)
+def ndf_images(symbol="", images_for="", p3=""):
+    ndf.create_images(symbol, images_for)
 
 
-def ndf2_refresh(symbol="", p2="", p3=""):
-    ndf2.refresh(symbol)
+def ndf_remove(symbol="", p2="", p3=""):
+    ndf.remove(symbol)
 
 
-def ndf2_info(p1="", p2="", p3=""):
+def ndf_refresh(symbol="", p2="", p3=""):
+    ndf.refresh(symbol)
+
+
+def ndf_info(p1="", p2="", p3=""):
     log(nddb.info())
     log("nDot db size: " + str(nddb.get_size()) + " KB")
     i_nddf_size = sys.getsizeof(nddf)
@@ -1100,7 +1316,7 @@ def ndf2_info(p1="", p2="", p3=""):
     log("nddf size in memory: " + str(int(i_nddf_size/1024)) + " KB")
 
 
-def ndf2_columns(p1="", p2="", p3=""):
+def ndf_columns(p1="", p2="", p3=""):
     i_cols = tuple(nddf.keys())
     log("Data Frame columns by symbols:")
     for i_c in i_cols:
@@ -1108,7 +1324,7 @@ def ndf2_columns(p1="", p2="", p3=""):
         log(str(tuple(nddf[i_c].columns)))
 
 
-def ndf2_show_last(symbol="", xminute="60", p3=""):
+def ndf_show_last(symbol="", xminute="60", p3=""):
     if symbol in nddf:
 
         from pandastable import Table, TableModel, config
@@ -1147,6 +1363,7 @@ def ndf2_show_last(symbol="", xminute="60", p3=""):
 
         app = TestApp()
         app.mainloop()
+        del app
     else:
         log("nddf key not exist: " + symbol)
 
@@ -1172,6 +1389,7 @@ def wl_add(symbol="", p2="", p3=""):
 
 def wl_remove(symbol="", p2="", p3=""):
     wl.remove(symbol)
+    ndf.remove(symbol)
     gui.refresh_ui()
 
 
@@ -1223,7 +1441,7 @@ def wl_trade_long(btn_no):
 def wl_btn_chart(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
     log("start: nchart " + symbol, True, False)
-    i_indecators = ndf2.get_added_indicators(symbol)
+    i_indecators = ndf.get_added_indicators(symbol)
     i_df = nddf[symbol].tail(20000)
     nchart.fit(i_df, symbol, i_indecators)
     nchart.show()
@@ -1231,8 +1449,8 @@ def wl_btn_chart(btn_no):
 
 def wl_btn_show(btn_no):
     symbol = wl.df.loc[btn_no-1]['symbol']
-    log("start: ndf2.show.last " + symbol, True, False)
-    ndf2_show_last(symbol)
+    log("start: ndf.show.last " + symbol, True, False)
+    ndf_show_last(symbol)
     log("ready.", False, False)
 
 # tr PROGRAMS ----------------------------------------------------------------------------
@@ -1390,7 +1608,7 @@ if __name__ == "__main__":
     print("Status: Reading nDot data frame")
     nddf = {}
     nddb = nd_db(nddf, log)
-    ndf2 = n_date_frame2()
+    ndf = n_date_frame2()
 
     print("Status: GUI Load")
     app = QApplication([])
