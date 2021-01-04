@@ -110,6 +110,8 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 15px;
 padding-left: 10px;
 color: #aaaaaa;
+border-bottom: 1px solid #888888;
+border-left: 1px solid #888888;
 </string>
    </property>
    <property name="text">
@@ -139,6 +141,10 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;
 border-bottom: 1px solid #eeeeee;
 padding-left: 10px;
+border-top: 1px solid #888888;
+border-left: 1px solid #888888;
+
+
 </string>
    </property>
    <property name="text">

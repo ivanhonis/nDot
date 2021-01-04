@@ -3,9 +3,10 @@ import datetime
 
 class n_images():
 
-    gdrive_path = "C:/Users/honis.ivan/Google Drive/nDot_Colabs/"
-
-    data = {
+    def __init__(self, log):
+        self.log = log
+        self.gdrive_path = "C:/Users/honis.ivan/Google Drive/nDot_Colabs/"
+        self.data = {
                 'name': "",  ## ez lesz a file neve
                 'timestamp': "",  ## mikor készültek az adatok
                 'source': "",  ## melyik eljárás milyen paraméterekkel állította elő
@@ -13,7 +14,8 @@ class n_images():
                 'description': "",  ## magyarázat mit volt az ötlet
                 'images': {},  ## ezek az adat csomagok
                 'images_count': 0,  ## hány adatcsomagot tartalmaz
-                'target_names': {}  ## a targetek értelmezése
+                'target_names': {},  ## a targetek értelmezése
+                'meta': ""  ## a good minták milyen beállításokkal keletkeztek
             }
 
     def set_name(self, name):
@@ -25,6 +27,9 @@ class n_images():
 
     def set_source(self, source):
         self.data['source'] = source
+
+    def set_meta(self, meta):
+        self.data['meta'] = "   " + meta
 
     def set_description(self, description):
         self.data['description'] = description
@@ -39,6 +44,7 @@ class n_images():
         self.data['images_count'] += 1
 
     def save(self):
+        self.log('n_images->save: ' + str(self.data['images_count']))
         pickle.dump(self.data, open(self.gdrive_path+self.data['name']+".pickle", "wb"))
 
     def load(self, file_name):

@@ -52,29 +52,38 @@ class market_data():
                                                                _from=from_dt, to=to_dt,
                                                                indicator='rsi',
                                                                indicator_fields={"timeperiod": 3})
+
+            # i_result = self.finnhub_client.stock_candles(symbol=symbol,
+            #                                              resolution=resolution,
+            #                                              _from=from_dt,
+            #                                              to=to_dt)
+
         except:
             self.log("Finnhub exception.")
             i_df = pd.DataFrame(None)
         else:
-            i_df = pd.DataFrame(i_result)
-            # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
-            i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
-            # a finnhub idejét Európa/Budapest időre konvertálom
-            i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
-            i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
-            i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
-            i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
-            i_df = i_df.round({'t': 6, 'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6})
-            i_df.set_index('datetime')
-            if rename:
-                i_df = i_df.rename(columns={"datetime": "Date",
-                                            "o": "Open",
-                                            "h": "High",
-                                            "l": "Low",
-                                            "c": "Close",
-                                            "v": "Volume"},
-                                   errors="raise")
-            # return pandas df -> o h c l v t datetime ohcl4
+            if i_result['s'] == 'ok':
+                i_df = pd.DataFrame(i_result)
+                # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
+                i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+                # a finnhub idejét Európa/Budapest időre konvertálom
+                i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
+                i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
+                i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
+                i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
+                i_df = i_df.round({'t': 6, 'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6})
+                i_df.set_index('datetime')
+                if rename:
+                    i_df = i_df.rename(columns={"datetime": "Date",
+                                                "o": "Open",
+                                                "h": "High",
+                                                "l": "Low",
+                                                "c": "Close",
+                                                "v": "Volume"},
+                                       errors="ignore")
+                # return pandas df -> o h c l v t datetime ohcl4
+            else:
+                i_df = pd.DataFrame(None)
         return i_df
 
     def company_profile(self, symbol):
@@ -107,3 +116,7 @@ class market_data():
         i_df = i_df.round({'rsi': 6})
         i_df.set_index('datetime')
         return i_df
+
+    def stock_symbols(self, market):
+        self.log("md-> stock_symbols:")
+        return self.finnhub_client.stock_symbols(market)

@@ -16,6 +16,7 @@ import sys  # a test parancs használja hdd szabad hely kiíratására
 import threading  # refresh info párhuzamosítva van
 import numpy as np
 import random  ## a image előállításához kell random mintavétel
+import pickle
 
 
 # User classes ------------------------------------------------------
@@ -24,6 +25,7 @@ from classes.market_data import market_data
 from classes.nd_db import nd_db
 from classes.nchart import nchart
 from classes.n_images import n_images
+from classes.n_data_frame_meta import n_date_frame_meta
 
 import websocket
 
@@ -51,7 +53,7 @@ from matplotlib.backend_tools import ToolBase
 
 
 class gui(QWidget, object):
-    start_command = "ndf.images PLAY ICX1"
+    # start_command = "ndf.images PLAY ICX1"
 
     def __init__(self):
         super(gui, self).__init__()
@@ -64,6 +66,9 @@ class gui(QWidget, object):
         # refresh_info párhuzamosítva van hogy ne kelljen várni a frissülésére--
         self.refresh_info_thread = ""
         self.refresh_info_string = ""
+        self.command_line_history = []
+        self.command_line_history_position = 0
+        self.load_command_line_history()
 
         # ablak beállítások ----------------------------------------------------
         self.setWindowTitle("   nDot")
@@ -79,8 +84,27 @@ class gui(QWidget, object):
             trade.broker_stop()
             print("Status: GUI Closed")
             self.close()
-        elif e.key() == QtCore.Qt.Key_F12:
-            tr_stop_all()
+        elif e.key() == QtCore.Qt.Key_Up:
+            self.command_line_history_position -= 1
+            self.command_line_history_position = max(0, self.command_line_history_position)
+            self.Command_Line.setText(self.command_line_history[self.command_line_history_position])
+        elif e.key() == QtCore.Qt.Key_Down:
+            self.command_line_history_position += 1
+            i_last_position = len(self.command_line_history)
+            self.command_line_history_position = min(i_last_position - 1, self.command_line_history_position)
+            self.Command_Line.setText(self.command_line_history[self.command_line_history_position])
+
+    def save_command_line_history(self):
+        with open('command_line_history.pickle', 'wb') as f:
+            pickle.dump(self.command_line_history, f)
+
+    def load_command_line_history(self):
+        try:
+            with open('command_line_history.pickle', 'rb') as f:
+                self.command_line_history = pickle.load(f)
+        except:
+            self.command_line_history = []
+
 
 # GUI - Setup --------------------------------------------------------------------------------------
 
@@ -110,7 +134,7 @@ class gui(QWidget, object):
                     object_group[i_o].clicked.connect(partial(tr_stop, i + 1))
 
         uic.loadUi("./qt_ui/form.ui", self)
-        self.Command_Line.setText(self.start_command)
+        # self.Command_Line.setText(self.start_command)
 
         # Csoportos hozzárendelések ----------------------------------------------------------
 
@@ -318,6 +342,13 @@ class gui(QWidget, object):
 
     def run_button_action(self):
         def run_method(i_program, args):
+            # Save command ---------------------------------------
+            if self.command_line_history[0] != self.Command_Line.text():
+                self.command_line_history.insert(0, self.Command_Line.text())
+                self.command_line_history = self.command_line_history[:25]
+                self.command_line_history_position = 0
+                self.save_command_line_history()
+            # Run command -------------------------------------------
             method = eval(i_program)
             kwargs = {}
             args_str = ', '.join(map(str, args))
@@ -387,23 +418,30 @@ class gui(QWidget, object):
 
     def mark_command_line(self, message, bug=True):
         if bug:
-            self.Command_Line.setStyleSheet('background-color: #ffaaaa; ' + \
-                                            'border-top-left-radius: 15px;' + \
-                                            'border-top-right-radius: 0px;' + \
-                                            'border-bottom-right-radius: 0px;' + \
-                                            'border-bottom-left-radius: 0px;' + \
-                                            'border-bottom: 1px solid #eeeeee;' + \
-                                            'padding-left: 10px;')
+            self.Command_Line.setStyleSheet('''background-color: #ffaaaa;
+                                            border-top-left-radius: 15px;
+                                            border-top-right-radius: 0px;
+                                            border-bottom-right-radius: 0px;
+                                            border-bottom-left-radius: 0px;
+                                            border-bottom: 1px solid #eeeeee;
+                                            padding-left: 10px;
+                                            border-top: 1px solid #888888;
+                                            border-left: 1px solid #888888;
+                                            ''')
             self.Command_Hint.setText(message)
             QApplication.processEvents()
         else:
-            self.Command_Line.setStyleSheet('background-color: #ffffff; ' + \
-                                            'border-top-left-radius: 15px;' + \
-                                            'border-top-right-radius: 0px;' + \
-                                            'border-bottom-right-radius: 0px;' + \
-                                            'border-bottom-left-radius: 0px;' + \
-                                            'border-bottom: 1px solid #eeeeee;' + \
-                                            'padding-left: 10px;')
+            self.Command_Line.setStyleSheet('''background-color: #ffffff;
+                                            border-top-left-radius: 15px;
+                                            border-top-right-radius: 0px;
+                                            border-bottom-right-radius: 0px;
+                                            border-bottom-left-radius: 0px;
+                                            border-bottom: 1px solid #eeeeee;
+                                            padding-left: 10px;
+                                            border-top: 1px solid #888888;
+                                            border-left: 1px solid #888888;
+                                            ''')
+
             self.Command_Hint.setText(message)
             QApplication.processEvents()
 
@@ -587,6 +625,7 @@ class n_date_frame2():
         self.load_indicators()
 
     def set_dt_order(self, symbol, ascending=True):
+        ''' rendezi időben az index oszlopot újra íraja kiszűri a duplikációt'''
         nddf[symbol]['Date'] = pd.to_datetime(nddf[symbol]['Date'])
         nddf[symbol].sort_values(by=['Date'], inplace=True, ascending=True)
         # nddf[symbol].sort_index(inplace=True)
@@ -595,6 +634,7 @@ class n_date_frame2():
         nddf[symbol] = nddf[symbol].reset_index(drop=True)
 
     def add(self, symbol):
+        ''' új nddf et hoz létre letölti a részvény árakat'''
         log("ndf-> add " + symbol)
         i_now = datetime.now() + timedelta(days=1)
         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
@@ -604,8 +644,11 @@ class n_date_frame2():
             i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
             i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
             nddf[symbol] = nddf[symbol].append(md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True), ignore_index=True)
-        self.set_dt_order(symbol)
-        log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+
+        if nddf[symbol].shape[0] > 0:
+            self.set_dt_order(symbol)
+            log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+
         log("Number of rows: " + str(nddf[symbol].shape[0]))
         # print(nddf[symbol])
         nddb.write(symbol)
@@ -671,7 +714,15 @@ class n_date_frame2():
 
     def create_images(self, symbol, images_for):
 
-        def time_gap_section(symbol, i_il, time_frame_size):
+        # image fej megcsinálása, minden image nél ugyan az
+        n_img = ""
+        n_img = n_images(log)
+        n_img.set_symbol(symbol)
+        n_img.set_source("nDot.py->n_data_frame2->create_images <ICX1>")
+        n_img.set_name("nDot_IMAGES_" + symbol + "_" + images_for)
+
+        # Segéd függvények Bármelyik image készítő használhatja --------------------------------------------------
+        def time_gap_section(symbol, i_il, time_frame_size):  ## egy számsor állít elő ha van benne szünet akkor kihagy egy számot
 
             i_int_to = int(i_il)
             i_int_from = i_int_to - time_frame_size + 1
@@ -690,12 +741,12 @@ class n_date_frame2():
             # print(base_mod)
             time_section = []
             for i_td in time_data:
-                time_section.append((i_td - base_mod).total_seconds() / 60)
+                time_section.append(round(((i_td - base_mod).total_seconds() / 60)/758,6))
             # print(time_section)
 
             return tuple(time_gap), tuple(time_section)
 
-        def array_diff(from_array, this_array):
+        def array_diff(from_array, this_array):  ## from arrayból eltávolitja a this_arrayt
             for i_nx in this_array:
                 from_array.remove((i_nx))
             return from_array
@@ -704,26 +755,117 @@ class n_date_frame2():
             no = min(no, len(from_array))
             return random.choices(from_array, k=no)
 
+        def r_v(i_tuple):  ## relative view, a szignálkori értéket veszi 1 nek és visszafelé abból számolja 0,9 - 1,1 stb
+            mod_array = []
+            last = i_tuple[len(i_tuple) - 1]
+            for i_t in i_tuple:
+                mod_array.append(round(i_t / last, 6))
+            return mod_array
 
-        if images_for == 'ICX1':
+        # image törzs létrehozása
+        if images_for == 'ICHIMOKU':
 
-            time_frame_size = 45
+            time_frame_size = 48  # a indikátortól visszafelé hány percet tegyen az image-ba
 
+            ### minden image kreátornak saját konstruktora van, ahány stratégiától függően mást teszek bele
             def images_constructor(symbol, indexes, time_frame_size, q):
-
-                def r_v(i_tuple):  ## relative view
-                    mod_array = []
-                    last = i_tuple[len(i_tuple)-1]
-                    for i_t in i_tuple:
-                        mod_array.append(round(i_t/last,6))
-                    return mod_array
                 # print("indexes", len(indexes))
+
                 for i_il in indexes:
                     i_int_to = int(i_il)
                     i_int_from = i_int_to - time_frame_size + 1
 
                     if i_int_from > 0:
                         time_gap, time_section = time_gap_section(symbol, i_il, time_frame_size)
+                        # print(time_section)
+                        i_cmo = nddf[symbol].loc[i_int_from:i_int_to, 'Close'] - nddf[symbol].loc[i_int_from:i_int_to, 'Open']
+                        i_hml = nddf[symbol].loc[i_int_from:i_int_to, 'High'] - nddf[symbol].loc[i_int_from:i_int_to, 'Low']
+
+
+                        i_data_dict = {
+                            # 'ohlc4': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ohlc4']),
+                            # 'Low': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Low'])),
+                            # 'High': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'High'])),
+                            # 'Open': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Open'])),
+                            # 'Close': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Close'])),
+                            # 'ADX_8_ONE': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ADX_8_ONE'])),
+                            # 'Close-Open': tuple(i_cmo),
+                            # 'High-Low': tuple(i_hml),
+                            'High': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'High']),
+                            'Low': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Low']),
+
+                            # 'Close': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Close']),
+                            # 'ADX_8_ONE': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ADX_8_ONE']),
+                            'RSI_14': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'RSI_14']),
+                            'MSFT_High': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'High']),
+                            'MSFT_Low': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'Low']),
+                            # 'MSFT_ohlc4': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'ohlc4']),
+                            'MSFT_RSI': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'RSI_14']),
+
+                            # 'DMP_8': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'DMP_8']),
+                            # 'DMN_8': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'DMN_8']),
+                            # 'Volume': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Volume']),
+                            # 'time_gap': time_gap,
+                            'time_section': time_section,
+                                       }
+                        n_img.add_image(i_data_dict, q)
+
+            i_indicators_need = ['ICHIMOKU', 'ADX8', 'RSI14']
+            if self.check_indicators(symbol, i_indicators_need):
+
+                n_img.set_description("""
+                Ötlet: Ichimoku szignálok közül kiválasztottam 'good' teljesítményüeket.
+                ezek előtti bekövetkezése előtti 45 percet(ticket) kiszedem és megpróbálom bennük felfedeztetni a közöset
+                ha sikerül akkor ezzel tudom erősítem az indikátort
+                """)
+
+                target_names = {'1': "Good LONG signal",
+                                '2': "Good SHORT signal",
+                                '3': "Bad LONG signal",
+                                '4': "Bad SHORT signal"
+                                }
+
+                n_img.add_target_names(target_names)
+
+                #  beteszem a 'good' Longokat -----------------------------------------
+                i_index_long = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_ICHI_LONG']].index))
+                images_constructor(symbol, i_index_long, time_frame_size, 1)  ## a constructor teszi bele az images-ek közé
+
+                #  beteszem a 'good' Shortokat -----------------------------------------
+                i_index_short = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_ICHI_SHORT']].index))
+                images_constructor(symbol, i_index_short, time_frame_size, 2)  ## a constructor teszi bele az images-ek közé
+
+                bad_over_weight = 2  # szorzó
+                #  beteszem a 'bad' Longokat -----------------------------------------
+                average_element_no = int((len(i_index_long) + len(i_index_short))/2)
+                i_index_long_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_ICHI_LONG_FIRST']].index))
+                i_index_long_first_m = array_diff(i_index_long_first_m, i_index_long)  # kiveszem a qualified elemeket
+                i_index_long_first_m = array_random_select(i_index_long_first_m, average_element_no * bad_over_weight)
+                images_constructor(symbol, i_index_long_first_m, time_frame_size, 3)  ## a constructor teszi bele az images-ek közé
+
+                #  beteszem a 'bad' Shortokat -----------------------------------------
+                i_index_short_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_ICHI_SHORT_FIRST']].index))
+                i_index_short_first_m = array_diff(i_index_short_first_m, i_index_short)  # kiveszem a qualified elemeket
+                i_index_short_first_m = array_random_select(i_index_short_first_m, average_element_no * bad_over_weight)
+                images_constructor(symbol, i_index_short_first_m, time_frame_size, 4)  ## a constructor teszi bele az images-ek közé
+
+                n_img.set_meta(ndf_meta.get_all_meta_key(symbol))
+                n_img.save()
+
+        elif images_for == 'SMA5813':
+
+            time_frame_size = 50  # a indikátortól visszafelé hány percet tegyen az image-ba
+
+            ### minden image kreátornak saját konstruktora van, ahány stratégiától függően mást teszek bele
+            def images_constructor(symbol, indexes, time_frame_size, q):
+                # print("indexes", len(indexes))
+
+                for i_il in indexes:
+                    i_int_to = int(i_il)
+                    i_int_from = i_int_to - time_frame_size + 1
+
+                    if i_int_from > 0:
+                        # time_gap, time_section = time_gap_section(symbol, i_il, time_frame_size)
                         i_data_dict = {
                             # 'ohlc4': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ohlc4']),
                             # 'Low': r_v(tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Low'])),
@@ -741,21 +883,15 @@ class n_date_frame2():
                             # 'Volume': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Volume']),
                             # 'time_gap': time_gap,
                             # 'time_section': time_section,
-                                       }
+                        }
                         n_img.add_image(i_data_dict, q)
 
-
-            i_indicators_need = ['ICHIMOKU', 'ADX8']
+            i_indicators_need = ['SMA5813', 'ADX8', 'RSI14']
             if self.check_indicators(symbol, i_indicators_need):
-                log('Creating nDot images...')
-                n_img = n_images()
-                n_img.set_name(symbol+"_ICX1")
-                n_img.set_symbol(symbol)
-                n_img.set_source("nDot.py->n_data_frame2->create_images <ICX1>")
                 n_img.set_description("""
-                Ötlet: Ichimoku szignálok közül kiválasztottam a 200/10.000 USD teljesítményüeket.
-                ezek előtti bekövetkezése előtti 45 percet(ticket) kiszedem és megpróbálom bennük felfedeztetni a közöset
-                ha sikerül akkor ezzel tudom erősítem az indikátort
+                Ötlet: 5 8 13 mozgóátlagokat figyelek, ha 5 alatta 8 alatta 13, akkor az egy LONG jel (visszafele SHORT),
+                ezek körül kiválasztom azt amin lehet legalább x dollárt (20 körül) keresni, és ezeket megprábolm 
+                klasszifikálni, elválasztani azoktól amiken nem lehet pénzt keresni. 
                 """)
 
                 target_names = {'1': "Good LONG signal",
@@ -766,28 +902,36 @@ class n_date_frame2():
 
                 n_img.add_target_names(target_names)
 
+                #  beteszem a 'good' Longokat -----------------------------------------
+                i_index_long = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_SMA5813_LONG']].index))
+                images_constructor(symbol, i_index_long, time_frame_size,
+                                   1)  ## a constructor teszi bele az images-ek közé
 
-                i_index_long = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_ICHI_LONG']].index))
-                i_index_short = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_ICHI_SHORT']].index))
-                average_element_no = int((len(i_index_long) + len(i_index_short))/2)
+                #  beteszem a 'good' Shortokat -----------------------------------------
+                i_index_short = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_SMA5813_SHORT']].index))
+                images_constructor(symbol, i_index_short, time_frame_size,
+                                   2)  ## a constructor teszi bele az images-ek közé
 
-                images_constructor(symbol, i_index_long, time_frame_size, 1)  ## a constructor teszi bele az images-ek közé
-                images_constructor(symbol, i_index_short, time_frame_size, 2)  ## a constructor teszi bele az images-ek közé
-
-                i_index_long_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_ICHI_LONG_FIRST']].index))
+                bad_over_weight = 2  # szorzó
+                #  beteszem a 'bad' Longokat -----------------------------------------
+                average_element_no = int((len(i_index_long) + len(i_index_short)) / 2)
+                i_index_long_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_SMA5813_LONG_FIRST']].index))
                 i_index_long_first_m = array_diff(i_index_long_first_m, i_index_long)  # kiveszem a qualified elemeket
-                i_index_long_first_m = array_random_select(i_index_long_first_m, average_element_no + 2)
-                images_constructor(symbol, i_index_long_first_m, time_frame_size, 3)  ## a constructor teszi bele az images-ek közé
+                i_index_long_first_m = array_random_select(i_index_long_first_m, average_element_no * bad_over_weight)
+                images_constructor(symbol, i_index_long_first_m, time_frame_size,
+                                   3)  ## a constructor teszi bele az images-ek közé
 
-                i_index_short_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_ICHI_SHORT_FIRST']].index))
-                i_index_short_first_m = array_diff(i_index_short_first_m, i_index_short)  # kiveszem a qualified elemeket
-                i_index_short_first_m = array_random_select(i_index_short_first_m, average_element_no + 2)
-                images_constructor(symbol, i_index_short_first_m, time_frame_size, 4)  ## a constructor teszi bele az images-ek közé
+                #  beteszem a 'bad' Shortokat -----------------------------------------
+                i_index_short_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_SMA5813_SHORT_FIRST']].index))
+                i_index_short_first_m = array_diff(i_index_short_first_m,
+                                                   i_index_short)  # kiveszem a qualified elemeket
+                i_index_short_first_m = array_random_select(i_index_short_first_m, average_element_no * bad_over_weight)
+                images_constructor(symbol, i_index_short_first_m, time_frame_size,
+                                   4)  ## a constructor teszi bele az images-ek közé
+
+                n_img.set_meta(ndf_meta.get_all_meta_key(symbol))
 
                 n_img.save()
-                del n_img
-                # n_img2 = n_img.load('APA_ICX1')
-                # print(n_img2)
 
         elif images_for == 'ADX_Ai':
             i_indicators_need = ['ADX8']
@@ -795,16 +939,16 @@ class n_date_frame2():
                 log('minden okmehet')
         else:
             log("Image style is missing...")
+        del n_img
 
     def add_tech(self, symbol, tech_indicator="SMA60"):
 
-        tech_qualify_block_size = 10000  # one deal is 10.000 USD
-        tech_qualify_min_profit = 300  # profit on one deal
-        tech_qualify_stop = -50  # stop loss
-
         def find_first_signal(symbol, col, new_col, n):
+            log(f"ndf->add_tech->find_first_signal on {col}")
+            i_good_signals = 0
 
             def find_pattern(df):
+                nonlocal i_good_signals
                 i_o = tuple([1.0])
                 i_z = tuple([0.0])
                 i_pattern = i_z + (i_o * (n-1))
@@ -812,6 +956,7 @@ class n_date_frame2():
                 # print(i_pattern, i_data)
                 if i_pattern == i_data:
                     i_return = True
+                    i_good_signals += 1
                 else:
                     i_return = False
                 return i_return
@@ -821,7 +966,23 @@ class n_date_frame2():
                 .apply(lambda x: find_pattern(x)) \
                 .astype(bool)
 
-        def qualify_signal(symbol, col, new_col, side):
+            log(f"  Result: {i_good_signals}")
+
+
+        def qualify_signal(symbol, col, new_col, side, qualify_config):
+
+            tech_qualify_block_size = qualify_config['tech_qualify_block_size']
+            tech_qualify_min_profit = qualify_config['tech_qualify_min_profit']
+            tech_qualify_stop = qualify_config['tech_qualify_stop']
+            tech_qualify_max_steps = qualify_config['tech_qualify_max_steps']
+
+            log(f"ndf->add_tech->qualify_signal: {side} {tech_qualify_block_size} USD p/s:"
+                f"{tech_qualify_min_profit}/{tech_qualify_stop} steps:{tech_qualify_max_steps}")
+
+            # print(tech_qualify_stop)
+            # print(tech_qualify_min_profit)
+            # print(tech_qualify_block_size)
+            # print(tech_qualify_max_steps)
 
             i_all_signals = 0
             i_good_signals = 0
@@ -842,7 +1003,7 @@ class n_date_frame2():
                     # i_date = nddf[symbol].loc[[i_start_index + i_i]].Date.values[0]
                     # i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
                     # print(i_i, ' Profit: ', i_profit, "Date: ", i_date, " Act price: ", i_act_ohlc4, "Side: ", side)
-                    while i_i < 90 and i_profit < tech_qualify_min_profit and not i_stop and nddf[symbol].shape[0] > i_start_index + i_i:
+                    while i_i < tech_qualify_max_steps and i_profit < tech_qualify_min_profit and not i_stop and nddf[symbol].shape[0] > i_start_index + i_i:
                         # print(nddf[symbol].shape, i_start_index + i_i)
                         i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
 
@@ -862,8 +1023,8 @@ class n_date_frame2():
                     else:
                         i_return = False
 
-                    i_date = nddf[symbol].loc[[i_start_index + i_i]].Date.values[0]
-                    i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
+                    # i_date = nddf[symbol].loc[[i_start_index + i_i]].Date.values[0]
+                    # i_act_ohlc4 = nddf[symbol].loc[[i_start_index + i_i]].ohlc4.values[0]
                     # print(i_i, ' Profit: ', i_profit, "Date: ", i_date, " Act price: ", i_act_ohlc4, "Side: ", side)
                 else:
                     i_return = False
@@ -874,7 +1035,10 @@ class n_date_frame2():
                 .apply(lambda x: qualify(x)) \
                 .astype(bool)
 
-            return i_all_signals, i_good_signals
+            # save settings for qualification signals ---------------------------------------------------------------
+            ndf_meta.add_meta_key(symbol, new_col, qualify_config)
+            log(f"  Result: all/good: {i_all_signals}/{i_good_signals}  {round(i_good_signals / i_all_signals * 100, 2)}%")
+            return
 
         def case_set_back(symbol):
             # a pandas ta elállítgatja a neveket, ezért minden
@@ -885,7 +1049,7 @@ class n_date_frame2():
                                                         "high": "High",
                                                         "volume": "Volume",
                                                         "date": "Date"
-                                                        })
+                                                        }, errors='ignore')
 
         def add_to_nddf(symbol, df, col):
             new_ser = pd.Series(df[col], name=col)
@@ -905,17 +1069,15 @@ class n_date_frame2():
 
             if tech_indicator == "SMA30":
                 nddf[symbol].ta.sma(length=30, append=True)
-                case_set_back(symbol)
             elif tech_indicator == "SMA60":
                 nddf[symbol].ta.sma(length=60, append=True)
-                case_set_back(symbol)
             elif tech_indicator == "SMA90":
                 nddf[symbol].ta.sma(length=90, append=True)
-                case_set_back(symbol)
             elif tech_indicator == "SMA5813":
                 nddf[symbol].ta.sma(length=5, append=True)
                 nddf[symbol].ta.sma(length=8, append=True)
                 nddf[symbol].ta.sma(length=13, append=True)
+
                 nddf[symbol]["long_set_tec1"] = nddf[symbol]['SMA_5'] > nddf[symbol]['SMA_8']
                 nddf[symbol]["long_set_tec2"] = nddf[symbol]['SMA_8'] > nddf[symbol]['SMA_13']
                 nddf[symbol]["SIG_SMA5813_LONG_ALL"] = nddf[symbol]['long_set_tec1'] & nddf[symbol]['long_set_tec2']
@@ -926,22 +1088,31 @@ class n_date_frame2():
                 nddf[symbol]["SIG_SMA5813_SHORT_ALL"] = nddf[symbol]['short_set_tec1'] & nddf[symbol]['short_set_tec2']
                 find_first_signal(symbol, 'SIG_SMA5813_SHORT_ALL', 'SIG_SMA5813_SHORT_FIRST', 2)
 
-                nddf[symbol] = nddf[symbol].drop(
-                    ['long_set_tec1',
-                     'long_set_tec2',
-                     'short_set_tec1',
-                     'short_set_tec2',
-                       ], axis=1, errors='ignore')
+                ndf_meta.add_meta_key(symbol, "SMA5813_find_first_signal_wait", "2")
 
-                case_set_back(symbol)
+                i_remove = ['long_set_tec1', 'long_set_tec2',
+                            'short_set_tec1', 'short_set_tec2']
+                self.remove_columns(symbol, i_remove)
+
+                # Qualifying  -----------------------------------------------------------------
+
+                qualify_config = {}
+                qualify_config['tech_qualify_block_size'] = 2000  # one deal is 10.000 USD
+                qualify_config['tech_qualify_min_profit'] = 18  # profit on one deal
+                qualify_config['tech_qualify_stop'] = -5  # stop loss
+                qualify_config['tech_qualify_max_steps'] = 10
+
+                qualify_signal(symbol, 'SIG_SMA5813_LONG_FIRST', 'SIG_QFY_SMA5813_LONG', 'LONG', qualify_config)
+                qualify_signal(symbol, 'SIG_SMA5813_SHORT_FIRST', 'SIG_QFY_SMA5813_SHORT', 'SHORT', qualify_config)
+
             elif tech_indicator == "RSI14":
+                log("  Adding RSI14...", False, True)
                 nddf[symbol].ta.rsi(append=True)
-                case_set_back(symbol)
+
             elif tech_indicator == "ICHIMOKU":
-                log("  Adding ICHIMOKU...", False, True)
                 nddf[symbol].ta.ichimoku(append=True)
                 case_set_back(symbol)
-                log("  Finding signals...", False, True)
+
                 nddf[symbol]["conv_over_base"] = nddf[symbol]["ITS_9"] > nddf[symbol]["IKS_26"]
                 nddf[symbol]["conv_under_base"] = nddf[symbol]["ITS_9"] < nddf[symbol]["IKS_26"]
                 nddf[symbol]["cloud_top"] = nddf[symbol][['ISA_9', 'ISB_26']].max(axis=1)
@@ -949,8 +1120,9 @@ class n_date_frame2():
                 nddf[symbol]["ohlc4_over_cloud"] = nddf[symbol]["ohlc4"] > nddf[symbol]["cloud_top"]
                 nddf[symbol]["ohlc4_under_cloud"] = nddf[symbol]["ohlc4"] < nddf[symbol]["cloud_bottom"]
 
-                nddf[symbol]["lagging_over_cloud"] = nddf[symbol]["ICS_26"] > nddf[symbol]["cloud_top"]
-                nddf[symbol]["lagging_under_cloud"] = nddf[symbol]["ICS_26"] < nddf[symbol]["cloud_bottom"]
+                # TODO: lagging linét megcsinálni, hogy a 26 percel előbbi állapotot nézze
+                # nddf[symbol]["lagging_over_cloud"] = nddf[symbol]["ICS_26"] > nddf[symbol]["cloud_top"]
+                # nddf[symbol]["lagging_under_cloud"] = nddf[symbol]["ICS_26"] < nddf[symbol]["cloud_bottom"]
 
                 # LONG SIGNALS -----------------------------------------------------------------
                 # A szignálokat csak intime ban csinálom meg
@@ -962,31 +1134,32 @@ class n_date_frame2():
                 find_first_signal(symbol, 'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST', 6)
 
                 # SHORT SIGNALS -----------------------------------------------------------------
-
                 nddfx_intime["SIG_ICHI_SHORT_ALL"] = nddfx_intime["conv_under_base"] \
                                                      & nddfx_intime["ohlc4_under_cloud"]
                                                      # & nddf[symbol]["lagging_under_cloud"]
                 add_to_nddf(symbol, nddfx_intime, 'SIG_ICHI_SHORT_ALL')
                 find_first_signal(symbol, 'SIG_ICHI_SHORT_ALL', 'SIG_ICHI_SHORT_FIRST', 6)
 
-                # DROP REST -----------------------------------------------------------------
-                nddf[symbol] = nddf[symbol].drop(
-                    ['conv_over_base',
-                     'conv_under_base',
-                     'cloud_top',
-                     'cloud_bottom',
-                     'ohlc4_over_cloud',
-                     'ohlc4_under_cloud',
-                     'lagging_over_cloud',
-                     'lagging_under_cloud',
-                    ], axis=1, errors='ignore')
+                ndf_meta.add_meta_key(symbol, "ICHIMOKU_find_first_signal_wait", "6")
+
+                i_remove = [
+                    'conv_over_base', 'conv_under_base',
+                    'cloud_top', 'cloud_bottom',
+                    'ohlc4_over_cloud', 'ohlc4_under_cloud',
+                    'lagging_over_cloud', 'lagging_under_cloud'
+                ]
+                self.remove_columns(symbol, i_remove)
+
                 # Qualifying  -----------------------------------------------------------------
-                log("  Qualifying LONG signals... ", False, True)
-                i_all_signals, i_good_signals = qualify_signal(symbol, 'SIG_ICHI_LONG_FIRST', 'SIG_QFY_ICHI_LONG', 'LONG')
-                log(f"  All / good: {i_all_signals} / {i_good_signals}  {round(i_good_signals/i_all_signals*100,2)}%", False, True)
-                log("  Qualifying SHORT signals... ", False, True)
-                i_all_signals, i_good_signals = qualify_signal(symbol, 'SIG_ICHI_SHORT_FIRST', 'SIG_QFY_ICHI_SHORT', 'SHORT')
-                log(f"  All / good: {i_all_signals} / {i_good_signals} {round(i_good_signals/i_all_signals*100,2)}%", False, True)
+
+                qualify_config = {}
+                qualify_config['tech_qualify_block_size'] = 10000  # one deal is 10.000 USD
+                qualify_config['tech_qualify_min_profit'] = 300  # profit on one deal
+                qualify_config['tech_qualify_stop'] = -50  # stop loss
+                qualify_config['tech_qualify_max_steps'] = 90
+
+                qualify_signal(symbol, 'SIG_ICHI_LONG_FIRST', 'SIG_QFY_ICHI_LONG', 'LONG', qualify_config)
+                qualify_signal(symbol, 'SIG_ICHI_SHORT_FIRST', 'SIG_QFY_ICHI_SHORT', 'SHORT', qualify_config)
 
             elif tech_indicator == "ADX8":
                 nddf[symbol].ta.adx(length=8, append=True)
@@ -1003,9 +1176,8 @@ class n_date_frame2():
                 nddf[symbol] = nddf[symbol].drop(
                     ['adx_inc'
                     ], axis=1, errors='ignore')
-                case_set_back(symbol)
 
-
+            case_set_back(symbol)
             nddb.write(symbol)
 
         else:
@@ -1019,6 +1191,7 @@ class n_date_frame2():
         if symbol in nddf:
             del nddf[symbol]
         i_log = nddb.remove(symbol)
+        ndf_meta.remove_meta(symbol)
 
     def refresh(self, symbol):
         log("ndf-> refresh " + symbol)
@@ -1034,6 +1207,13 @@ class n_date_frame2():
         log("Time frame (after refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
         log("Number of rows (after refresh): " + str(nddf[symbol].shape[0]))
         nddb.write(symbol)
+
+    def remove_columns(self, symbol, columns):
+        ''' eltávolít egy oszlopokat az nddf ből'''
+        for i_c in columns:
+            if i_c in tuple(nddf[symbol].columns):
+                nddf[symbol] = nddf[symbol].drop(i_c, axis=1, errors='ignore')
+
 
 
 class watch_list:
@@ -1180,23 +1360,10 @@ def help2(p1="", p2="", p3=""):
 
 
 def do(symbol="", p2="", p3=""):
-    nDot_image = {}
-    nDot_image['name'] = "APA - Ichimoku Signal qualification"
-    nDot_image['description'] = """
-    Ichimoku szigálokat keresek azokból kiválasztom azokat melyeken lehetett keresni minimum 200 USD / 10.000 USD
-    Aminősített szinálok előző 60 nek adatait adom vissza.
-    egy szignál előéletét nevezem image nak
-      """
-    nDot_image['images'] = {}
-    i_index_long = (tuple(nddf['APA'].loc[nddf['APA']['SIG_QFY_ICHI_LONG']].index))
-    i_index_short = (tuple(nddf['APA'].loc[nddf['APA']['SIG_QFY_ICHI_SHORT']].index))
-    print(i_index_long)
-    for i_il in i_index_long:
-        i_int_to = int(i_il)
-        i_int_from = i_int_to - 60
-        print(nddf['APA'].loc[i_int_from:i_int_to, 'Close'])
-
-    print(i_index_short)
+    i_res = md.stock_symbols("US")
+    idf = pd.DataFrame(i_res)
+    print(idf)
+    idf.to_csv("finnhub_stocks.csv", index=False, sep=';')
 
 
 def s(msg_str):
@@ -1609,6 +1776,7 @@ if __name__ == "__main__":
     nddf = {}
     nddb = nd_db(nddf, log)
     ndf = n_date_frame2()
+    ndf_meta = n_date_frame_meta(log)
 
     print("Status: GUI Load")
     app = QApplication([])
