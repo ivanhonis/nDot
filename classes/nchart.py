@@ -12,8 +12,9 @@ output_file("nchart.html")
 
 class nchart():
 
-    def __init__(self):
-        self.width = 1200
+    def __init__(self, trade):
+        self.trade = trade
+        self.width = 1330
         self.toolbar_location = "left"
         self.tools = "xpan,xwheel_zoom,reset"
         self.y_axis_location = "right"
@@ -26,8 +27,8 @@ class nchart():
         self.gray2 = "#888888"
         self.black = "#333333"
 
-        self.min_border_left = 200
-        self.min_border_right = 50
+        self.min_border_left = 20
+        self.min_border_right = 20
         self.min_border_top = 15
         self.min_border_bottom = 0
 
@@ -35,10 +36,17 @@ class nchart():
 
     def fit(self, i_df, name, indecators=""):
         i_df = i_df.reset_index(drop=True)
+        # print(i_df)
+        nddfx_intime, nddfx_outtime = self.trade.time_filter(i_df, "15:30", "22:00")
+        i_df = nddfx_intime.reset_index()
+        # print(i_df)
+        i_df['Date_str'] = i_df['Date'].astype(str)
         self.elements = list()
         self.elements.append(self.chart_candlestick(i_df, name))
         self.elements.append(self.chart_vol(i_df, name))
         if len(indecators) > 0:
+            if 'BREAKOUT' in indecators:
+                self.elements.append(self.chart_breakout(i_df, "BREAKOUT"))
             if 'SMA60' in indecators:
                 self.elements.append(self.chart_sma(i_df, "SMA60"))
             if 'SMA5813' in indecators:
@@ -49,7 +57,6 @@ class nchart():
                 self.elements.append(self.chart_adx(i_df, "ADX8"))
             if 'RSI14' in indecators:
                 self.elements.append(self.chart_rsi(i_df, "RSI14"))
-
 
     def show(self):
 
@@ -65,6 +72,7 @@ class nchart():
                 e.min_border_top = 0
             else:
                 if e.title.text != "ADX8" and e.title.text != "RSI14":
+                    ## ADX* és RSI14 nél nem kell összzárni a y rangeotmert az nem egyezik a részvény árfolyammal
                     e.y_range = self.elements[0].y_range
                 e.xaxis.visible = False
                 e.x_range = self.elements[0].x_range
@@ -84,7 +92,6 @@ class nchart():
         show(c)
 
     def chart_candlestick(self, df, name):
-        # print(df)
 
         stock = ColumnDataSource(df)
 
@@ -147,14 +154,13 @@ class nchart():
         # hover ----------------------------------------------------------------------------
         p.add_tools(HoverTool(
 
-            tooltips=[("Datetime", "@Date"),
-                                ("Low", "@Low{$0,0.00}"),
-                                ("High", "@High{$0,0.00}"),
-                                ("Open", "@Open{$0,0.00}"),
-                                ("Close", "@Close{$0,0.00}"),
+            tooltips=[("Date", "@Date_str"),
+                                ("Low, High", "@Low{$0,0.00}, @High{$0,0.00}"),
+                                ("Open, Close", "@Open{$0,0.00}, @Close{$0,0.00}"),
+                                ("ohlc4", "@ohlc4{$0,0.00}"),
                                 ("Volume", "@Volume{($ 0.00 a)}")],
 
-            formatters={"Date": 'datetime'},
+            # formatters={"Date": 'datetime'},
 
 
             mode='vline'
@@ -557,3 +563,59 @@ class nchart():
         # end default settings ------------------------------------------------------------------------------------
         return p
 
+    def chart_breakout(self, df, name):
+
+        stock = ColumnDataSource(df)
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=220,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+        # print ohlc4 price
+        p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        p.line('index', 'ohlc4', color=self.blue, source=stock)
+
+        sig = tuple(df['SIG_BREAKOUT_LONG_ALL'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_QFY_BREAKOUT_LONG'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_BREAKOUT_SHORT_ALL'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_QFY_BREAKOUT_SHORT'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4', color=self.red, size=15, source=stock, view=view_sig)
+
+        p.legend.visible = False
+
+        p.add_tools(HoverTool(
+
+            tooltips=[("Date", "@Date_str"),
+                                ("ohlc4", "@ohlc4{$0,0.00}"),
+                                ("Volume", "@Volume{($ 0.00 a)}")],
+
+            mode='vline'
+        ))
+
+        # start default settings  ----------------------------------------------------------------------------------
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+        return p

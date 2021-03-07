@@ -10,7 +10,7 @@ import os  # for test command
 import psutil  # for test command
 import pandas_ta as ta  # technical indicators for ndf.tech
 from functools import partial  # a kattintás hozzá rendeléséhez használom
-from datetime import datetime, timedelta  # a log ban használom
+from datetime import datetime, timedelta, time as dt_time  # a log ban használom
 import sys  # a test parancs használja hdd szabad hely kiíratására
 # from multiprocessing import Process
 import threading  # refresh info párhuzamosítva van
@@ -316,7 +316,7 @@ class gui(QWidget, object):
             ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
             ['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
             ['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
-            ['ndf.images', 'ndf_images', 'ndf.image <symbol> <image>', 1],
+            ['ndf.images', 'ndf_images', 'ndf.images <symbol> <image>', 1],
             ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
             ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
             ['ndf.info', 'ndf_info', 'ndf.info', 0],
@@ -638,7 +638,7 @@ class n_date_frame2():
         log("ndf-> add " + symbol)
         i_now = datetime.now() + timedelta(days=1)
         i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-        i_datetime_series = pd.date_range(start=i_now, periods=7, freq='-93d')
+        i_datetime_series = pd.date_range(start=i_now, periods=35, freq='-62d')
         nddf[symbol] = pd.DataFrame()
         for i_i in range(len(i_datetime_series)-1):
             i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
@@ -661,6 +661,8 @@ class n_date_frame2():
             ['SMA90',   ['SMA_90']],
             ['SMA5813', ['SMA_5', 'SMA_8', 'SMA_13']],
             ['RSI14', ['RSI_14']],
+            ['BREAKOUT', ['SIG_QFY_BREAKOUT_LONG', 'SIG_QFY_BREAKOUT_SHORT',
+                          'SIG_BREAKOUT_LONG_ALL', 'SIG_BREAKOUT_SHORT_ALL']],
             ['ADX8',    ['ADX_8', 'DMP_8', 'DMN_8', 'ADX_8_ONE']],
             ['ICHIMOKU', ['ISA_9', 'ISB_26', 'ITS_9', 'IKS_26', 'ICS_26',
                           'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST',
@@ -765,7 +767,7 @@ class n_date_frame2():
         # image törzs létrehozása
         if images_for == 'ICHIMOKU':
 
-            time_frame_size = 48  # a indikátortól visszafelé hány percet tegyen az image-ba
+            time_frame_size = 45  # a indikátortól visszafelé hány percet tegyen az image-ba
 
             ### minden image kreátornak saját konstruktora van, ahány stratégiától függően mást teszek bele
             def images_constructor(symbol, indexes, time_frame_size, q):
@@ -793,20 +795,19 @@ class n_date_frame2():
                             # 'High-Low': tuple(i_hml),
                             'High': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'High']),
                             'Low': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Low']),
-
                             # 'Close': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Close']),
-                            # 'ADX_8_ONE': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ADX_8_ONE']),
-                            'RSI_14': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'RSI_14']),
-                            'MSFT_High': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'High']),
-                            'MSFT_Low': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'Low']),
-                            # 'MSFT_ohlc4': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'ohlc4']),
-                            'MSFT_RSI': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'RSI_14']),
+                            'ADX_8_ONE': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'ADX_8_ONE']),
+                            # 'RSI_14': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'RSI_14']),
+                            # 'MSFT_High': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'High']),
+                            # 'MSFT_Low': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'Low']),
+                            'MSFT_ohlc4': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'ohlc4']),
+                            # 'MSFT_RSI14': tuple(nddf['MSFT'].loc[i_int_from:i_int_to, 'RSI_14']),
 
                             # 'DMP_8': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'DMP_8']),
                             # 'DMN_8': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'DMN_8']),
                             # 'Volume': tuple(nddf[symbol].loc[i_int_from:i_int_to, 'Volume']),
                             # 'time_gap': time_gap,
-                            'time_section': time_section,
+                            # 'time_section': time_section,
                                        }
                         n_img.add_image(i_data_dict, q)
 
@@ -835,7 +836,7 @@ class n_date_frame2():
                 i_index_short = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_QFY_ICHI_SHORT']].index))
                 images_constructor(symbol, i_index_short, time_frame_size, 2)  ## a constructor teszi bele az images-ek közé
 
-                bad_over_weight = 2  # szorzó
+                bad_over_weight = 1  # szorzó
                 #  beteszem a 'bad' Longokat -----------------------------------------
                 average_element_no = int((len(i_index_long) + len(i_index_short))/2)
                 i_index_long_first_m = (list(nddf[symbol].loc[nddf[symbol]['SIG_ICHI_LONG_FIRST']].index))
@@ -1063,6 +1064,7 @@ class n_date_frame2():
             nddf[symbol][col] = i_df_temp[col]
             nddf[symbol][col].fillna(False, inplace=True)
 
+
         log("ndf-> add_tech " + symbol + " - " + str(tech_indicator))
 
         if self.is_indicator(tech_indicator):
@@ -1176,6 +1178,103 @@ class n_date_frame2():
                 nddf[symbol] = nddf[symbol].drop(
                     ['adx_inc'
                     ], axis=1, errors='ignore')
+
+            elif tech_indicator == "BREAKOUT":
+
+                # TODO: most 30 perc után leáll a pénz keresés.. lehet trailerrel is 5% visszesés után áll le
+
+                tech_qualify_block_size = 3000  # one deal is x USD
+                tech_qualify_min_profit = 50  # profit on one deal
+                tech_qualify_stop = -5  # stop loss
+                tech_qualify_max_steps = 30  # max minutes to get profit
+                tech_qualify_min_steps = 8  # max minutes to get profit
+
+                def breakout_qulify(nddfx_intime, i_start_index, side):
+
+                    nonlocal tech_qualify_block_size, tech_qualify_min_profit, tech_qualify_stop, tech_qualify_max_steps, tech_qualify_min_steps
+
+                    i_i = 0
+                    i_profit = 0
+                    i_stop = False
+                    while i_i < tech_qualify_max_steps and i_profit < tech_qualify_min_profit and not i_stop and \
+                            nddfx_intime.shape[0] > i_start_index + i_i:
+                        i_act_ohlc4 = nddfx_intime.iloc[i_start_index + i_i]['ohlc4']
+                        # i_act_Date = nddfx_intime.iloc[i_start_index + i_i]['Date']
+                        if side == 'LONG':
+                            i_profit = int((i_act_ohlc4 - i_start_ohlc4) * i_qty)
+                        else:
+                            i_profit = int((i_start_ohlc4 - i_act_ohlc4) * i_qty)
+                        if i_profit < tech_qualify_stop:
+                            i_stop = True
+
+                        # print(i_start_index + i_i ,i_act_Date, i_start_ohlc4, i_act_ohlc4, i_profit)
+                        i_i += 1
+
+                    i_i -= 1  # hátul tesztelős ciklus kellene de nincs ezért 1 et levonok
+
+                    if i_profit > tech_qualify_min_profit and i_i > tech_qualify_min_steps:
+                        i_return_qfy = True
+                        i_return_n_plus = i_i
+                    else:
+                        i_return_qfy = False
+                        i_return_n_plus = 0
+
+                    return i_return_qfy, i_return_n_plus
+
+                nddfx_intime, nddfx_outtime = trade.time_filter(nddf[symbol], "16:20", "22:00")
+                nddfx_intime = nddfx_intime.reset_index()
+
+                nddfx_intime['SIG_BREAKOUT_LONG_ALL'] = False
+                nddfx_intime['SIG_QFY_BREAKOUT_LONG'] = False
+
+                nddfx_intime['SIG_BREAKOUT_SHORT_ALL'] = False
+                nddfx_intime['SIG_QFY_BREAKOUT_SHORT'] = False
+
+                row_count = nddfx_intime.shape[0]
+                n = 1
+                while n < row_count - 1:
+                    if n / 1000 == int(n / 1000):
+                        s(str(round(n / row_count * 100, 2))+" %")
+                    xn_minus = nddfx_intime.iloc[n-1]['ohlc4']  # adott elem előtt 1-el
+                    i_start_ohlc4 = nddfx_intime.iloc[n]['ohlc4']   # adott elem
+                    xn_plus = nddfx_intime.iloc[n+1]['ohlc4']  # adott elem után 1-el
+
+                    i_Date = nddfx_intime.iloc[n]['Date']  # a signálnak kell elég idő zárás előtt 45 perc, hogy kifusson
+                    i_qty = int(tech_qualify_block_size / i_start_ohlc4)  # mennyiség kiszámolása
+
+                    if i_start_ohlc4 < xn_minus and i_start_ohlc4 < xn_plus and tools.is_date_in_timeperiod(dt_time(16, 20), dt_time(21, 15), i_Date):
+                        nddfx_intime.loc[n, 'SIG_BREAKOUT_LONG_ALL'] = True
+                        i_qfy_result, i_n_plus = breakout_qulify(nddfx_intime, n, "LONG")
+                        if i_qfy_result:
+                            nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_LONG'] = True
+                        else:
+                            nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_LONG'] = False
+                        n = n + i_n_plus + 1
+                    elif i_start_ohlc4 > xn_minus and i_start_ohlc4 > xn_plus and tools.is_date_in_timeperiod(dt_time(16, 20), dt_time(21, 15), i_Date):
+                        nddfx_intime.loc[n, 'SIG_BREAKOUT_SHORT_ALL'] = True
+                        i_qfy_result, i_n_plus = breakout_qulify(nddfx_intime, n, "SHORT")
+                        if i_qfy_result:
+                            nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_SHORT'] = True
+                        else:
+                            nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_SHORT'] = False
+                        n = n + i_n_plus + 1
+                    else:
+                        n += 1
+
+                nddfx_intime = nddfx_intime.set_index("Date")
+                add_to_nddf(symbol, nddfx_intime, 'SIG_BREAKOUT_LONG_ALL')
+                add_to_nddf(symbol, nddfx_intime, 'SIG_QFY_BREAKOUT_LONG')
+                add_to_nddf(symbol, nddfx_intime, 'SIG_BREAKOUT_SHORT_ALL')
+                add_to_nddf(symbol, nddfx_intime, 'SIG_QFY_BREAKOUT_SHORT')
+
+                ldx_all_after = nddf[symbol].SIG_BREAKOUT_LONG_ALL.value_counts()
+                ldx_after = nddf[symbol].SIG_QFY_BREAKOUT_LONG.value_counts()
+                log(f"  LONG results: all/good: {ldx_all_after[1]}/{ldx_after[1]}  {round(ldx_after[1] / ldx_all_after[1] * 100, 2)}%")
+
+                sdx_all_after = nddf[symbol].SIG_BREAKOUT_SHORT_ALL.value_counts()
+                sdx_after = nddf[symbol].SIG_QFY_BREAKOUT_SHORT.value_counts()
+                log(f"  SHORT result: all/good: {sdx_all_after[1]}/{sdx_after[1]}  {round(sdx_after[1] / sdx_all_after[1] * 100, 2)}%")
+                s("")
 
             case_set_back(symbol)
             nddb.write(symbol)
@@ -1351,8 +1450,12 @@ class tools():
         i_return = pd.read_csv(StringIO(su.getvalue()), sep=",", index_col=0, parse_dates=True)
         return i_return
 
+    def is_date_in_timeperiod(self, start_time, end_time, Date):
+        in_time = dt_time(Date.hour, Date.minute)
+        return in_time >= start_time and in_time <= end_time
 
-# PROGRAMS ----------------------------------------------------------------------------
+
+        # PROGRAMS ----------------------------------------------------------------------------
 
 
 def help2(p1="", p2="", p3=""):
@@ -1783,6 +1886,10 @@ if __name__ == "__main__":
     gui = gui()
     trade = trade(gui=gui)
     tools = tools()
+
+    # print(tools.dbdt_to_unixdt('2021-03-05 18:09:00'))
+    # print(tools.dbdt_to_unixdt('2021-03-05 18:50:00'))
+
     md = market_data(log, s, tools)
     wl = watch_list()
     gui.refresh_ui()
@@ -1790,7 +1897,7 @@ if __name__ == "__main__":
     gui.showMaximized()
 
     # ndf = n_date_frame()
-    nchart = nchart()
+    nchart = nchart(trade)
 
 
     # gui.show()

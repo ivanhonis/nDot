@@ -47,16 +47,17 @@ class market_data():
                  + " - "
                  + self.tools.unixdt_to_dbdt(to_dt))
         try:
-            i_result = self.finnhub_client.technical_indicator(symbol=symbol,
-                                                               resolution=resolution,
-                                                               _from=from_dt, to=to_dt,
-                                                               indicator='rsi',
-                                                               indicator_fields={"timeperiod": 3})
-
-            # i_result = self.finnhub_client.stock_candles(symbol=symbol,
-            #                                              resolution=resolution,
-            #                                              _from=from_dt,
-            #                                              to=to_dt)
+            # i_result = self.finnhub_client.technical_indicator(symbol=symbol,
+            #                                                    resolution=resolution,
+            #                                                    _from=from_dt, to=to_dt,
+            #                                                    indicator='rsi',
+            #                                                    indicator_fields={"timeperiod": 3})
+            #
+            #
+            i_result = self.finnhub_client.stock_candles(symbol=symbol,
+                                                         resolution=resolution,
+                                                         _from=from_dt,
+                                                         to=to_dt)
 
         except:
             self.log("Finnhub exception.")
@@ -67,7 +68,7 @@ class market_data():
                 # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
                 i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
                 # a finnhub idejét Európa/Budapest időre konvertálom
-                i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
+                i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=1)
                 i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
                 i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
                 i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
