@@ -15,7 +15,8 @@ class n_images():
                 'images': {},  ## ezek az adat csomagok
                 'images_count': 0,  ## hány adatcsomagot tartalmaz
                 'target_names': {},  ## a targetek értelmezése
-                'meta': ""  ## a good minták milyen beállításokkal keletkeztek
+                'meta': "",  ## a good minták milyen beállításokkal keletkeztek
+                'historic_max': {} ## az adatok egységes normalizálásoh a történelmi maximum értékek
             }
 
     def set_name(self, name):
@@ -37,6 +38,9 @@ class n_images():
     def add_target_names(self, target_names):
         self.data['target_names'] = target_names
 
+    def set_historic_max(self, historic_max):
+        self.data['historic_max'] = historic_max
+
     def add_image(self, dict, target):
         dict['target'] = target
         self.data['images'][self.data['images_count']] = {}
@@ -46,6 +50,7 @@ class n_images():
     def save(self):
         self.log('n_images->save: ' + str(self.data['images_count']))
         pickle.dump(self.data, open(self.gdrive_path+self.data['name']+".pickle", "wb"))
+        self.log('n_images->saved: ' + str(self.gdrive_path+self.data['name']+".pickle"))
 
     def load(self, file_name):
         return pickle.load(open(self.gdrive_path+file_name+'.pickle', "rb"))

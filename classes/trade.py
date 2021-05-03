@@ -275,7 +275,7 @@ class trade():
                 sleep(0.5)
                 i_wait_no += 1
         if self.monitor_break:
-            print("Status: Monitor stopped!")
+            print("Status: Monitor is stopped!")
         self.monitor_break = False
         self.monitor_is_working = False
         self.refresh_tr_info()
@@ -315,7 +315,7 @@ class trade():
                 i_wait_no += 1
             is_broker_action = self.broker_action()
         if self.broker_break:
-            print("Status: Broker stopped!")
+            print("Status: Broker is stopped!")
         else:
             self.gui.tlog("Ready.", line=False, indent=False, color="normal")
         self.broker_is_working = False

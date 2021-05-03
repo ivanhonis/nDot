@@ -1,17 +1,29 @@
 import finnhub
 import pandas as pd
 
+# for streaming ---------------------------------------
+import threading
+from time import sleep, gmtime, time, strftime
+
 
 class market_data():
     api_key_finnhubio1 = "bs9c9lvrh5rahoaofmt0"
     finnhub_client = ""
 
-    def __init__(self, log, s, tools):
+    def __init__(self, log, s, tools, ndf, stream_last_refresh):
         self.log = log
         self.s = s
         self.tools = tools
+        self.stream_last_refresh = stream_last_refresh
+        self.ndf = ndf
         self.finnhub_client = finnhub.Client(api_key=self.api_key_finnhubio1)
         self.finnhub_client.DEFAULT_TIMEOUT = 100
+
+        # for straming
+        self.stream_is_working = False
+        self.stream_thread = ""
+        self.stream_break = False
+        self.stream_refresh_rate = 60
 
     def check_finnhub_connection(self, symbol="AAPL"):
         self.log("md-> check_finnhub_connection: " + symbol)
@@ -41,11 +53,12 @@ class market_data():
             i_return = round(i_usd_price["HUF"], 4)
         return i_return
 
-    def get_stock_candles(self, symbol, resolution, from_dt, to_dt, rename=False):
-        self.log("md-> get_stock_candles: " + symbol + " - "
-                 + self.tools.unixdt_to_dbdt(from_dt)
-                 + " - "
-                 + self.tools.unixdt_to_dbdt(to_dt))
+    def get_stock_candles(self, symbol, resolution, from_dt, to_dt, rename=False, log_off=False):
+        if not log_off:
+            self.log("md-> get_stock_candles: " + symbol + " - "
+                     + self.tools.unixdt_to_dbdt(from_dt)
+                     + " - "
+                     + self.tools.unixdt_to_dbdt(to_dt))
         try:
             # i_result = self.finnhub_client.technical_indicator(symbol=symbol,
             #                                                    resolution=resolution,
@@ -58,32 +71,31 @@ class market_data():
                                                          resolution=resolution,
                                                          _from=from_dt,
                                                          to=to_dt)
+            # print(i_result)
 
         except:
-            self.log("Finnhub exception.")
+            if not log_off:
+                self.log("Finnhub exception.")
             i_df = pd.DataFrame(None)
         else:
             if i_result['s'] == 'ok':
                 i_df = pd.DataFrame(i_result)
-                # i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, resolution, from_dt, to_dt))
-                i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+                i_df['Date'] = pd.to_datetime(i_df['t'], unit='s')
                 # a finnhub idejét Európa/Budapest időre konvertálom
-                i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=1)
-                i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
                 i_df['ohlc4'] = round(((i_df['o'] + i_df['h'] + i_df['l'] + i_df['c'])/4), 6)
-                i_df = i_df[['datetime', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
+                i_df = i_df[['Date', 't', 'o', 'h', 'l', 'c', 'ohlc4', 'v']]
                 i_df = i_df.round({'t': 6, 'o': 6, 'h': 6, 'l': 6, 'c': 6, 'ohlc4': 6})
-                i_df.set_index('datetime')
                 if rename:
-                    i_df = i_df.rename(columns={"datetime": "Date",
-                                                "o": "Open",
+                    i_df = i_df.rename(columns={"o": "Open",
                                                 "h": "High",
                                                 "l": "Low",
                                                 "c": "Close",
                                                 "v": "Volume"},
                                        errors="ignore")
-                # return pandas df -> o h c l v t datetime ohcl4
+                i_df = self.ndf.i_df_dt_order(i_df)
             else:
+                if not log_off:
+                    self.log("Empty result for this time period.")
                 i_df = pd.DataFrame(None)
         return i_df
 
@@ -118,6 +130,40 @@ class market_data():
         i_df.set_index('datetime')
         return i_df
 
-    def stock_symbols(self, market):
-        self.log("md-> stock_symbols:")
+    def stock_symbols(self, market="US"):
+        self.log("md-> stock_symbols: " + str(market))
         return self.finnhub_client.stock_symbols(market)
+
+    def stream_run(self):
+        if not self.stream_is_working:
+            self.stream_is_working = True
+            self.stream_thread = threading.Thread(target=self.stream_while)
+            self.stream_thread.start()
+            # self.refresh_tr_info()
+
+    def stream_stop(self):
+        self.stream_break = True
+
+    def stream_while(self):
+        i_wait_sec = self.stream_refresh_rate
+        while not self.stream_break:
+            self.stream_action()
+            # várakozik egy adott ideig de ki tud belőle szállni menet közben is így esc re azonnal leáll
+            i_wait_no = 0
+            while i_wait_no < i_wait_sec and not self.stream_break:
+                sleep(1)
+                i_wait_no += 1
+        if self.stream_break:
+            print("Status: Data streaming is stopped!")
+        self.stream_break = False
+        self.stream_is_working = False
+        # self.refresh_tr_info()
+
+    def stream_action(self):
+        # print("hello :)")
+        i_new_row_count = self.ndf.get_allrow_count()
+        for smb in self.ndf.get_all_symbol():
+            self.ndf.refresh(smb, log_off=True)
+        i_new_row_count = self.ndf.get_allrow_count() - i_new_row_count
+        if i_new_row_count > 0:
+            self.stream_last_refresh(strftime("%H:%M"))

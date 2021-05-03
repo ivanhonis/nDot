@@ -57,6 +57,8 @@ class nchart():
                 self.elements.append(self.chart_adx(i_df, "ADX8"))
             if 'RSI14' in indecators:
                 self.elements.append(self.chart_rsi(i_df, "RSI14"))
+            if 'MACD' in indecators:
+                self.elements.append(self.chart_macd(i_df, "MACD"))
 
     def show(self):
 
@@ -71,7 +73,7 @@ class nchart():
                 e.xaxis.visible = False
                 e.min_border_top = 0
             else:
-                if e.title.text != "ADX8" and e.title.text != "RSI14":
+                if e.title.text != "ADX8" and e.title.text != "RSI14" and e.title.text != "MACD":
                     ## ADX* és RSI14 nél nem kell összzárni a y rangeotmert az nem egyezik a részvény árfolyammal
                     e.y_range = self.elements[0].y_range
                 e.xaxis.visible = False
@@ -360,28 +362,26 @@ class nchart():
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
-        sig = tuple(df['SIG_ICHI_LONG_FIRST'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
+        # sig = tuple(df['SIG_ICHI_LONG_FIRST'])
+        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        # p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
 
         sig = tuple(df['SIG_QFY_ICHI_LONG'])
         view_sig_qty = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.segment(x0='index', x1='index', y0=0, y1='ohlc4', color=self.orange, line_width=3, source=stock, view=view_sig_qty)
-
-        sig = tuple(df['SIG_QFY_ICHI_SHORT'])
-        view_sig_qty = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.segment(x0='index', x1='index', y0=0, y1='ohlc4', color=self.orange, line_width=3, source=stock, view=view_sig_qty)
+        p.triangle('index', 'ohlc4', line_color=self.green, line_width=2, fill_color=self.green, size=15, source=stock, view=view_sig_qty)
 
 
         sig = tuple(df['SIG_ICHI_SHORT_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
-        sig = tuple(df['SIG_ICHI_SHORT_FIRST'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', color=self.red, size=15, source=stock, view=view_sig)
+        # sig = tuple(df['SIG_ICHI_SHORT_FIRST'])
+        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        # p.triangle('index', 'ohlc4', color=self.red, size=15, source=stock, view=view_sig)
 
-
+        sig = tuple(df['SIG_QFY_ICHI_SHORT'])
+        view_sig_qty = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.inverted_triangle('index', 'ohlc4', line_color=self.red, line_width=2, fill_color=self.red, size=15, source=stock, view=view_sig_qty)
 
         # p.add_tools(HoverTool(
         #     tooltips=[("Datetime", "@Date"),
@@ -471,6 +471,69 @@ class nchart():
         p.y_range = Range1d(*desired_range2)
         return p
 
+    def chart_macd(self, df, name):
+        stock = ColumnDataSource(df)
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=150,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+        # print ohlc4 price
+        # p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        # p.line('index', 'ohlc4', color=self.blue, source=stock)
+
+        # p.line('index', 'ADX_8', color=self.black, legend_label="ADX_8", source=stock, line_width=2)
+        # p.line('index', 'DMP_8', color=self.green, legend_label="DI+", source=stock)
+        # p.line('index', 'DMN_8', color=self.red, legend_label="DI-", source=stock)
+        # # Vertical line
+
+        # vline1 = Span(location=20, dimension='width', line_color=self.black, line_width=1)
+        # vline2 = Span(location=0, dimension='width', line_color=self.black, line_width=2)
+        # vline3 = Span(location=-20, dimension='width', line_color=self.black, line_width=1)
+        # p.renderers.extend([vline1])
+        # p.renderers.extend([vline2])
+        # p.renderers.extend([vline3])
+
+        inc = df['MACDh_12_26_9'] > 0
+        inc = tuple(inc)
+        dec = df['MACDh_12_26_9'] < 0
+        dec = tuple(dec)
+
+        view_inc = CDSView(source=stock, filters=[BooleanFilter(inc)])
+        view_dec = CDSView(source=stock, filters=[BooleanFilter(dec)])
+
+
+        p.vbar(x='index', width=0.7, top='MACDh_12_26_9', bottom=0, fill_color=self.red, line_color=self.red,
+               source=stock, view=view_dec, name="MACD")
+        p.vbar(x='index', width=0.7, top='MACDh_12_26_9', bottom=0, fill_color=self.green, line_color=self.green,
+               source=stock, view=view_inc, name="MACD", legend_label=name)
+
+        p.legend.visible = False
+
+        # start default settings  ----------------------------------------------------------------------------------
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+
+        i_max = df['MACDh_12_26_9'].max()
+        i_min = df['MACDh_12_26_9'].min()
+        desired_range2 = (i_min, i_max)
+        p.y_range = Range1d(*desired_range2)
+        return p
+
+
     def chart_rsi(self, df, name):
         stock = ColumnDataSource(df)
         p = figure(sizing_mode='fixed',
@@ -534,17 +597,17 @@ class nchart():
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
-        sig = tuple(df['SIG_SMA5813_LONG_FIRST'])
+        sig = tuple(df['SIG_QFY_SMA5813_LONG'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
+        p.triangle('index', 'ohlc4', line_color=self.green, line_width=2, fill_color=self.green, size=15, source=stock, view=view_sig)
 
         sig = tuple(df['SIG_SMA5813_SHORT_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
-        sig = tuple(df['SIG_SMA5813_SHORT_FIRST'])
+        sig = tuple(df['SIG_QFY_SMA5813_SHORT'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', color=self.red, size=15, source=stock, view=view_sig)
+        p.inverted_triangle('index', 'ohlc4', line_color=self.red, line_width=2, fill_color=self.red, size=15, source=stock, view=view_sig)
 
         p.legend.visible = False
 
@@ -582,6 +645,7 @@ class nchart():
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
+
         sig = tuple(df['SIG_QFY_BREAKOUT_LONG'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
@@ -592,7 +656,7 @@ class nchart():
 
         sig = tuple(df['SIG_QFY_BREAKOUT_SHORT'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', color=self.red, size=15, source=stock, view=view_sig)
+        p.inverted_triangle('index', 'ohlc4', line_color=self.red, line_width=2, fill_color=self.red, size=15, source=stock, view=view_sig)
 
         p.legend.visible = False
 

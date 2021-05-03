@@ -25,8 +25,9 @@ class nd_db():
         self.close()
         return i_return
 
-    def write(self, symbol):
-        self.log("nd_db-> write:" + symbol)
+    def write(self, symbol, log_off=False):
+        if not log_off:
+            self.log("nd_db-> write:" + symbol)
         self.open()
         self.store.put(symbol, self.nddf[symbol], format='table')
         self.close()
