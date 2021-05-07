@@ -10,12 +10,12 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <dataset creator config>
 <--------------------------------------------------->
 {
-"time_frame_size" : 45,
+"time_frame_size" : 20,
 "good_long_field" : "SIG_QFY_SMA5813_LONG",
 "good_short_field" : "SIG_QFY_SMA5813_SHORT",
-"bad_over_weight" : 1.1,
-"bad_long_field" : "SIG_SMA5813_LONG_FIRST",
-"bad_short_field" : "SIG_SMA5813_SHORT_FIRST"
+"bad_over_weight" : 1,
+"bad_long_field" : "SIG_SMA5813_LONG_ALL_FIRST",
+"bad_short_field" : "SIG_SMA5813_SHORT_ALL_FIRST"
 }
 
 ;
@@ -25,7 +25,9 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <--------------------------------------------------->
 [
 "Low",
-"High"
+"High",
+"MACDh_12_26_9",
+"ADX_8_ONE"
 ]
 
 ;
@@ -34,8 +36,7 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <Contras cross data fields>
 <--------------------------------------------------->
 [
+"SPY_ohlc4",
+"SPY_Volume",
 "RDS.A_ohlc4"
-<"RDS.A_ADX_8_ONE",>
-<"XOM_ohlc4",>
-<"XOM_ADX_8_ONE">
 ]

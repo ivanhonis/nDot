@@ -1399,18 +1399,16 @@ class n_date_frame2():
 
     def vector_qualify(self,
                        symbol,
-                       long_field, short_filed,
+                       long_field, short_field,
                        stock_size,
                        min_profit, min_step_profit,
                        stop,
                        steps, overlay_steps,
                        qfy_long_field, qfy_short_field):
-
-
         """
         :param symbol:
         :param long_field: Long signals for qfy
-        :param short_filed: Short signals for qfy
+        :param short_field: Short signals for qfy
         :param stock_size: invested stock size in USD
         :param min_profit: minimum profit in USD
         :param min_step_profit: protect against outlier, if profit comes too fast
@@ -1420,12 +1418,106 @@ class n_date_frame2():
         :return: no return auto update nddf
         :param qfy_long_field: return to qualified long signals
         :param qfy_short_field:  return to qualified short positions
-
         """
         log(f"ndf->vector_qualify: {stock_size} USD p/s:" +
             f"{min_profit}/{stop} steps:{steps} overlay steps:{overlay_steps}")
+# ---------------------------------
+        def qfy_bad_cross(symbol,ori_field, envi_fileld, overlay_steps):
+            # nem lehet utána qfy short
+            i_remove = []
+            for i_dif in range(1, overlay_steps + 2):
+                c_name = "SXQF" + str(i_dif)
+                i_remove.append(c_name)
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif - 1)
+            # s(str(i_vs) + "%")
+            # i_vs += i_vs_p
 
-        s("1%")
+            i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+            nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+            nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
+            i_remove.append('SXQFMAX')
+            self.remove_columns(symbol, i_remove)
+
+            # nem lehet utána qfy short
+            i_remove = []
+            for i_dif in range(1, overlay_steps + 2):
+                c_name = "SXQF" + str(i_dif)
+                i_remove.append(c_name)
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(-(i_dif - 1))
+            # s(str(i_vs) + "%")
+            # i_vs += i_vs_p
+
+            i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+            nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+            nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
+            i_remove.append('SXQFMAX')
+            self.remove_columns(symbol, i_remove)
+
+        def qfy_bad_cross_rnd(symbol,ori_field, envi_fileld, overlay_steps):
+            nddf[symbol]['XRND'] = np.random.randint(2, size=nddf[symbol].shape[0])
+            # nem lehet utána qfy short
+            i_remove = []
+            for i_dif in range(1, overlay_steps + 2):
+                c_name = "SXQF" + str(i_dif)
+                i_remove.append(c_name)
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif - 1)
+
+            i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+            nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+            nddf[symbol][ori_field] = (nddf[symbol][ori_field] &\
+                                      (nddf[symbol]["SXQFMAX"] == 0)) | \
+                                      (nddf[symbol][ori_field] & \
+                                       (nddf[symbol]["XRND"] == 0))
+            i_remove.append('SXQFMAX')
+            self.remove_columns(symbol, i_remove)
+
+            # nem lehet utána qfy short
+            i_remove = []
+            for i_dif in range(1, overlay_steps + 2):
+                c_name = "SXQF" + str(i_dif)
+                i_remove.append(c_name)
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(-(i_dif - 1))
+
+            i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+            nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+
+            nddf[symbol][ori_field] = (nddf[symbol][ori_field] &\
+                                      (nddf[symbol]["SXQFMAX"] == 0)) | \
+                                      (nddf[symbol][ori_field] & \
+                                       (nddf[symbol]["XRND"] == 0))
+
+            i_remove.append('SXQFMAX')
+            i_remove.append('XRND')
+            self.remove_columns(symbol, i_remove)
+
+        def qfy_bad_befo(symbol,ori_field, overlay_steps):
+            # nem lehet utána qfy short
+            i_remove = []
+            for i_dif in range(1, overlay_steps + 1):
+                c_name = "SXQF" + str(i_dif)
+                i_remove.append(c_name)
+                nddf[symbol][c_name] = nddf[symbol][ori_field].shift(i_dif)
+
+            i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+            nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+            nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
+            i_remove.append('SXQFMAX')
+            self.remove_columns(symbol, i_remove)
+
+        i_vs = 1
+        i_vs_p = 10.8
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
         i_remove = []
         for i_dif in range(1, steps + 1):
             c_name = "X" + str(i_dif)
@@ -1439,14 +1531,8 @@ class n_date_frame2():
         nddf[symbol]["XMIN"] = nddf[symbol].iloc[:, i_ser].min(axis=1)
         nddf[symbol]["XMAX_USD"] = nddf[symbol]["XMAX"] * stock_size / 100
         nddf[symbol]["XMIN_USD"] = nddf[symbol]["XMIN"] * stock_size / 100
-        s("10%")
-
-        # MEAN_XMAX_USD = nddf[symbol]["XMAX_USD"].mean()
-        # min_profit = MEAN_XMAX_USD * 1.5
-        # print(min_profit)
-        # print(MEAN_XMAX_USD)
-
-        # nddf[symbol]["XMIN_USD"] = nddf[symbol]["XMIN"] * stock_size / 100
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
 
         nddf[symbol]["XMAX_POS"] = nddf[symbol].iloc[:, i_ser].idxmax(axis=1)
         nddf[symbol]["XMIN_POS"] = nddf[symbol].iloc[:, i_ser].idxmin(axis=1)
@@ -1460,7 +1546,8 @@ class n_date_frame2():
 
         nddf[symbol]["XMIN_POS"] = nddf[symbol]["XMIN_POS"].str.replace('X', '')
         nddf[symbol]["XMIN_POS"] = pd.to_numeric(nddf[symbol]["XMIN_POS"])
-        s("20%")
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
 
         # Qualify long positons
         nddf[symbol]["MIN_PROFIT_OK"] = (nddf[symbol]["XMAX_USD"] > min_profit) &\
@@ -1474,14 +1561,16 @@ class n_date_frame2():
                                       ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
 
         nddf[symbol][qfy_long_field] = nddf[symbol][qfy_long_field] & nddf[symbol][long_field]
-        s("30%")
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
 
         i_remove = []
         for i_dif in range(1, overlay_steps + 1):
             c_name = "LQ" + str(i_dif)
             i_remove.append(c_name)
             nddf[symbol][c_name] = nddf[symbol][qfy_long_field].shift(i_dif)
-        s("40%")
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
 
         i_pos_first = nddf[symbol].columns.get_loc("LQ1")
         i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
@@ -1490,9 +1579,12 @@ class n_date_frame2():
         nddf[symbol][qfy_long_field] = nddf[symbol][qfy_long_field] & (nddf[symbol]["LQMAX"] == 0)
 
         i_remove.append('LQMAX')
+        i_remove.append('MIN_PROFIT_OK')
+        i_remove.append('LOSS_OVER_STOP_LIMIT')
+        i_remove.append('STOP_POS_AFTER_PROFIT_POS')
         self.remove_columns(symbol, i_remove)
-        s("50%")
-
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
 
         # Qualify SHORT positons
         nddf[symbol]["MIN_PROFIT_OK"] = (nddf[symbol]["XMIN_USD"] < -min_profit) & \
@@ -1505,13 +1597,15 @@ class n_date_frame2():
                                       (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
                                        ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
 
-        nddf[symbol][qfy_short_field] = nddf[symbol][qfy_short_field] & nddf[symbol][short_filed]
+        nddf[symbol][qfy_short_field] = nddf[symbol][qfy_short_field] & nddf[symbol][short_field]
+#
         i_remove = []
         for i_dif in range(1, overlay_steps + 1):
             c_name = "SQ" + str(i_dif)
             i_remove.append(c_name)
             nddf[symbol][c_name] = nddf[symbol][qfy_short_field].shift(i_dif)
-        s("60%")
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
 
         i_pos_first = nddf[symbol].columns.get_loc("SQ1")
         i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
@@ -1525,15 +1619,39 @@ class n_date_frame2():
                     'XMAX_POS', 'XMIN_POS',
                     'MIN_PROFIT_OK', 'LOSS_OVER_STOP_LIMIT', 'STOP_POS_AFTER_PROFIT_POS']
         self.remove_columns(symbol, i_remove)
-        s("99%")
 
-        i_all_signal = nddf[symbol][long_field].sum()
-        i_good_signals = nddf[symbol][qfy_long_field].sum()
-        log(f"LONG result: all/good: {i_all_signal}/{i_good_signals} {round(i_good_signals / i_all_signal * 100, 2)}%")
-        i_all_signal = nddf[symbol][short_filed].sum()
-        i_good_signals = nddf[symbol][qfy_short_field].sum()
-        log(f"SHORT result: all/good: {i_all_signal}/{i_good_signals} {round(i_good_signals / i_all_signal * 100, 2)}%")
-        s("")
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
+
+        long_field_first = long_field + "_FIRST"
+        short_field_first = short_field + "_FIRST"
+        nddf[symbol][long_field_first] = ~(nddf[symbol][long_field] == nddf[symbol][long_field].shift(1)) & \
+                                                 nddf[symbol][long_field]
+        nddf[symbol][short_field_first] = ~(nddf[symbol][short_field] == nddf[symbol][short_field].shift(1)) & \
+                                                  nddf[symbol][short_field]
+
+        qfy_bad_cross(symbol, long_field_first, qfy_long_field, overlay_steps)
+        qfy_bad_cross(symbol, long_field_first, qfy_short_field, overlay_steps)
+        qfy_bad_cross(symbol, short_field_first, qfy_long_field, overlay_steps)
+        qfy_bad_cross(symbol, short_field_first, qfy_short_field, overlay_steps)
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
+        qfy_bad_befo(symbol, long_field_first, overlay_steps)
+        qfy_bad_befo(symbol, short_field_first, overlay_steps)
+        qfy_bad_cross_rnd(symbol, long_field_first, short_field_first, overlay_steps)
+        qfy_bad_cross(symbol, short_field_first, long_field_first, overlay_steps)
+        s(str(i_vs) + "%")
+        i_vs += i_vs_p
+        # ----------------------------------------------------------------------------------
+        i_signals = nddf[symbol][qfy_long_field].sum()
+        log(f"GOOD LONG result: {i_signals}")
+        i_signals = nddf[symbol][qfy_short_field].sum()
+        log(f"GOOD SHORT result: {i_signals}")
+        i_signals = nddf[symbol][long_field_first].sum()
+        log(f"BAD LONG result: all/good: {i_signals}")
+        i_signals = nddf[symbol][short_field_first].sum()
+        log(f"BAD SHORT result: all/good: {i_signals}")
+        log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
 
     def add_tech(self, symbol, tech_indicator="SMA60"):
 
@@ -1736,17 +1854,10 @@ class n_date_frame2():
                 nddb.write(symbol)
 
             elif tech_indicator == "SMA5813":
+                nddf[symbol].ta.sma(length=5, append=True)
+                nddf[symbol].ta.sma(length=8, append=True)
+                nddf[symbol].ta.sma(length=13, append=True)
 
-                multi_strategy = ta.Strategy(
-                    name="SMA5813",
-                    ta=[
-                        {"kind": "sma", "length": 5},
-                        {"kind": "sma", "length": 8},
-                        {"kind": "sma", "length": 13},
-                    ]
-                )
-
-                nddf[symbol].ta.strategy(multi_strategy, append=True)
 
                 nddf[symbol]["long_set_tec1"] = nddf[symbol]['SMA_5'] > nddf[symbol]['SMA_8']
                 nddf[symbol]["long_set_tec2"] = nddf[symbol]['SMA_8'] > nddf[symbol]['SMA_13']
@@ -1769,9 +1880,9 @@ class n_date_frame2():
 
                 ndf.vector_qualify(symbol,
                                    long_field="SIG_SMA5813_LONG_ALL",
-                                   short_filed="SIG_SMA5813_SHORT_ALL",
+                                   short_field="SIG_SMA5813_SHORT_ALL",
                                    stock_size=10000,
-                                   min_profit=30,
+                                   min_profit=75,
                                    min_step_profit=5,
                                    stop=-5,
                                    steps=30,
@@ -1869,110 +1980,6 @@ class n_date_frame2():
                 ndf.set_dt_order(symbol)
                 nddb.write(symbol)
 
-            # elif tech_indicator == "BREAKOUT":
-            #
-            #     # TODO: most 30 perc után leáll a pénz keresés.. lehet trailerrel is 5% visszesés után áll le
-            #
-            #     tech_qualify_block_size = 10000  # one deal is x USD
-            #     tech_qualify_min_profit = 100  # profit on one deal
-            #     tech_qualify_stop = -15  # stop loss
-            #     tech_qualify_max_steps = 30  # max minutes to get profit
-            #     tech_qualify_min_steps = 5  # min minutes to get profit
-            #
-            #     def breakout_qulify(nddfx_intime, i_start_index, side):
-            #
-            #         nonlocal tech_qualify_block_size, tech_qualify_min_profit, tech_qualify_stop, tech_qualify_max_steps, tech_qualify_min_steps
-            #
-            #         i_i = 0
-            #         i_profit = 0
-            #         i_stop = False
-            #         while i_i < tech_qualify_max_steps and i_profit < tech_qualify_min_profit and not i_stop and \
-            #                 nddfx_intime.shape[0] > i_start_index + i_i:
-            #             i_act_ohlc4 = nddfx_intime.iloc[i_start_index + i_i]['ohlc4']
-            #             # i_act_Date = nddfx_intime.iloc[i_start_index + i_i]['Date']
-            #             if side == 'LONG':
-            #                 i_profit = int((i_act_ohlc4 - i_start_ohlc4) * i_qty)
-            #             else:
-            #                 i_profit = int((i_start_ohlc4 - i_act_ohlc4) * i_qty)
-            #             if i_profit < tech_qualify_stop:
-            #                 i_stop = True
-            #
-            #             # print(i_start_index + i_i ,i_act_Date, i_start_ohlc4, i_act_ohlc4, i_profit)
-            #             i_i += 1
-            #
-            #         i_i -= 1  # hátul tesztelős ciklus kellene de nincs ezért 1 et levonok
-            #
-            #         if i_profit > tech_qualify_min_profit and i_i > tech_qualify_min_steps:
-            #             i_return_qfy = True
-            #             i_return_n_plus = i_i
-            #         else:
-            #             i_return_qfy = False
-            #             i_return_n_plus = 0
-            #
-            #         return i_return_qfy, i_return_n_plus
-            #
-            #     nddfx_intime, nddfx_outtime = trade.time_filter(nddf[symbol], "16:20", "22:00")
-            #     nddfx_intime = nddfx_intime.reset_index()
-            #
-            #     nddfx_intime['SIG_BREAKOUT_LONG_ALL'] = False
-            #     nddfx_intime['SIG_QFY_BREAKOUT_LONG'] = False
-            #
-            #     nddfx_intime['SIG_BREAKOUT_SHORT_ALL'] = False
-            #     nddfx_intime['SIG_QFY_BREAKOUT_SHORT'] = False
-            #
-            #     row_count = nddfx_intime.shape[0]
-            #     n = 1
-            #     while n < row_count - 1:
-            #         if n / 1000 == int(n / 1000):
-            #             s(str(round(n / row_count * 100, 2))+" %")
-            #         xn_minus = nddfx_intime.iloc[n-1]['ohlc4']  # adott elem előtt 1-el
-            #         i_start_ohlc4 = nddfx_intime.iloc[n]['ohlc4']   # adott elem
-            #         xn_plus = nddfx_intime.iloc[n+1]['ohlc4']  # adott elem után 1-el
-            #
-            #         i_Date = nddfx_intime.iloc[n]['Date']  # a signálnak kell elég idő zárás előtt 45 perc, hogy kifusson
-            #         i_qty = int(tech_qualify_block_size / i_start_ohlc4)  # mennyiség kiszámolása
-            #
-            #         if i_start_ohlc4 < xn_minus and i_start_ohlc4 < xn_plus and tools.is_date_in_timeperiod(dt_time(16, 20), dt_time(21, 15), i_Date):
-            #             nddfx_intime.loc[n, 'SIG_BREAKOUT_LONG_ALL'] = True
-            #             i_qfy_result, i_n_plus = breakout_qulify(nddfx_intime, n, "LONG")
-            #             if i_qfy_result:
-            #                 nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_LONG'] = True
-            #             else:
-            #                 nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_LONG'] = False
-            #             n = n + i_n_plus + 1
-            #         elif i_start_ohlc4 > xn_minus and i_start_ohlc4 > xn_plus and tools.is_date_in_timeperiod(dt_time(16, 20), dt_time(21, 15), i_Date):
-            #             nddfx_intime.loc[n, 'SIG_BREAKOUT_SHORT_ALL'] = True
-            #             i_qfy_result, i_n_plus = breakout_qulify(nddfx_intime, n, "SHORT")
-            #             if i_qfy_result:
-            #                 nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_SHORT'] = True
-            #             else:
-            #                 nddfx_intime.loc[n, 'SIG_QFY_BREAKOUT_SHORT'] = False
-            #             n = n + i_n_plus + 1
-            #         else:
-            #             n += 1
-            #
-            #     nddfx_intime = nddfx_intime.set_index("Date")
-            #     add_to_nddf(symbol, nddfx_intime, 'SIG_BREAKOUT_LONG_ALL')
-            #     add_to_nddf(symbol, nddfx_intime, 'SIG_QFY_BREAKOUT_LONG')
-            #     add_to_nddf(symbol, nddfx_intime, 'SIG_BREAKOUT_SHORT_ALL')
-            #     add_to_nddf(symbol, nddfx_intime, 'SIG_QFY_BREAKOUT_SHORT')
-            #
-            #     ldx_all_after = nddf[symbol].SIG_BREAKOUT_LONG_ALL.value_counts()
-            #     ldx_after = nddf[symbol].SIG_QFY_BREAKOUT_LONG.value_counts()
-            #     log(f"  LONG results: all/good: {ldx_all_after[1]}/{ldx_after[1]}  {round(ldx_after[1] / ldx_all_after[1] * 100, 2)}%")
-            #
-            #     sdx_all_after = nddf[symbol].SIG_BREAKOUT_SHORT_ALL.value_counts()
-            #     sdx_after = nddf[symbol].SIG_QFY_BREAKOUT_SHORT.value_counts()
-            #     log(f"  SHORT result: all/good: {sdx_all_after[1]}/{sdx_after[1]}  {round(sdx_after[1] / sdx_all_after[1] * 100, 2)}%")
-            #     s("")
-            #
-            #     check_signal_overlay(symbol, "SIG_QFY_BREAKOUT_LONG", overlay_window=45)
-            #     check_signal_overlay(symbol, "SIG_QFY_BREAKOUT_SHORT", overlay_window=45)
-            #
-            #
-            # case_set_back(symbol)
-            # nddb.write(symbol)
-
             elif tech_indicator == "BREAKOUT":
 
                 # TODO: most 30 perc után leáll a pénz keresés.. lehet trailerrel is 5% visszesés után áll le
@@ -1987,7 +1994,7 @@ class n_date_frame2():
                 ndf.set_dt_order(symbol)
                 ndf.vector_qualify(symbol,
                                    long_field="SIG_BREAKOUT_LONG_ALL",
-                                   short_filed="SIG_BREAKOUT_SHORT_ALL",
+                                   short_field="SIG_BREAKOUT_SHORT_ALL",
                                    stock_size=10000,
                                    min_profit=30,
                                    min_step_profit=5,
@@ -2360,6 +2367,7 @@ def do(symbol="", p2="", p3=""):
 
 def s(msg_str):
     if LogTo == "Gui":
+        QApplication.processEvents()
         gui.Status.setText("Status: " + msg_str)
         QApplication.processEvents()
 

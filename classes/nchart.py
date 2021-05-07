@@ -620,13 +620,21 @@ class nchart():
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
-        sig = tuple(df['SIG_QFY_SMA5813_LONG'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', line_color=self.green, line_width=2, fill_color=self.green, size=15, source=stock, view=view_sig)
-
         sig = tuple(df['SIG_SMA5813_SHORT_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_SMA5813_LONG_ALL_FIRST'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4', line_color=self.orange, line_width=2, fill_color=self.orange, size=18, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_SMA5813_SHORT_ALL_FIRST'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.inverted_triangle('index', 'ohlc4', line_color=self.orange, line_width=2, fill_color=self.orange, size=18, source=stock, view=view_sig)
+
+        sig = tuple(df['SIG_QFY_SMA5813_LONG'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4', line_color=self.green, line_width=2, fill_color=self.green, size=15, source=stock, view=view_sig)
 
         sig = tuple(df['SIG_QFY_SMA5813_SHORT'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])

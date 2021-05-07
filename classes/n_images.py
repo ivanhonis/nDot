@@ -49,8 +49,6 @@ class n_images():
 
     def save(self):
         self.log('n_images->save: ' + str(self.data['images_count']))
-        print("itt", self.data['name'])
-        print(self.data)
         pickle.dump(self.data, open(self.gdrive_path+self.data['name']+".pickle", "wb"))
         self.log('n_images->saved: ' + str(self.gdrive_path+self.data['name']+".pickle"))
 
