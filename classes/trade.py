@@ -668,6 +668,8 @@ class trade():
 
     def time_filter(self, df, time_open, time_close):
         df = df.set_index('Date')
-        i_intime = df.between_time(time_open, time_close)
-        i_outtime = df.between_time(time_close, time_open)
+        i_intime = df.between_time(time_open, time_close).copy()
+        i_outtime = df.between_time(time_close, time_open).copy()
+        i_intime = i_intime.reset_index()
+        i_outtime = i_outtime.reset_index()
         return i_intime, i_outtime

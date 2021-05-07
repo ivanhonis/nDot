@@ -3,11 +3,12 @@ import pandas as pd
 
 # for streaming ---------------------------------------
 import threading
+from random import randint
 from time import sleep, gmtime, time, strftime
 
 
 class market_data():
-    api_key_finnhubio1 = "bs9c9lvrh5rahoaofmt0"
+    api_key_finnhubio1 = "c28o33iad3if6b4c0ong"
     finnhub_client = ""
 
     def __init__(self, log, s, tools, ndf, stream_last_refresh):
@@ -24,6 +25,8 @@ class market_data():
         self.stream_thread = ""
         self.stream_break = False
         self.stream_refresh_rate = 60
+
+        self.request_count = 0
 
     def check_finnhub_connection(self, symbol="AAPL"):
         self.log("md-> check_finnhub_connection: " + symbol)
@@ -59,6 +62,8 @@ class market_data():
                      + self.tools.unixdt_to_dbdt(from_dt)
                      + " - "
                      + self.tools.unixdt_to_dbdt(to_dt))
+
+        i_result = ""
         try:
             # i_result = self.finnhub_client.technical_indicator(symbol=symbol,
             #                                                    resolution=resolution,
@@ -67,15 +72,31 @@ class market_data():
             #                                                    indicator_fields={"timeperiod": 3})
             #
             #
+
+            # i_now = gmtime()
+            # i_now_str = f"{int(i_now.tm_hour)}:{int(i_now.tm_min)}:{int(i_now.tm_sec)}"
+            # if i_now_str in self.request_count.keys():
+            #     self.request_count[i_now_str] += 1
+            # else:
+            #     self.request_count[i_now_str] = 1
+            #
+            # if self.request_count[i_now_str] > 8:
+            #     sleep(2)
+            #
+            # print(gmtime().tm_sec)
+            # sleep(1/randint(2,3))
             i_result = self.finnhub_client.stock_candles(symbol=symbol,
                                                          resolution=resolution,
                                                          _from=from_dt,
                                                          to=to_dt)
-            # print(i_result)
+            # print("md rq",self.request_count)
+            # self.request_count -= 1
 
-        except:
-            if not log_off:
-                self.log("Finnhub exception.")
+        except Exception as e:
+            self.log("Finnhub exception: " + symbol + " - "
+                     + self.tools.unixdt_to_dbdt(from_dt)
+                     + " - "
+                     + self.tools.unixdt_to_dbdt(to_dt))
             i_df = pd.DataFrame(None)
         else:
             if i_result['s'] == 'ok':
@@ -95,7 +116,9 @@ class market_data():
                 i_df = self.ndf.i_df_dt_order(i_df)
             else:
                 if not log_off:
-                    self.log("Empty result for this time period.")
+                    self.log("Empty result for this time period: " +
+                             str(self.tools.unixdt_to_dbdt(from_dt)) +
+                             " - " + str(self.tools.unixdt_to_dbdt(to_dt)))
                 i_df = pd.DataFrame(None)
         return i_df
 

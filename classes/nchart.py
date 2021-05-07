@@ -37,8 +37,8 @@ class nchart():
     def fit(self, i_df, name, indecators=""):
         i_df = i_df.reset_index(drop=True)
         # print(i_df)
-        nddfx_intime, nddfx_outtime = self.trade.time_filter(i_df, "15:30", "22:00")
-        i_df = nddfx_intime.reset_index()
+        i_df, nemhasznal = self.trade.time_filter(i_df, "15:30", "22:00")
+        # i_df = nddfx_intime.reset_index()
         # print(i_df)
         i_df['Date_str'] = i_df['Date'].astype(str)
         self.elements = list()
@@ -47,8 +47,10 @@ class nchart():
         if len(indecators) > 0:
             if 'BREAKOUT' in indecators:
                 self.elements.append(self.chart_breakout(i_df, "BREAKOUT"))
+            if 'SMA30' in indecators:
+                self.elements.append(self.chart_sma_30(i_df, "SMA30"))
             if 'SMA60' in indecators:
-                self.elements.append(self.chart_sma(i_df, "SMA60"))
+                self.elements.append(self.chart_sma_60(i_df, "SMA60"))
             if 'SMA5813' in indecators:
                 self.elements.append(self.chart_sma5813(i_df, "SMA5813"))
             if 'ICHIMOKU' in indecators:
@@ -278,7 +280,7 @@ class nchart():
         p.title.visible = False
         return p
 
-    def chart_sma(self, df, name):
+    def chart_sma_30(self, df, name):
         stock = ColumnDataSource(df)
         p = figure(sizing_mode='fixed',
                    plot_width=self.width,
@@ -292,19 +294,8 @@ class nchart():
         p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
         p.line('index', 'ohlc4', color=self.blue, source=stock)
 
-        p.line('index', 'SMA_60', color=self.green, legend_label="SMA_60", source=stock)
+        p.line('index', 'SMA_30', color=self.green, legend_label="SMA_30", source=stock)
         p.legend.visible = False
-        # p.add_tools(HoverTool(
-        #     tooltips=[("Datetime", "@Date"),
-        #                         ("Low", "@Low{$0,0.00}"),
-        #                         ("High", "@High{$0,0.00}"),
-        #                         ("Open", "@Open{$0,0.00}"),
-        #                         ("Close", "@Close{$0,0.00}"),
-        #                         ("Volume", "@Volume{($ 0.00 a)}")],
-        #
-        #     formatters={"Date": 'datetime'},
-        #     mode='vline'
-        # ))
 
         # start default settings  ----------------------------------------------------------------------------------
         p.legend.location = "top_left"
@@ -320,6 +311,38 @@ class nchart():
         p.outline_line_color = self.gray2
         # end default settings ------------------------------------------------------------------------------------
         return p
+
+    def chart_sma_60(self, df, name):
+        stock = ColumnDataSource(df)
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=150,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+        # print ohlc4 price
+        p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        p.line('index', 'ohlc4', color=self.blue, source=stock)
+
+        p.line('index', 'SMA_60', color=self.green, legend_label="SMA_60", source=stock)
+        p.legend.visible = False
+
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+        return p
+
 
     def chart_ichimoku(self, df, name):
 
@@ -683,3 +706,4 @@ class nchart():
         p.outline_line_color = self.gray2
         # end default settings ------------------------------------------------------------------------------------
         return p
+

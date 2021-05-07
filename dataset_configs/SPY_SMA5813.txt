@@ -1,0 +1,41 @@
+<--------------------------------------------------->
+<description>
+<--------------------------------------------------->
+otlet: 5 8 13 mozgoatlagokat figyelek, ha 5 alatta 8 alatta 13, akkor az egy LONG jel (visszafele SHORT),
+ezek korul kivalasztom azt amin lehet legalabb x dollart (50 korul) keresni (qualified),
+(pontos parameterek a meta adatok kozott talalhatok) es ezeket megprablom
+klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
+;
+<--------------------------------------------------->
+<dataset creator config>
+<--------------------------------------------------->
+{
+"time_frame_size" : 45,
+"good_long_field" : "SIG_QFY_SMA5813_LONG",
+"good_short_field" : "SIG_QFY_SMA5813_SHORT",
+"bad_over_weight" : 1,
+"bad_long_field" : "SIG_SMA5813_LONG_FIRST",
+"bad_short_field" : "SIG_SMA5813_SHORT_FIRST"
+}
+
+;
+
+<--------------------------------------------------->
+<fields from original>
+<--------------------------------------------------->
+[
+"Low",
+"High",
+"ADX_8_ONE",
+<"RSI_14",
+"MACDh_12_26_9">
+]
+
+;
+
+<--------------------------------------------------->
+<Contras cross data fields>
+<--------------------------------------------------->
+[
+"RDS.A_ohlc4"
+]
