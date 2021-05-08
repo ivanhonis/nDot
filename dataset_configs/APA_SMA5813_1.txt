@@ -24,8 +24,8 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <fields from original>
 <--------------------------------------------------->
 [
-"Low",
-"High",
+"LOW_DIFF",
+"HIGH_DIFF",
 "MACDh_12_26_9",
 "ADX_8_ONE"
 ]
@@ -36,7 +36,6 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <Contras cross data fields>
 <--------------------------------------------------->
 [
-"SPY_ohlc4",
-"SPY_Volume",
-"RDS.A_ohlc4"
+"SPY_LOW_DIFF",
+"SPY_HIGH_DIFF"
 ]
