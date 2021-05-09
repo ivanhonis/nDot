@@ -188,5 +188,5 @@ class market_data():
         for smb in self.ndf.get_all_symbol():
             self.ndf.refresh(smb, log_off=True)
         i_new_row_count = self.ndf.get_allrow_count() - i_new_row_count
-        if i_new_row_count > 0:
+        if i_new_row_count > 0:  # csak akkor frissítünk ha van új sor
             self.stream_last_refresh(strftime("%H:%M"))
