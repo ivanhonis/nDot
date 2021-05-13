@@ -1,7 +1,7 @@
 import pickle
 
 
-class n_date_frame_meta():
+class n_date_frame_meta:
 
     def __init__(self, log):
         self.log = log

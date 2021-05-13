@@ -4,7 +4,7 @@ import os
 import threading
 
 
-class nd_db():
+class nd_db:
 
     def __init__(self, nddf, log):
         self.nddf = nddf
@@ -14,7 +14,7 @@ class nd_db():
 
     def paralell_load(self):
         print("Status: nDot Database loading...")
-        i_store = pd.HDFStore('nDot_db.h5', "r")
+        i_store = pd.HDFStore('nDot_db.h5', "a")
         i_store.open("r")
         i_keys = i_store.keys()
         i_keys_array = []
@@ -36,7 +36,6 @@ class nd_db():
             th.join()
 
         i_store.close()
-
 
     def get_size(self):
         return int(os.path.getsize('nDot_db.h5')/1024)

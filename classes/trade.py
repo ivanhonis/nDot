@@ -4,11 +4,10 @@ import tables
 import threading
 from datetime import time as dt_time
 from time import sleep, gmtime, time
-# azért használom, hogy a rendszres lekérdezések nem pont ugyan olyan ütemben történjenek, ne tűnjek junk nak
-from random import randint
+from random import randint # azért használom, hogy a rendszres lekérdezések nem pont ugyan olyan ütemben történjenek, ne tűnjek junk nak
 
 
-class trade():
+class trade:
 
     def __init__(self, gui):
         self.gui = gui

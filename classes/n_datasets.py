@@ -1,10 +1,9 @@
 import pickle
 import datetime
-
 import numpy as np
 
 
-class n_dataset():
+class n_dataset:
 
     def __init__(self, log):
         self.log = log
@@ -62,7 +61,7 @@ class n_dataset():
         self.data['X_count'] += 1
 
     def add_y(self, label):
-        label = np.array([label])
+        label = np.array([int(label)])
         self.data['y'] = np.concatenate((self.data['y'], label))
 
     def add_field(self, field):
@@ -81,6 +80,8 @@ class n_dataset():
         self.set_y_unique()
         self.log('X shape: ' + str(self.data['X'].shape))
         self.log('y shape: ' + str(self.data['y'].shape))
+        self.log('y unique: ' + str(np.unique(self.data['y'],  return_counts=True)))
+
         self.log('Historic max shape: ' + str(self.data['historic_max'].shape))
         self.log('Historic min shape: ' + str(self.data['historic_min'].shape))
         self.data['data_fields'] = str(tuple(self.fields_dict.keys()))

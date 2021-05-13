@@ -1,6 +1,5 @@
 from datetime import datetime, time as dt_time
 import time
-import pandas as pd
 
 
 class tools:
@@ -14,12 +13,10 @@ class tools:
     def dbdt_to_unixdt(self, datestring):
         dt = datetime.strptime(datestring, '%Y-%m-%d %H:%M:%S')
         dt2 = datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-        # print(dt2)
         i_return = str(int(time.mktime(dt2.timetuple())))
         return i_return
 
     def unixdt_to_dbdt(self, unix_datetime):
-        # print("datetime", unix_datetime)
         return str(datetime.fromtimestamp(int(unix_datetime)).strftime('%Y-%m-%d %H:%M:%S'))
 
     # def get_ui_date_unix(self, fort):

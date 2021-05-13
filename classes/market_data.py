@@ -1,13 +1,12 @@
 import finnhub
 import pandas as pd
-
 # for streaming ---------------------------------------
 import threading
-from random import randint
-from time import sleep, gmtime, time, strftime
+from time import sleep, strftime
 
 
-class market_data():
+class market_data:
+
     api_key_finnhubio1 = "c28o33iad3if6b4c0ong"
     finnhub_client = ""
 
@@ -63,35 +62,11 @@ class market_data():
                      + " - "
                      + self.tools.unixdt_to_dbdt(to_dt))
 
-        i_result = ""
         try:
-            # i_result = self.finnhub_client.technical_indicator(symbol=symbol,
-            #                                                    resolution=resolution,
-            #                                                    _from=from_dt, to=to_dt,
-            #                                                    indicator='rsi',
-            #                                                    indicator_fields={"timeperiod": 3})
-            #
-            #
-
-            # i_now = gmtime()
-            # i_now_str = f"{int(i_now.tm_hour)}:{int(i_now.tm_min)}:{int(i_now.tm_sec)}"
-            # if i_now_str in self.request_count.keys():
-            #     self.request_count[i_now_str] += 1
-            # else:
-            #     self.request_count[i_now_str] = 1
-            #
-            # if self.request_count[i_now_str] > 8:
-            #     sleep(2)
-            #
-            # print(gmtime().tm_sec)
-            # sleep(1/randint(2,3))
             i_result = self.finnhub_client.stock_candles(symbol=symbol,
                                                          resolution=resolution,
                                                          _from=from_dt,
                                                          to=to_dt)
-            # print("md rq",self.request_count)
-            # self.request_count -= 1
-
         except Exception as e:
             self.log("Finnhub exception: " + symbol + " - "
                      + self.tools.unixdt_to_dbdt(from_dt)

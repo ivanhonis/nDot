@@ -11,11 +11,11 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <--------------------------------------------------->
 {
 "time_frame_size" : 20,
-"good_long_field" : "SIG_QFY_SMA5813_LONG",
-"good_short_field" : "SIG_QFY_SMA5813_SHORT",
+"good_long_field" : "SIG_QFY_SMA5813_GOOD_LONG",
+"good_short_field" : "SIG_QFY_SMA5813_GOOD_SHORT",
 "bad_over_weight" : 1,
-"bad_long_field" : "SIG_SMA5813_LONG_ALL_FIRST",
-"bad_short_field" : "SIG_SMA5813_SHORT_ALL_FIRST"
+"bad_long_field" : "SIG_QFY_SMA5813_BAD_LONG",
+"bad_short_field" : "SIG_QFY_SMA5813_BAD_SHORT"
 }
 
 ;
