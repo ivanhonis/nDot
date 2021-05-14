@@ -1,6 +1,6 @@
 import alpaca_trade_api as tradeapi
 import pandas as pd
-import tables
+# import tables
 import threading
 from datetime import time as dt_time
 from time import sleep, gmtime, time

@@ -1651,6 +1651,16 @@ class n_date_frame2:
                 mask = nddf[symbol].between_time('21:30', '16:00').index
                 nddf[symbol].loc[mask, 'SIG_SMA5813_LONG_ALL'] = False
                 nddf[symbol].loc[mask, 'SIG_SMA5813_SHORT_ALL'] = False
+
+                nddf[symbol]['INDX_SMA5813'] = 0
+                nddf[symbol]['INDX_SMA5813'].values[nddf[symbol]['SIG_SMA5813_LONG_ALL']] = 1
+                nddf[symbol]['INDX_SMA5813'].values[nddf[symbol]['SIG_SMA5813_SHORT_ALL']] = 2
+                nddf[symbol]['INDX_SMA5813_SHIFT'] = nddf[symbol]['INDX_SMA5813'] != nddf[symbol]['INDX_SMA5813'].shift(1)
+                nddf[symbol]['IND_SMA5813'] = nddf[symbol]['INDX_SMA5813_SHIFT'] * nddf[symbol]['INDX_SMA5813']
+
+                i_remove = ['INDX_SMA5813', 'INDX_SMA5813_SHIFT', 'SIG_SMA5813_LONG_ALL', 'SIG_SMA5813_SHORT_ALL']
+                self.remove_columns(symbol, i_remove)
+
                 self.set_dt_order(symbol)
 
                 ndf.vector_qualify(symbol,
