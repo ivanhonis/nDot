@@ -779,10 +779,7 @@ class n_date_frame2:
             ['SMA30', ['SMA_30']],
             ['SMA60', ['SMA_60']],
             ['SMA90', ['SMA_90']],
-            ['SMA5813', ['SMA_5', 'SMA_8', 'SMA_13',
-                         'SIG_SMA5813_LONG_ALL', 'SIG_SMA5813_SHORT_ALL',
-                         'SIG_SMA5813_LONG_FIRST', 'SIG_SMA5813_SHORT_ALL_FIRST',
-                         'SIG_QFY_SMA5813_LONG', 'SIG_QFY_SMA5813_ALL_SHORT']],
+            ['SMA5813', ['SMA_5', 'SMA_8', 'SMA_13', 'SIG_SMA5813']],
             ['PRICE_DIFF', ['LOW_DIFF', 'HIGH_DIFF',
                             'OPEN_DIFF', 'CLOSE_DIFF',
                             'OHLC4_DIFF']],
@@ -947,10 +944,10 @@ class n_date_frame2:
 
                 nd_dset.set_description(description)
 
-                y_names = {'0': "Good LONG signal",
-                           '1': "Good SHORT signal",
-                           '2': "Bad LONG signal",
-                           '3': "Bad SHORT signal"
+                y_names = {'1': "Good LONG signal",
+                           '2': "Good SHORT signal",
+                           '3': "Bad LONG signal",
+                           '4': "Bad SHORT signal"
                            }
 
                 nd_dset.add_y_names(y_names)
@@ -1057,25 +1054,25 @@ class n_date_frame2:
 
     def vector_qualify(self,
                        symbol,
-                       long_field, short_field,
+                       sig_suffix,
                        stock_size,
                        min_profit, min_step_profit,
                        stop,
-                       steps, overlay_steps,
-                       exit_field_prefix):
+                       steps, overlay_steps):
         """
         :param symbol:
-        :param long_field: Long signals for qfy
-        :param short_field: Short signals for qfy
+        :param sig_suffix: end of the signal  SIG_ + sig_suffix
         :param stock_size: invested stock size in USD
         :param min_profit: minimum profit in USD
         :param min_step_profit: protect against outlier, if profit comes too fast
         :param stop: stop loss in USD
         :param steps: maximum steps for profit takeing
         :param overlay_steps: signal overlay, the next qfy signal must be out of overlay_steps
-        :param exit_field_prefix: exit is 4  column Good long good short bad long bad short
         :return: no return auto update nddf
         """
+
+        first_sig_field = "SIG_" + sig_suffix
+        y_field = "y_" + sig_suffix
 
         # # save originalfields
         # original_df = pd.DataFrame(None)
@@ -1084,7 +1081,46 @@ class n_date_frame2:
         log(f"ndf->vector_qualify: {stock_size} USD p/s:" +
             f"{min_profit}/{stop} steps:{steps} overlay steps:{overlay_steps}")
         
-        s2(True, 15)
+        s2(True, 25)
+
+        def y_chk(symbol, y_field, overlay_steps):
+
+            s2()
+
+            # nem lehet utána qfy short
+            i_remove = []
+            for i_dif in range(1, overlay_steps + 1):
+                c_name = "SXP" + str(i_dif)
+                i_remove.append(c_name)
+                nddf[symbol][c_name] = nddf[symbol][y_field].shift(i_dif)
+
+            nddf[symbol]["chk_result"] = 0
+            i_pos_first = nddf[symbol].columns.get_loc("SXP1")
+            i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+            nddf[symbol]["SCPMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+            nddf[symbol]["chk_result"] = nddf[symbol][y_field] * nddf[symbol]["SCPMAX"]
+            i_remove.append('SCPMAX')
+            self.remove_columns(symbol, i_remove)
+
+            # nem lehet utána qfy short
+            i_remove = []
+            for i_dif in range(1, overlay_steps + 1):
+                c_name = "SXM" + str(i_dif)
+                i_remove.append(c_name)
+                nddf[symbol][c_name] = nddf[symbol][y_field].shift(0 - i_dif)
+
+            i_pos_first = nddf[symbol].columns.get_loc("SXM1")
+            i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+            nddf[symbol]["SXMMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+            nddf[symbol]["chk_result"] = nddf[symbol][y_field] * nddf[symbol]["SXMMAX"]
+
+            i_result = nddf[symbol]["chk_result"].sum()
+            i_remove.append('SXMMAX')
+            i_remove.append('chk_result')
+            self.remove_columns(symbol, i_remove)
+            return i_result
 
         def qfy_bad_cross(symbol, ori_field, envi_fileld, overlay_steps):
             
@@ -1092,12 +1128,10 @@ class n_date_frame2:
             
             # nem lehet utána qfy short
             i_remove = []
-            for i_dif in range(1, overlay_steps + 2):
+            for i_dif in range(1, overlay_steps + 1):
                 c_name = "SXQF" + str(i_dif)
                 i_remove.append(c_name)
-                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif - 1)
-            # s(str(i_vs) + "%")
-            # i_vs += i_vs_p
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif)
 
             i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
             i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
@@ -1107,14 +1141,14 @@ class n_date_frame2:
             i_remove.append('SXQFMAX')
             self.remove_columns(symbol, i_remove)
 
+            s2()
+
             # nem lehet utána qfy short
             i_remove = []
-            for i_dif in range(1, overlay_steps + 2):
+            for i_dif in range(1, overlay_steps + 1):
                 c_name = "SXQF" + str(i_dif)
                 i_remove.append(c_name)
-                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(-(i_dif - 1))
-            # s(str(i_vs) + "%")
-            # i_vs += i_vs_p
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(0 - i_dif)
 
             i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
             i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
@@ -1131,10 +1165,10 @@ class n_date_frame2:
             nddf[symbol]['XRND'] = np.random.randint(2, size=nddf[symbol].shape[0])
             # nem lehet utána qfy short
             i_remove = []
-            for i_dif in range(1, overlay_steps + 2):
+            for i_dif in range(1, overlay_steps + 1):
                 c_name = "SXQF" + str(i_dif)
                 i_remove.append(c_name)
-                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif - 1)
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif)
 
             i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
             i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
@@ -1147,12 +1181,14 @@ class n_date_frame2:
             i_remove.append('SXQFMAX')
             self.remove_columns(symbol, i_remove)
 
+            s2()
+
             # nem lehet utána qfy short
             i_remove = []
-            for i_dif in range(1, overlay_steps + 2):
+            for i_dif in range(1, overlay_steps + 1):
                 c_name = "SXQF" + str(i_dif)
                 i_remove.append(c_name)
-                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(-(i_dif - 1))
+                nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(0 - i_dif)
 
             i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
             i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
@@ -1216,11 +1252,11 @@ class n_date_frame2:
 
         nddf[symbol]["XMIN_POS"] = nddf[symbol]["XMIN_POS"].str.replace('X', '')
         nddf[symbol]["XMIN_POS"] = pd.to_numeric(nddf[symbol]["XMIN_POS"])
-        
+
         s2()
 
         # Qualify long positons
-        qfy_long_field = "SIG_QFY_" + exit_field_prefix + "_GOOD_LONG"
+        qfy_long_field = "SIG_QFY_" + sig_suffix + "_GOOD_LONG"
         nddf[symbol]["MIN_PROFIT_OK"] = (nddf[symbol]["XMAX_USD"] > min_profit) & \
                                         (nddf[symbol]["XMAX_POS"] > min_step_profit)
 
@@ -1231,25 +1267,11 @@ class n_date_frame2:
                                         (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
                                          ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
 
-        nddf[symbol][qfy_long_field] = nddf[symbol][qfy_long_field] & nddf[symbol][long_field]
-        
-        s2()
+        y_field_temp = y_field + "_TEMP"
+        nddf[symbol][y_field_temp] = 0
+        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_long_field] & (nddf[symbol][first_sig_field] == 1)] = 1
+        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_long_field]) & (nddf[symbol][first_sig_field] == 1)] = 3
 
-        i_remove = []
-        for i_dif in range(1, overlay_steps + 1):
-            c_name = "LQ" + str(i_dif)
-            i_remove.append(c_name)
-            nddf[symbol][c_name] = nddf[symbol][qfy_long_field].shift(i_dif)
-
-        s2()
-
-        i_pos_first = nddf[symbol].columns.get_loc("LQ1")
-        i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-
-        nddf[symbol]["LQMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        nddf[symbol][qfy_long_field] = nddf[symbol][qfy_long_field] & (nddf[symbol]["LQMAX"] == 0)
-
-        i_remove.append('LQMAX')
         i_remove.append('MIN_PROFIT_OK')
         i_remove.append('LOSS_OVER_STOP_LIMIT')
         i_remove.append('STOP_POS_AFTER_PROFIT_POS')
@@ -1258,7 +1280,7 @@ class n_date_frame2:
         s2()
 
         # Qualify SHORT positons
-        qfy_short_field = "SIG_QFY_" + exit_field_prefix + "_GOOD_SHORT"
+        qfy_short_field = "SIG_QFY_" + sig_suffix + "_GOOD_SHORT"
         nddf[symbol]["MIN_PROFIT_OK"] = (nddf[symbol]["XMIN_USD"] < -min_profit) & \
                                         (nddf[symbol]["XMIN_POS"] > min_step_profit)
 
@@ -1269,62 +1291,80 @@ class n_date_frame2:
                                          (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
                                           ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
 
-        nddf[symbol][qfy_short_field] = nddf[symbol][qfy_short_field] & nddf[symbol][short_field]
-        #
-        i_remove = []
-        for i_dif in range(1, overlay_steps + 1):
-            c_name = "SQ" + str(i_dif)
-            i_remove.append(c_name)
-            nddf[symbol][c_name] = nddf[symbol][qfy_short_field].shift(i_dif)
+        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_short_field] & (nddf[symbol][first_sig_field] == 2)] = 2
+        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_short_field]) & (nddf[symbol][first_sig_field] == 2)] = 4
 
-        s2()
-
-        i_pos_first = nddf[symbol].columns.get_loc("SQ1")
-        i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-
-        nddf[symbol]["SQMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        nddf[symbol][qfy_short_field] = nddf[symbol][qfy_short_field] & (nddf[symbol]["SQMAX"] == 0)
-        i_remove.append('SQMAX')
-        self.remove_columns(symbol, i_remove)
+        # print((nddf[symbol][y_field] == 0).sum())
+        # print((nddf[symbol][y_field] == 1).sum())
+        # print((nddf[symbol][y_field] == 2).sum())
+        # print((nddf[symbol][y_field] == 3).sum())
+        # print((nddf[symbol][y_field] == 4).sum())
 
         i_remove = ['XMAX_USD', 'XMIN_USD',
                     'XMAX_POS', 'XMIN_POS',
-                    'MIN_PROFIT_OK', 'LOSS_OVER_STOP_LIMIT', 'STOP_POS_AFTER_PROFIT_POS']
+                    'MIN_PROFIT_OK', 'LOSS_OVER_STOP_LIMIT', 'STOP_POS_AFTER_PROFIT_POS',
+                    qfy_long_field, qfy_short_field]
         self.remove_columns(symbol, i_remove)
 
-        s2()
+        nddf[symbol]["y_1"] = False
+        nddf[symbol]["y_1"].values[nddf[symbol][y_field_temp] == 1] = True
 
-        long_field_first = "SIG_QFY_" + exit_field_prefix + "_BAD_LONG"
-        short_field_first = "SIG_QFY_" + exit_field_prefix + "_BAD_SHORT"
-        self.get_first_signal(symbol, long_field, short_field, long_field_first, short_field_first)
+        nddf[symbol]["y_2"] = False
+        nddf[symbol]["y_2"].values[nddf[symbol][y_field_temp] == 2] = True
 
-        qfy_bad_cross(symbol, long_field_first, qfy_long_field, overlay_steps)
-        qfy_bad_cross(symbol, long_field_first, qfy_short_field, overlay_steps)
-        qfy_bad_cross(symbol, short_field_first, qfy_long_field, overlay_steps)
-        qfy_bad_cross(symbol, short_field_first, qfy_short_field, overlay_steps)
+        nddf[symbol]["y_3"] = False
+        nddf[symbol]["y_3"].values[nddf[symbol][y_field_temp] == 3] = True
 
-        qfy_bad_befo(symbol, long_field_first, overlay_steps)
-        qfy_bad_befo(symbol, short_field_first, overlay_steps)
-        qfy_bad_cross_rnd(symbol, long_field_first, short_field_first, overlay_steps)
-        qfy_bad_cross(symbol, short_field_first, long_field_first, overlay_steps)
+        nddf[symbol]["y_4"] = False
+        nddf[symbol]["y_4"].values[nddf[symbol][y_field_temp] == 4] = True
 
-        long_field_first2 = "SIG_" + exit_field_prefix + "_LONG_FIRST"
-        short_field_first2 = "SIG_" + exit_field_prefix + "_SHORT_FIRST"
-        self.get_first_signal(symbol, long_field, short_field, long_field_first2, short_field_first2)
+        qfy_bad_befo(symbol, 'y_1', overlay_steps)
+        qfy_bad_befo(symbol, 'y_2', overlay_steps)
 
-        s2()
+        qfy_bad_cross_rnd(symbol, 'y_1', 'y_2', overlay_steps)
+        qfy_bad_cross(symbol, 'y_2', 'y_1', overlay_steps)
 
-        # ----------------------------------------------------------------------------------
-        i_signals = nddf[symbol][qfy_long_field].sum()
-        log(f"GOOD LONG result: {i_signals}")
-        i_signals = nddf[symbol][qfy_short_field].sum()
-        log(f"GOOD SHORT result: {i_signals}")
-        i_signals = nddf[symbol][long_field_first].sum()
-        log(f"BAD LONG result: {i_signals}")
-        i_signals = nddf[symbol][short_field_first].sum()
-        log(f"BAD SHORT result: {i_signals}")
+        qfy_bad_cross(symbol, 'y_3', 'y_1', overlay_steps)
+        qfy_bad_cross(symbol, 'y_3', 'y_2', overlay_steps)
+
+        qfy_bad_cross(symbol, 'y_4', 'y_1', overlay_steps)
+        qfy_bad_cross(symbol, 'y_4', 'y_2', overlay_steps)
+
+        qfy_bad_befo(symbol, 'y_3', overlay_steps)
+        qfy_bad_befo(symbol, 'y_4', overlay_steps)
+
+        qfy_bad_cross_rnd(symbol, 'y_3', 'y_4', overlay_steps)
+        qfy_bad_cross(symbol, 'y_4', 'y_3', overlay_steps)
+
+        nddf[symbol][y_field] = 0
+        nddf[symbol][y_field].values[nddf[symbol]['y_1']] = 1
+        nddf[symbol][y_field].values[nddf[symbol]['y_2']] = 2
+        nddf[symbol][y_field].values[nddf[symbol]['y_3']] = 3
+        nddf[symbol][y_field].values[nddf[symbol]['y_4']] = 4
+
+
+
+        i_remove = ['y_1', 'y_2', 'y_3', 'y_4',
+                    y_field_temp]
+        self.remove_columns(symbol, i_remove)
+
+        y0 = (nddf[symbol][y_field] == 0).sum()
+        y1 = (nddf[symbol][y_field] == 1).sum()
+        y2 = (nddf[symbol][y_field] == 2).sum()
+        y3 = (nddf[symbol][y_field] == 3).sum()
+        y4 = (nddf[symbol][y_field] == 4).sum()
+
+        ychk = y_chk(symbol, y_field, overlay_steps)
+
+        log(f"y=0 (None) result: {y0}")
+        log(f"y=1 (GOOD LONG) result: {y1}")
+        log(f"y=2 (GOOD SHORT) result: {y2}")
+        log(f"y=3 (BAD LONG) result: {y3}")
+        log(f"y=4 (BAD SHORT) result: {y4}")
+        log(f"y chk sum: (0 = no overlay) result: {ychk}")
         log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
-        s("")
+        # s("")
+
 
         # def vector_qualify(self,
         #                    symbol,
@@ -1656,7 +1696,7 @@ class n_date_frame2:
                 nddf[symbol]['INDX_SMA5813'].values[nddf[symbol]['SIG_SMA5813_LONG_ALL']] = 1
                 nddf[symbol]['INDX_SMA5813'].values[nddf[symbol]['SIG_SMA5813_SHORT_ALL']] = 2
                 nddf[symbol]['INDX_SMA5813_SHIFT'] = nddf[symbol]['INDX_SMA5813'] != nddf[symbol]['INDX_SMA5813'].shift(1)
-                nddf[symbol]['IND_SMA5813'] = nddf[symbol]['INDX_SMA5813_SHIFT'] * nddf[symbol]['INDX_SMA5813']
+                nddf[symbol]['SIG_SMA5813'] = nddf[symbol]['INDX_SMA5813_SHIFT'] * nddf[symbol]['INDX_SMA5813']
 
                 i_remove = ['INDX_SMA5813', 'INDX_SMA5813_SHIFT', 'SIG_SMA5813_LONG_ALL', 'SIG_SMA5813_SHORT_ALL']
                 self.remove_columns(symbol, i_remove)
@@ -1664,15 +1704,13 @@ class n_date_frame2:
                 self.set_dt_order(symbol)
 
                 ndf.vector_qualify(symbol,
-                                   long_field="SIG_SMA5813_LONG_ALL",
-                                   short_field="SIG_SMA5813_SHORT_ALL",
+                                   sig_suffix="SMA5813",
                                    stock_size=10000,
                                    min_profit=75,
                                    min_step_profit=5,
                                    stop=-5,
                                    steps=30,
-                                   overlay_steps=30,
-                                   exit_field_prefix="SMA5813")
+                                   overlay_steps=30)
 
                 self.set_dt_order(symbol)
                 nddb.write(symbol)
