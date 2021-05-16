@@ -51,6 +51,11 @@ from classes.n_datasets import n_dataset
 from classes.n_data_frame_meta import n_date_frame_meta
 from classes.tools import tools
 
+# # Ai components
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+from tensorflow.keras.models import load_model
+from tqdm import tqdm
+
 # import websocket
 
 if LocalRUN:
@@ -634,7 +639,7 @@ class n_date_frame2:
         self.load_indicators()
 
     def get_dataset_config(self, file_name):
-        log("ndf-> get_dataset_config " + file_name + ".txt")
+        log("ndf-> get_dataset_config " + file_name )
 
         # ez nem vizsgálja, hogy létezik e file, ezt hívás előtt kell
 
@@ -643,9 +648,11 @@ class n_date_frame2:
                 contents = contents.replace(" ", "")
             contents = contents.replace('\n', '').replace('\r', '')
             contents = re.sub('<.*?>', '', contents)
+            if contents[-2:] == ",]":
+                contents = contents[:-2] + "]"
             return contents
 
-        with open(file_name + '.txt') as f:
+        with open(file_name) as f:
             contents = f.read()
         contents = contents.split(";")
         description = clear_string(contents[0], space=False)
@@ -702,7 +709,7 @@ class n_date_frame2:
         i_df = i_df.set_index("Date")
         return i_df.index[0] < i_df.index[-1]
 
-    def add(self, symbol, years=3):
+    def add(self, symbol, years=1):
         years = int(years)
         i_results_md = [None] * 300
         i_rcu = 0
@@ -785,8 +792,7 @@ class n_date_frame2:
                             'OHLC4_DIFF']],
             ['RSI14', ['RSI_14']],
             ['MACD', ['MACD_12_2', 'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9']],
-            ['BREAKOUT', ['SIG_QFY_BREAKOUT_LONG', 'SIG_QFY_BREAKOUT_SHORT',
-                          'SIG_BREAKOUT_LONG_ALL', 'SIG_BREAKOUT_SHORT_ALL']],
+            ['BREAKOUT', ['SIG_BREAKOUT']],
             ['ADX8', ['ADX_8', 'DMP_8', 'DMN_8', 'ADX_8_ONE']],
             ['ICHIMOKU', ['ISA_9', 'ISB_26', 'ITS_9', 'IKS_26', 'ICS_26',
                           'SIG_ICHI_LONG_ALL', 'SIG_ICHI_LONG_FIRST',
@@ -867,18 +873,54 @@ class n_date_frame2:
                 i_return = False
         return i_return
 
-    def create_dataset(self, symbol, config_file):
+    def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras):
+        i_int_to = int(index)
+        i_int_from = i_int_to - time_window_size + 1
 
-        config_file_path = "dataset_configs/" + config_file
-        file = pathlib.Path(config_file_path + ".txt")
+        i_data_array = np.array([])
+        if i_int_from > 0:
+            if len(original_fields) > 0:
+                for i_of in original_fields:
+                    i_add = np.array(nddf[symbol].loc[i_int_from:i_int_to, i_of])
+                    i_data_array = np.append(i_data_array, i_add)
+
+            if len(contras) > 0:
+                for i_con in contras:
+                    contra_sep_pre = i_con.split('_')
+                    con_sep = []
+                    if len(contra_sep_pre) > 2:
+                        con_sep.append(contra_sep_pre[0])
+                        s = "_"
+                        con_sep.append(s.join(contra_sep_pre[1:]))
+                    else:
+                        con_sep = contra_sep_pre
+
+                    con_symbol = con_sep[0]
+                    con_field = con_sep[1]
+                    i_new = np.array(nddf[con_symbol].loc[i_int_from:i_int_to, con_field])
+                    i_data_array = np.append(i_data_array, i_new)
+        return i_data_array
+
+    def create_dataset(self, symbol, project_name):
+
+        def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras):
+
+            for i_il in indexes:
+                i_data_array = self.get_dataset_by_index(symbol=symbol,
+                                                         index=i_il,
+                                                         time_window_size=time_window_size,
+                                                         original_fields=original_fields,
+                                                         contras=contras)
+                nd_dset.add_X(i_data_array)
+                nd_dset.add_y(y)
+
+        config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
+        file = pathlib.Path(config_file_path)
         if file.exists():
 
             description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
-            field_ok_basic1 = ndf.is_field_exist(symbol, dataset_config['good_long_field'])
-            field_ok_basic2 = ndf.is_field_exist(symbol, dataset_config['good_short_field'])
-            field_ok_basic3 = ndf.is_field_exist(symbol, dataset_config['bad_long_field'])
-            field_ok_basic4 = ndf.is_field_exist(symbol, dataset_config['bad_short_field'])
-            field_ok_basic = field_ok_basic1 and field_ok_basic2 and field_ok_basic3 and field_ok_basic4
+            sig_field = "SIG_" + dataset_config['sig_suffix']
+            field_ok_basic = ndf.is_field_exist(symbol, sig_field)
 
             field_ok_original_fields = True
             for o_f in original_fields:
@@ -889,111 +931,86 @@ class n_date_frame2:
                 field_ok_contras = field_ok_contras and ndf.is_contra(c)
 
             if field_ok_basic and field_ok_original_fields and field_ok_contras:
-                time_frame_size = dataset_config[
-                    "time_frame_size"]  # a indikátortól visszafelé hány percet tegyen az image-ba
+                time_window_size = dataset_config["time_window_size"]
+                y_field = "y_" + dataset_config["sig_suffix"]
+
+                ndf.vector_qualify(symbol,
+                                   sig_suffix=dataset_config["sig_suffix"],
+                                   stock_size=dataset_config["stock_size"],
+                                   min_profit=dataset_config["min_profit"],
+                                   min_step_profit=dataset_config["min_step_profit"],
+                                   stop=dataset_config["stop"],
+                                   steps=dataset_config["steps"],
+                                   overlay_steps=dataset_config["overlay_steps"])
+
+                self.set_dt_order(symbol)
+                nddb.write(symbol)
 
                 # image fej megcsinálása, minden image nél ugyan az
-                # n_dataset = ""
                 nd_dset = n_dataset(log)
                 nd_dset.set_symbol(symbol)
 
                 nd_dset.set_source("nDot.py->n_data_frame2->create_dataset")
-                nd_dset.set_name("nDot_DATASET_" + config_file)
-
-                def array_diff(from_array, this_array):  # from arrayból eltávolitja a this_arrayt
-                    for i_nx in this_array:
-                        if i_nx in from_array:
-                            from_array.remove(i_nx)
-                    return from_array
-
-                def array_random_select(from_array, no):
-                    no = min(no, len(from_array))
-                    return random.choices(from_array, k=no)
-
-                def images_constructor(symbol, indexes, time_frame_size, q):
-
-                    for i_il in indexes:
-                        i_int_to = int(i_il)
-                        i_int_from = i_int_to - time_frame_size + 1
-
-                        if i_int_from > 0:
-                            i_data_array = np.array([])
-                            if len(original_fields) > 0:
-                                for i_of in original_fields:
-                                    i_add = np.array(nddf[symbol].loc[i_int_from:i_int_to, i_of])
-                                    i_data_array = np.append(i_data_array, i_add)
-
-                            if len(contras) > 0:
-                                for i_con in contras:
-                                    contra_sep_pre = i_con.split('_')
-                                    con_sep = []
-                                    if len(contra_sep_pre) > 2:
-                                        con_sep.append(contra_sep_pre[0])
-                                        s = "_"
-                                        con_sep.append(s.join(contra_sep_pre[1:]))
-                                    else:
-                                        con_sep = contra_sep_pre
-
-                                    con_symbol = con_sep[0]
-                                    con_field = con_sep[1]
-                                    i_new = np.array(nddf[con_symbol].loc[i_int_from:i_int_to, con_field])
-                                    i_data_array = np.append(i_data_array, i_new)
-                            nd_dset.add_X(i_data_array)
-                            nd_dset.add_y(q)
-                            nd_dset.set_window_size(time_frame_size)
+                nd_dset.set_name("nDot_DATASET_" + project_name)
+                nd_dset.set_project_name(project_name)
 
                 nd_dset.set_description(description)
 
-                y_names = {'1': "Good LONG signal",
-                           '2': "Good SHORT signal",
-                           '3': "Bad LONG signal",
-                           '4': "Bad SHORT signal"
+                y_names = {'0': "Good LONG signal",
+                           '1': "Good SHORT signal",
+                           '2': "Bad LONG signal",
+                           '3': "Bad SHORT signal"
                            }
-
                 nd_dset.add_y_names(y_names)
                 #  beteszem a 'good' signálokat -----------------------------------------
-                i_index_good_long = (tuple(nddf[symbol].loc[nddf[symbol][dataset_config['good_long_field']]].index))
-                i_index_good_short = (tuple(nddf[symbol].loc[nddf[symbol][dataset_config['good_short_field']]].index))
 
-                max_signals = min(len(i_index_good_long), len(i_index_good_short))
+                i_index_good_long = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 0].index))
+                i_index_good_short = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 1].index))
+
+                i_index_bad_long = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 2].index))
+                i_index_bad_short = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 3].index))
+
+                max_signals = min(  len(i_index_good_long),
+                                    len(i_index_good_short),
+                                    len(i_index_bad_long),
+                                    len(i_index_bad_short))
+
                 i_index_good_long = i_index_good_long[0:max_signals]
                 i_index_good_short = i_index_good_short[0:max_signals]
-
-                images_constructor(symbol, i_index_good_long, time_frame_size, 0)
-                images_constructor(symbol, i_index_good_short, time_frame_size, 1)
-
-                max_signals = int(max_signals * dataset_config['bad_over_weight'])  # szorzó
-
-                #  beteszem a 'bad' signálokat -----------------------------------------
-                i_index_bad_long = (tuple(nddf[symbol].loc[nddf[symbol][dataset_config['bad_long_field']]].index))
-                i_index_bad_short = (tuple(nddf[symbol].loc[nddf[symbol][dataset_config['bad_short_field']]].index))
-
                 i_index_bad_long = i_index_bad_long[0:max_signals]
                 i_index_bad_short = i_index_bad_short[0:max_signals]
 
-                print(max_signals)
+                nd_dset.set_window_size(time_window_size)
 
-                images_constructor(symbol, i_index_bad_long, time_frame_size, 2)
-                images_constructor(symbol, i_index_bad_short, time_frame_size, 3)
+                dataset_constructor(symbol=symbol,
+                                    indexes=i_index_good_long,
+                                    time_window_size=time_window_size,
+                                    y=0,
+                                    original_fields=original_fields,
+                                    contras=contras)
 
-                # #  beteszem a 'bad' Longokat -----------------------------------------
-                # average_element_no = int((len(i_index_long) + len(i_index_short)) / 2)
-                # i_index_long_first_m = (list(nddf[symbol].loc[nddf[symbol][dataset_config['bad_long_field']]].index))
-                # i_index_long_first_m = array_diff(i_index_long_first_m, i_index_long)  # kiveszem a qualified elemeket
-                # #
-                # i_index_long_first_m = array_random_select(i_index_long_first_m,
-                #                                            int(average_element_no * bad_over_weight))
-                # images_constructor(symbol, i_index_long_first_m, time_frame_size, 2)
-                #
-                # #  beteszem a 'bad' Shortokat -----------------------------------------
-                # i_index_short_first_m = (list(nddf[symbol].loc[nddf[symbol][dataset_config['bad_short_field']]].index))
-                # i_index_short_first_m = array_diff(i_index_short_first_m,
-                #                                    i_index_short)  # kiveszem a qualified elemeket
-                # i_index_short_first_m = array_random_select(i_index_short_first_m,
-                #                                             int(average_element_no * bad_over_weight))
-                # images_constructor(symbol, i_index_short_first_m, time_frame_size, 3)
+                dataset_constructor(symbol=symbol,
+                                    indexes=i_index_good_short,
+                                    time_window_size=time_window_size,
+                                    y=1,
+                                    original_fields=original_fields,
+                                    contras=contras)
 
-                # historic max ---------------------------------
+                dataset_constructor(symbol=symbol,
+                                    indexes=i_index_bad_long,
+                                    time_window_size=time_window_size,
+                                    y=2,
+                                    original_fields=original_fields,
+                                    contras=contras)
+
+                dataset_constructor(symbol=symbol,
+                                    indexes=i_index_bad_short,
+                                    time_window_size=time_window_size,
+                                    y=3,
+                                    original_fields=original_fields,
+                                    contras=contras)
+
+                # historic max and min ---------------------------------
 
                 i_historic_max = np.array([])
                 i_historic_min = np.array([])
@@ -1001,11 +1018,11 @@ class n_date_frame2:
                     for i_of in original_fields:
                         nd_dset.add_field(i_of)
                         i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
-                        i_conc = np.full(time_frame_size, i_conc)
+                        i_conc = np.full(time_window_size, i_conc)
                         i_historic_max = np.concatenate((i_historic_max, i_conc))
 
                         i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
-                        i_conc = np.full(time_frame_size, i_conc)
+                        i_conc = np.full(time_window_size, i_conc)
                         i_historic_min = np.concatenate((i_historic_min, i_conc))
 
                 for i_con in contras:
@@ -1022,11 +1039,11 @@ class n_date_frame2:
                     con_symbol = con_sep[0]
                     con_field = con_sep[1]
                     i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
-                    i_conc = np.full(time_frame_size, i_conc)
+                    i_conc = np.full(time_window_size, i_conc)
                     i_historic_max = np.concatenate((i_historic_max, i_conc))
 
                     i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
-                    i_conc = np.full(time_frame_size, i_conc)
+                    i_conc = np.full(time_window_size, i_conc)
                     i_historic_min = np.concatenate((i_historic_min, i_conc))
 
                 nd_dset.set_historic_max(i_historic_max)
@@ -1081,7 +1098,7 @@ class n_date_frame2:
         log(f"ndf->vector_qualify: {stock_size} USD p/s:" +
             f"{min_profit}/{stop} steps:{steps} overlay steps:{overlay_steps}")
         
-        s2(True, 25)
+        s2(True, 22)
 
         def y_chk(symbol, y_field, overlay_steps):
 
@@ -1253,6 +1270,11 @@ class n_date_frame2:
         nddf[symbol]["XMIN_POS"] = nddf[symbol]["XMIN_POS"].str.replace('X', '')
         nddf[symbol]["XMIN_POS"] = pd.to_numeric(nddf[symbol]["XMIN_POS"])
 
+        nddf[symbol]["ACT_DAY"] = nddf[symbol]["Date"].dt.day
+        nddf[symbol]["SHIFTED_DAY"] = nddf[symbol].Date.shift(0 - steps).dt.day
+        nddf[symbol]["SHIFTED_DAY_OK"] = False
+        nddf[symbol]["SHIFTED_DAY_OK"] = nddf[symbol]["ACT_DAY"] == nddf[symbol]["SHIFTED_DAY"]
+
         s2()
 
         # Qualify long positons
@@ -1265,12 +1287,12 @@ class n_date_frame2:
         nddf[symbol][qfy_long_field] = nddf[symbol]["MIN_PROFIT_OK"] & \
                                        ((nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"]) |
                                         (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
-                                         ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
+                                         ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"])) & nddf[symbol]["SHIFTED_DAY_OK"]
 
         y_field_temp = y_field + "_TEMP"
         nddf[symbol][y_field_temp] = 0
-        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_long_field] & (nddf[symbol][first_sig_field] == 1)] = 1
-        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_long_field]) & (nddf[symbol][first_sig_field] == 1)] = 3
+        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_long_field] & (nddf[symbol][first_sig_field] == 0)] = 1
+        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_long_field]) & (nddf[symbol][first_sig_field] == 0)] = 3
 
         i_remove.append('MIN_PROFIT_OK')
         i_remove.append('LOSS_OVER_STOP_LIMIT')
@@ -1289,20 +1311,15 @@ class n_date_frame2:
         nddf[symbol][qfy_short_field] = nddf[symbol]["MIN_PROFIT_OK"] & \
                                         ((nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"]) |
                                          (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
-                                          ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
+                                          ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"])) & nddf[symbol]["SHIFTED_DAY_OK"]
 
-        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_short_field] & (nddf[symbol][first_sig_field] == 2)] = 2
-        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_short_field]) & (nddf[symbol][first_sig_field] == 2)] = 4
-
-        # print((nddf[symbol][y_field] == 0).sum())
-        # print((nddf[symbol][y_field] == 1).sum())
-        # print((nddf[symbol][y_field] == 2).sum())
-        # print((nddf[symbol][y_field] == 3).sum())
-        # print((nddf[symbol][y_field] == 4).sum())
+        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_short_field] & (nddf[symbol][first_sig_field] == 1)] = 2
+        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_short_field]) & (nddf[symbol][first_sig_field] == 1)] = 4
 
         i_remove = ['XMAX_USD', 'XMIN_USD',
                     'XMAX_POS', 'XMIN_POS',
                     'MIN_PROFIT_OK', 'LOSS_OVER_STOP_LIMIT', 'STOP_POS_AFTER_PROFIT_POS',
+                    'ACT_DAY', 'SHIFTED_DAY', 'SHIFTED_DAY_OK',
                     qfy_long_field, qfy_short_field]
         self.remove_columns(symbol, i_remove)
 
@@ -1336,302 +1353,32 @@ class n_date_frame2:
         qfy_bad_cross_rnd(symbol, 'y_3', 'y_4', overlay_steps)
         qfy_bad_cross(symbol, 'y_4', 'y_3', overlay_steps)
 
-        nddf[symbol][y_field] = 0
-        nddf[symbol][y_field].values[nddf[symbol]['y_1']] = 1
-        nddf[symbol][y_field].values[nddf[symbol]['y_2']] = 2
-        nddf[symbol][y_field].values[nddf[symbol]['y_3']] = 3
-        nddf[symbol][y_field].values[nddf[symbol]['y_4']] = 4
-
-
+        nddf[symbol][y_field] = 4
+        nddf[symbol][y_field].values[nddf[symbol]['y_1']] = 0
+        nddf[symbol][y_field].values[nddf[symbol]['y_2']] = 1
+        nddf[symbol][y_field].values[nddf[symbol]['y_3']] = 2
+        nddf[symbol][y_field].values[nddf[symbol]['y_4']] = 3
 
         i_remove = ['y_1', 'y_2', 'y_3', 'y_4',
                     y_field_temp]
         self.remove_columns(symbol, i_remove)
 
-        y0 = (nddf[symbol][y_field] == 0).sum()
-        y1 = (nddf[symbol][y_field] == 1).sum()
-        y2 = (nddf[symbol][y_field] == 2).sum()
-        y3 = (nddf[symbol][y_field] == 3).sum()
-        y4 = (nddf[symbol][y_field] == 4).sum()
+        y0 = (nddf[symbol][y_field] == 4).sum()
+        y1 = (nddf[symbol][y_field] == 0).sum()
+        y2 = (nddf[symbol][y_field] == 1).sum()
+        y3 = (nddf[symbol][y_field] == 2).sum()
+        y4 = (nddf[symbol][y_field] == 3).sum()
 
         ychk = y_chk(symbol, y_field, overlay_steps)
 
-        log(f"y=0 (None) result: {y0}")
-        log(f"y=1 (GOOD LONG) result: {y1}")
-        log(f"y=2 (GOOD SHORT) result: {y2}")
-        log(f"y=3 (BAD LONG) result: {y3}")
-        log(f"y=4 (BAD SHORT) result: {y4}")
-        log(f"y chk sum: (0 = no overlay) result: {ychk}")
-        log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
-        # s("")
-
-
-        # def vector_qualify(self,
-        #                    symbol,
-        #                    long_field, short_field,
-        #                    stock_size,
-        #                    min_profit, min_step_profit,
-        #                    stop,
-        #                    steps, overlay_steps,
-        #                    qfy_long_field, qfy_short_field):
-        #     """
-        #     :param symbol:
-        #     :param long_field: Long signals for qfy
-        #     :param short_field: Short signals for qfy
-        #     :param stock_size: invested stock size in USD
-        #     :param min_profit: minimum profit in USD
-        #     :param min_step_profit: protect against outlier, if profit comes too fast
-        #     :param stop: stop loss in USD
-        #     :param steps: maximum steps for profit takeing
-        #     :param overlay_steps: signal overlay, the next qfy signal must be out of overlay_steps
-        #     :return: no return auto update nddf
-        #     :param qfy_long_field: return to qualified long signals
-        #     :param qfy_short_field:  return to qualified short positions
-        #     """
-        #
-        #     # save originalfields
-        #     original_df = pd.DataFrame(None)
-        #     original_df = nddf[symbol][[long_field, short_field]].copy()
-        #
-        #     log(f"ndf->vector_qualify: {stock_size} USD p/s:" +
-        #         f"{min_profit}/{stop} steps:{steps} overlay steps:{overlay_steps}")
-        #
-        #     # ---------------------------------
-        #     def qfy_bad_cross(symbol, ori_field, envi_fileld, overlay_steps):
-        #         # nem lehet utána qfy short
-        #         i_remove = []
-        #         for i_dif in range(1, overlay_steps + 2):
-        #             c_name = "SXQF" + str(i_dif)
-        #             i_remove.append(c_name)
-        #             nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif - 1)
-        #         # s(str(i_vs) + "%")
-        #         # i_vs += i_vs_p
-        #
-        #         i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
-        #         i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-        #
-        #         nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #         nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
-        #         i_remove.append('SXQFMAX')
-        #         self.remove_columns(symbol, i_remove)
-        #
-        #         # nem lehet utána qfy short
-        #         i_remove = []
-        #         for i_dif in range(1, overlay_steps + 2):
-        #             c_name = "SXQF" + str(i_dif)
-        #             i_remove.append(c_name)
-        #             nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(-(i_dif - 1))
-        #         # s(str(i_vs) + "%")
-        #         # i_vs += i_vs_p
-        #
-        #         i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
-        #         i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-        #
-        #         nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #         nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
-        #         i_remove.append('SXQFMAX')
-        #         self.remove_columns(symbol, i_remove)
-        #
-        #     def qfy_bad_cross_rnd(symbol, ori_field, envi_fileld, overlay_steps):
-        #         nddf[symbol]['XRND'] = np.random.randint(2, size=nddf[symbol].shape[0])
-        #         # nem lehet utána qfy short
-        #         i_remove = []
-        #         for i_dif in range(1, overlay_steps + 2):
-        #             c_name = "SXQF" + str(i_dif)
-        #             i_remove.append(c_name)
-        #             nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif - 1)
-        #
-        #         i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
-        #         i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-        #
-        #         nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #         nddf[symbol][ori_field] = (nddf[symbol][ori_field] & \
-        #                                    (nddf[symbol]["SXQFMAX"] == 0)) | \
-        #                                   (nddf[symbol][ori_field] & \
-        #                                    (nddf[symbol]["XRND"] == 0))
-        #         i_remove.append('SXQFMAX')
-        #         self.remove_columns(symbol, i_remove)
-        #
-        #         # nem lehet utána qfy short
-        #         i_remove = []
-        #         for i_dif in range(1, overlay_steps + 2):
-        #             c_name = "SXQF" + str(i_dif)
-        #             i_remove.append(c_name)
-        #             nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(-(i_dif - 1))
-        #
-        #         i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
-        #         i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-        #
-        #         nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #
-        #         nddf[symbol][ori_field] = (nddf[symbol][ori_field] &
-        #                                    (nddf[symbol]["SXQFMAX"] == 0)) | \
-        #                                   (nddf[symbol][ori_field] &
-        #                                    (nddf[symbol]["XRND"] == 0))
-        #
-        #         i_remove.append('SXQFMAX')
-        #         i_remove.append('XRND')
-        #         self.remove_columns(symbol, i_remove)
-        #
-        #     def qfy_bad_befo(symbol, ori_field, overlay_steps):
-        #         # nem lehet utána qfy short
-        #         i_remove = []
-        #         for i_dif in range(1, overlay_steps + 1):
-        #             c_name = "SXQF" + str(i_dif)
-        #             i_remove.append(c_name)
-        #             nddf[symbol][c_name] = nddf[symbol][ori_field].shift(i_dif)
-        #
-        #         i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
-        #         i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-        #
-        #         nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #         nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
-        #         i_remove.append('SXQFMAX')
-        #         self.remove_columns(symbol, i_remove)
-        #
-        #     i_vs = 1
-        #     i_vs_p = 10.8
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #     i_remove = []
-        #     for i_dif in range(1, steps + 1):
-        #         c_name = "X" + str(i_dif)
-        #         i_remove.append(c_name)
-        #         nddf[symbol][c_name] = ((nddf[symbol].ohlc4.shift(-i_dif) / nddf[symbol].ohlc4) - 1) * 100
-        #
-        #     i_pos_first = nddf[symbol].columns.get_loc("X1")
-        #     i_ser = list(range(i_pos_first, i_pos_first + steps))
-        #
-        #     nddf[symbol]["XMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #     nddf[symbol]["XMIN"] = nddf[symbol].iloc[:, i_ser].min(axis=1)
-        #     nddf[symbol]["XMAX_USD"] = nddf[symbol]["XMAX"] * stock_size / 100
-        #     nddf[symbol]["XMIN_USD"] = nddf[symbol]["XMIN"] * stock_size / 100
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     nddf[symbol]["XMAX_POS"] = nddf[symbol].iloc[:, i_ser].idxmax(axis=1)
-        #     nddf[symbol]["XMIN_POS"] = nddf[symbol].iloc[:, i_ser].idxmin(axis=1)
-        #
-        #     i_remove.append('XMAX')
-        #     i_remove.append("XMIN")
-        #     self.remove_columns(symbol, i_remove)
-        #
-        #     nddf[symbol]["XMAX_POS"] = nddf[symbol]["XMAX_POS"].str.replace('X', '')
-        #     nddf[symbol]["XMAX_POS"] = pd.to_numeric(nddf[symbol]["XMAX_POS"])
-        #
-        #     nddf[symbol]["XMIN_POS"] = nddf[symbol]["XMIN_POS"].str.replace('X', '')
-        #     nddf[symbol]["XMIN_POS"] = pd.to_numeric(nddf[symbol]["XMIN_POS"])
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     # Qualify long positons
-        #     nddf[symbol]["MIN_PROFIT_OK"] = (nddf[symbol]["XMAX_USD"] > min_profit) & \
-        #                                     (nddf[symbol]["XMAX_POS"] > min_step_profit)
-        #
-        #     nddf[symbol]["LOSS_OVER_STOP_LIMIT"] = nddf[symbol]["XMIN_USD"] < stop
-        #     nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] = nddf[symbol]["XMIN_POS"] > nddf[symbol]["XMAX_POS"]
-        #     nddf[symbol][qfy_long_field] = nddf[symbol]["MIN_PROFIT_OK"] & \
-        #                                    ((nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"]) |
-        #                                     (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
-        #                                      ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
-        #
-        #     nddf[symbol][qfy_long_field] = nddf[symbol][qfy_long_field] & nddf[symbol][long_field]
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     i_remove = []
-        #     for i_dif in range(1, overlay_steps + 1):
-        #         c_name = "LQ" + str(i_dif)
-        #         i_remove.append(c_name)
-        #         nddf[symbol][c_name] = nddf[symbol][qfy_long_field].shift(i_dif)
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     i_pos_first = nddf[symbol].columns.get_loc("LQ1")
-        #     i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-        #
-        #     nddf[symbol]["LQMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #     nddf[symbol][qfy_long_field] = nddf[symbol][qfy_long_field] & (nddf[symbol]["LQMAX"] == 0)
-        #
-        #     i_remove.append('LQMAX')
-        #     i_remove.append('MIN_PROFIT_OK')
-        #     i_remove.append('LOSS_OVER_STOP_LIMIT')
-        #     i_remove.append('STOP_POS_AFTER_PROFIT_POS')
-        #     self.remove_columns(symbol, i_remove)
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     # Qualify SHORT positons
-        #     nddf[symbol]["MIN_PROFIT_OK"] = (nddf[symbol]["XMIN_USD"] < -min_profit) & \
-        #                                     (nddf[symbol]["XMIN_POS"] > min_step_profit)
-        #
-        #     nddf[symbol]["LOSS_OVER_STOP_LIMIT"] = nddf[symbol]["XMAX_USD"] > -stop
-        #     nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] = nddf[symbol]["XMIN_POS"] < nddf[symbol]["XMAX_POS"]
-        #     nddf[symbol][qfy_short_field] = nddf[symbol]["MIN_PROFIT_OK"] & \
-        #                                     ((nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"]) |
-        #                                      (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
-        #                                       ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"]))
-        #
-        #     nddf[symbol][qfy_short_field] = nddf[symbol][qfy_short_field] & nddf[symbol][short_field]
-        #     #
-        #     i_remove = []
-        #     for i_dif in range(1, overlay_steps + 1):
-        #         c_name = "SQ" + str(i_dif)
-        #         i_remove.append(c_name)
-        #         nddf[symbol][c_name] = nddf[symbol][qfy_short_field].shift(i_dif)
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     i_pos_first = nddf[symbol].columns.get_loc("SQ1")
-        #     i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
-        #
-        #     nddf[symbol]["SQMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-        #     nddf[symbol][qfy_short_field] = nddf[symbol][qfy_short_field] & (nddf[symbol]["SQMAX"] == 0)
-        #     i_remove.append('SQMAX')
-        #     self.remove_columns(symbol, i_remove)
-        #
-        #     i_remove = ['XMAX_USD', 'XMIN_USD',
-        #                 'XMAX_POS', 'XMIN_POS',
-        #                 'MIN_PROFIT_OK', 'LOSS_OVER_STOP_LIMIT', 'STOP_POS_AFTER_PROFIT_POS']
-        #     self.remove_columns(symbol, i_remove)
-        #
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     long_field_first = long_field + "_FIRST"
-        #     short_field_first = short_field + "_FIRST"
-        #     self.get_first_signal(symbol, long_field, short_field, long_field_first, short_field_first)
-        #
-        #     qfy_bad_cross(symbol, long_field_first, qfy_long_field, overlay_steps)
-        #     qfy_bad_cross(symbol, long_field_first, qfy_short_field, overlay_steps)
-        #     qfy_bad_cross(symbol, short_field_first, qfy_long_field, overlay_steps)
-        #     qfy_bad_cross(symbol, short_field_first, qfy_short_field, overlay_steps)
-        #
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     qfy_bad_befo(symbol, long_field_first, overlay_steps)
-        #     qfy_bad_befo(symbol, short_field_first, overlay_steps)
-        #     qfy_bad_cross_rnd(symbol, long_field_first, short_field_first, overlay_steps)
-        #     qfy_bad_cross(symbol, short_field_first, long_field_first, overlay_steps)
-        #
-        #     nddf[symbol][long_field] = original_df[long_field]
-        #     nddf[symbol][short_field] = original_df[short_field]
-        #
-        #     s(str(i_vs) + "%")
-        #     i_vs += i_vs_p
-        #
-        #     # ----------------------------------------------------------------------------------
-        #     i_signals = nddf[symbol][qfy_long_field].sum()
-        #     log(f"GOOD LONG result: {i_signals}")
-        #     i_signals = nddf[symbol][qfy_short_field].sum()
-        #     log(f"GOOD SHORT result: {i_signals}")
-        #     i_signals = nddf[symbol][long_field_first].sum()
-        #     log(f"BAD LONG result: all/good: {i_signals}")
-        #     i_signals = nddf[symbol][short_field_first].sum()
-        #     log(f"BAD SHORT result: all/good: {i_signals}")
-        #     log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
-        #     s("")
+        log(f"  y=4 (None) result: {y0}")
+        log(f"  y=0 (GOOD LONG) result: {y1}")
+        log(f"  y=1 (GOOD SHORT) result: {y2}")
+        log(f"  y=2 (BAD LONG) result: {y3}")
+        log(f"  y=3 (BAD SHORT) result: {y4}")
+        log(f"  y chk sum: (0 = no overlay) result: {ychk}")
+        log("  Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+        s("")
 
     def add_tech(self, symbol, tech_indicator="SMA60"):
 
@@ -1699,19 +1446,14 @@ class n_date_frame2:
                 nddf[symbol]['SIG_SMA5813'] = nddf[symbol]['INDX_SMA5813_SHIFT'] * nddf[symbol]['INDX_SMA5813']
 
                 i_remove = ['INDX_SMA5813', 'INDX_SMA5813_SHIFT', 'SIG_SMA5813_LONG_ALL', 'SIG_SMA5813_SHORT_ALL']
+
+                # SIG készítésnél belül 1,2,3,4et használok de sparscategorical cross entropy 0,1,2,3 ér meg ezért el siftelem
+
+                nddf[symbol]["SIG_SMA5813"].values[nddf[symbol]['SIG_SMA5813'] == 0] = 4
+                nddf[symbol]["SIG_SMA5813"].values[nddf[symbol]['SIG_SMA5813'] == 1] = 0
+                nddf[symbol]["SIG_SMA5813"].values[nddf[symbol]['SIG_SMA5813'] == 2] = 1
+
                 self.remove_columns(symbol, i_remove)
-
-                self.set_dt_order(symbol)
-
-                ndf.vector_qualify(symbol,
-                                   sig_suffix="SMA5813",
-                                   stock_size=10000,
-                                   min_profit=75,
-                                   min_step_profit=5,
-                                   stop=-5,
-                                   steps=30,
-                                   overlay_steps=30)
-
                 self.set_dt_order(symbol)
                 nddb.write(symbol)
 
@@ -1812,16 +1554,24 @@ class n_date_frame2:
                 nddf[symbol].loc[mask, 'SIG_BREAKOUT_LONG_ALL'] = False
                 nddf[symbol].loc[mask, 'SIG_BREAKOUT_SHORT_ALL'] = False
                 ndf.set_dt_order(symbol)
+
+                nddf[symbol]['SIG_BREAKOUT'] = 0
+                nddf[symbol]['SIG_BREAKOUT'].values[nddf[symbol]['SIG_BREAKOUT_LONG_ALL']] = 1
+                nddf[symbol]['SIG_BREAKOUT'].values[nddf[symbol]['SIG_BREAKOUT_SHORT_ALL']] = 2
+                # nddf[symbol]['SIG_BREAKOUT_TEMP_SHIFT'] = nddf[symbol]['SIG_BREAKOUT_TEMP'] != nddf[symbol]['SIG_BREAKOUT_TEMP'].shift(1)
+                # nddf[symbol]['SIG_BREAKOUT'] = nddf[symbol]['SIG_BREAKOUT_TEMP_SHIFT'] * nddf[symbol]['SIG_BREAKOUT_TEMP']
+
+                i_remove = ['SIG_BREAKOUT_LONG_ALL', 'SIG_BREAKOUT_SHORT_ALL']
+                self.remove_columns(symbol, i_remove)
+
                 ndf.vector_qualify(symbol,
-                                   long_field="SIG_BREAKOUT_LONG_ALL",
-                                   short_field="SIG_BREAKOUT_SHORT_ALL",
+                                   sig_suffix="BREAKOUT",
                                    stock_size=10000,
-                                   min_profit=30,
+                                   min_profit=70,
                                    min_step_profit=5,
                                    stop=-5,
                                    steps=30,
                                    overlay_steps=30,
-                                   exit_field_prefix="BREAKOUT"
                                    )
 
                 ndf.set_dt_order(symbol)
@@ -1958,13 +1708,61 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
+    from shutil import copy2
+    import pickle as pickle
+    from sklearn import preprocessing
+    project_name = "APA_SMA5813"
+
+    to_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name
+
+    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_TF_MODEL_" + project_name + ".h5"
+    copy2(from_path, to_path)
+
+    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_DATA_TRANSFORM_" + project_name + ".pickle"
+    copy2(from_path, to_path)
+
+    local_path = "projects/" + project_name + "/" + "nDot_DATA_TRANSFORM_" + project_name + ".pickle"
+    norm_model = pickle.load(open(local_path, "rb"))
+    print(norm_model)
+
+    local_path = 'projects/' + project_name + '/nDot_TF_MODEL_' + project_name + '.h5'
+    tf_model = load_model(local_path)
+    # print(new_model.summary())
+
+    def X_transform(X):
+        X = np.array(X)
+        X = np.reshape(X, (X.shape[0], 1, X.shape[1]))
+        return X
+
     symbol = "APA"
 
-    print(nddf[symbol])
-    nddf[symbol]["T"] = True
-    print(nddf[symbol]["T"].sum())
-    nddf[symbol]["T"] = nddf[symbol]["T"].shift(2)
-    print(nddf[symbol]["T"].sum())
+    config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
+    description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
+    time_window_size = dataset_config['time_window_size']
+    i_index = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_SMA5813'] == 0].index))
+
+    stimt = 0
+    print(stimt, len(i_index))
+    for i_ndx in tqdm(i_index):
+        i_array = ndf.get_dataset_by_index(symbol, i_ndx, time_window_size, original_fields, contras)
+        i_array = i_array.reshape(1, -1)
+        X = norm_model.transform(i_array)
+        X = X_transform(X)
+        y_predict = np.argmax(tf_model.predict(X))
+        # print(y_predict)
+        if y_predict == 0:
+            stimt += 1
+
+    print(stimt, len(i_index))
+
+
+    # symbol = "APA"
+    #
+    # print(nddf[symbol])
+    # nddf[symbol]["T"] = True
+    # print(nddf[symbol]["T"].sum())
+    # nddf[symbol]["T"] = nddf[symbol]["T"].shift(2)
+    # print(nddf[symbol]["T"].sum())
 
 
 # df = pd.DataFrame(None)
@@ -2068,6 +1866,7 @@ def s(msg_str):
     if LogTo == "Gui":
         QApplication.processEvents()
         gui.Status.setText("Status: " + msg_str)
+        gui.Progress_Bar.setValue(0)
         QApplication.processEvents()
 
 
@@ -2083,8 +1882,10 @@ def s2(null=False, steps=0):
             s2_value = 0
             s2_max = steps
             gui.Status.setText(" ".join(["Status:", str(int(s2_value)), "%"]))
+            gui.Progress_Bar.setValue(int(s2_value))
         else:
             gui.Status.setText(" ".join(["Status:", str(int(s2_value / s2_max * 100)), "%"]))
+            gui.Progress_Bar.setValue(int(s2_value / s2_max * 100))
             s2_value += 1
         QApplication.processEvents()
 
@@ -2126,6 +1927,9 @@ def log(add_text, line=False, indent=True, color="normal"):
         lines = add_text.splitlines()
 
         for one_line in lines:
+            if one_line[0:2] == "  ":
+                one_line = "&nbsp;&nbsp;" + one_line[2:]
+
             i_log_text = i_log_text \
                          + "<font color='#000000'>" \
                          + time.strftime("%m-%d %H:%M:%S") + " > " \
@@ -2171,7 +1975,7 @@ def exit_program():
 # ndf programs  ----------------------------------------------------------------------------
 
 
-def ndf_add(symbol="", years=3):
+def ndf_add(symbol="", years=1):
     ndf.add(symbol, years)
 
 

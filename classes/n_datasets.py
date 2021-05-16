@@ -8,9 +8,11 @@ class n_dataset:
     def __init__(self, log):
         self.log = log
         self.gdrive_path = "C:/Users/honis.ivan/Google Drive/nDot_Colabs/"
+        self.project_path = ""
         self.fields_dict = {}
         self.data = {
                 'name': "",  ## ez lesz a file neve
+                'project_name': "",  ## ez lesz a file neve
                 'data_structure_ver': "2.0",  ## ez lesz a file neve
                 'timestamp': "",  ## mikor készültek az adatok
                 'source': "",  ## melyik eljárás milyen paraméterekkel állította elő
@@ -31,6 +33,10 @@ class n_dataset:
     def set_name(self, name):
         self.data['name'] = name
         self.data['timestamp'] = str(datetime.datetime.now())  ## névadáskor jön létra az időbélyeg
+
+    def set_project_name(self, name):
+        self.data['project_name'] = name
+        self.project_path = "projects/" + name + "/"
 
     def set_symbol(self, symbol):
         self.data['symbol'] = symbol
@@ -77,16 +83,20 @@ class n_dataset:
         self.data['y_unique']["counts"] = counts
 
     def save(self):
+        self.log('n_datasets-> save')
         self.set_y_unique()
-        self.log('X shape: ' + str(self.data['X'].shape))
-        self.log('y shape: ' + str(self.data['y'].shape))
-        self.log('y unique: ' + str(np.unique(self.data['y'],  return_counts=True)))
-
-        self.log('Historic max shape: ' + str(self.data['historic_max'].shape))
-        self.log('Historic min shape: ' + str(self.data['historic_min'].shape))
+        self.data['y'] = self.data['y'].reshape(-1, 1)
+        self.log('  X shape: ' + str(self.data['X'].shape))
+        self.log('  y shape: ' + str(self.data['y'].shape))
+        y_type, y_cases = np.unique(self.data['y'],  return_counts=True)
+        self.log('  y unique: ' + str(y_type) + " " + str(y_cases))
+        self.log('  Historic max shape: ' + str(self.data['historic_max'].shape))
+        self.log('  Historic min shape: ' + str(self.data['historic_min'].shape))
         self.data['data_fields'] = str(tuple(self.fields_dict.keys()))
         pickle.dump(self.data, open(self.gdrive_path+self.data['name']+".pickle", "wb"))
-        self.log('n_dataset->saved: ' + str(self.gdrive_path+self.data['name']+".pickle"))
+        pickle.dump(self.data, open(self.project_path+self.data['name']+".pickle", "wb"))
+        self.log('n_dataset-> saved: ' + str(self.gdrive_path+self.data['name']+".pickle"))
+        self.log('n_dataset-> saved: ' + str(self.project_path+self.data['name']+".pickle"))
 
     def load(self, file_name):
         return pickle.load(open(self.gdrive_path+file_name+'.pickle', "rb"))

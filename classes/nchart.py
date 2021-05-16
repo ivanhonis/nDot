@@ -598,7 +598,8 @@ class nchart:
         return p
 
     def chart_sma5813(self, df, name):
-
+        df['ohlc4_up'] = df['ohlc4'] * 1.003
+        df['ohlc4_down'] = df['ohlc4'] * 0.997
         stock = ColumnDataSource(df)
         p = figure(sizing_mode='fixed',
                    plot_width=self.width,
@@ -616,31 +617,35 @@ class nchart:
         p.line('index', 'SMA_8', color=self.orange, legend_label="SMA_8", line_width=2, source=stock)
         p.line('index', 'SMA_13', color=self.red, legend_label="SMA_13", line_width=3, source=stock)
 
-        # sig = tuple(df['SIG_SMA5813_LONG_ALL'])
-        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        # p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
-        #
-        # sig = tuple(df['SIG_SMA5813_SHORT_ALL'])
-        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        # p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
-
-        df['SIG_SMA5813_LONG_ALL_FIRST'] = df['IND_SMA5813'] == 1
+        df['SIG_SMA5813_LONG_ALL_FIRST'] = df['SIG_SMA5813'] == 1
         sig = tuple(df['SIG_SMA5813_LONG_ALL_FIRST'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', line_color=self.orange, line_width=2, fill_color=self.orange, size=18, source=stock, view=view_sig)
+        p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
-        df['SIG_SMA5813_SHORT_ALL_FIRST'] = df['IND_SMA5813'] == 2
+        df['SIG_SMA5813_SHORT_ALL_FIRST'] = df['SIG_SMA5813'] == 2
         sig = tuple(df['SIG_SMA5813_SHORT_ALL_FIRST'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.inverted_triangle('index', 'ohlc4', line_color=self.orange, line_width=2, fill_color=self.orange, size=18, source=stock, view=view_sig)
+        p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
-        sig = tuple(df['SIG_QFY_SMA5813_GOOD_LONG'])
+        df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_SMA5813'] == 1
+        sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', line_color=self.green, line_width=2, fill_color=self.green, size=15, source=stock, view=view_sig)
+        p.triangle('index', 'ohlc4_up', line_color=self.orange, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
 
+        df['SIG_QFY_SMA5813_GOOD_SHORT'] = df['y_SMA5813'] == 2
         sig = tuple(df['SIG_QFY_SMA5813_GOOD_SHORT'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.inverted_triangle('index', 'ohlc4', line_color=self.red, line_width=2, fill_color=self.red, size=15, source=stock, view=view_sig)
+        p.inverted_triangle('index', 'ohlc4_down', line_color=self.orange, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
+
+        df['SIG_QFY_SMA5813_BAD_LONG'] = df['y_SMA5813'] == 3
+        sig = tuple(df['SIG_QFY_SMA5813_BAD_LONG'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4_up', line_color=self.gray2, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
+
+        df['SIG_QFY_SMA5813_BAD_SHORT'] = df['y_SMA5813'] == 4
+        sig = tuple(df['SIG_QFY_SMA5813_BAD_SHORT'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.inverted_triangle('index', 'ohlc4_down', line_color=self.gray2, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
 
         p.legend.visible = False
 
@@ -660,7 +665,8 @@ class nchart:
         return p
 
     def chart_breakout(self, df, name):
-
+        df['ohlc4_up'] = df['ohlc4'] * 1.003
+        df['ohlc4_down'] = df['ohlc4'] * 0.997
         stock = ColumnDataSource(df)
         p = figure(sizing_mode='fixed',
                    plot_width=self.width,
@@ -674,25 +680,37 @@ class nchart:
         p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
         p.line('index', 'ohlc4', color=self.blue, source=stock)
 
+        df['SIG_BREAKOUT_LONG_ALL'] = df['SIG_BREAKOUT'] == 1
         sig = tuple(df['SIG_BREAKOUT_LONG_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
-
-        sig = tuple(df['SIG_QFY_BREAKOUT_LONG'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
-
+        df['SIG_BREAKOUT_SHORT_ALL'] = df['SIG_BREAKOUT'] == 2
         sig = tuple(df['SIG_BREAKOUT_SHORT_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
-        sig = tuple(df['SIG_QFY_BREAKOUT_SHORT'])
+        df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_BREAKOUT'] == 1
+        sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.inverted_triangle('index', 'ohlc4', line_color=self.red, line_width=2, fill_color=self.red, size=15, source=stock, view=view_sig)
+        p.triangle('index', 'ohlc4_up', line_color=self.orange, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
+
+        df['SIG_QFY_BREAKOUT_GOOD_SHORT'] = df['y_BREAKOUT'] == 2
+        sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_SHORT'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.inverted_triangle('index', 'ohlc4_down', line_color=self.orange, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
+
+        df['SIG_QFY_BREAKOUT_BAD_LONG'] = df['y_BREAKOUT'] == 3
+        sig = tuple(df['SIG_QFY_BREAKOUT_BAD_LONG'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.triangle('index', 'ohlc4_up', line_color=self.gray2, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
+
+        df['SIG_QFY_BREAKOUT_BAD_SHORT'] = df['y_BREAKOUT'] == 4
+        sig = tuple(df['SIG_QFY_BREAKOUT_BAD_SHORT'])
+        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        p.inverted_triangle('index', 'ohlc4_down', line_color=self.gray2, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
 
         p.legend.visible = False
-
         p.add_tools(HoverTool(
 
             tooltips=[("Date", "@Date_str"),

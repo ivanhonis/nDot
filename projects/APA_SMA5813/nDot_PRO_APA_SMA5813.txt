@@ -10,12 +10,14 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <dataset creator config>
 <--------------------------------------------------->
 {
-"time_frame_size" : 45,
-"good_long_field" : "SIG_QFY_SMA5813_LONG",
-"good_short_field" : "SIG_QFY_SMA5813_SHORT",
-"bad_over_weight" : 1,
-"bad_long_field" : "SIG_SMA5813_LONG_FIRST",
-"bad_short_field" : "SIG_SMA5813_SHORT_FIRST"
+"sig_suffix" : "SMA5813", <y>
+"time_window_size" : 20, <mekkora legyen az adatszet mérete visszafelé>
+"stock_size" : 10000, <mekkora egy kötés méret>
+"min_profit" : 75, <minimum profit>
+"min_step_profit" : 5, <ennél több lépésből kell, hogy létrejöjjön a profit, hirtelen kiugrásokat kiszűri>
+"stop" : -5, <stop loss mértéke>
+"steps" : 30, <maximum hány lépésből kell létrejönni a profitnak>
+"overlay_steps" : 30 <a szignálok nem fedhetik át egymást, eznem lehet kevesebb mint a steps>
 }
 
 ;
@@ -24,10 +26,9 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <fields from original>
 <--------------------------------------------------->
 [
-"Low",
-"High",
-<"ADX_8_ONE",
-"RSI_14",>
+"LOW_DIFF",
+"HIGH_DIFF",
+"ADX_8_ONE",
 "MACDh_12_26_9"
 ]
 
@@ -37,5 +38,6 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <Contras cross data fields>
 <--------------------------------------------------->
 [
-"RDS.A_ohlc4"
+"SPY_LOW_DIFF",
+"SPY_HIGH_DIFF"
 ]
