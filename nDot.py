@@ -50,6 +50,7 @@ from classes.nchart import nchart
 from classes.n_datasets import n_dataset
 from classes.n_data_frame_meta import n_date_frame_meta
 from classes.tools import tools
+from classes.algo_trade import algo_trade
 
 # # Ai components
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -1060,7 +1061,7 @@ class n_date_frame2:
                 if not field_ok_contras:
                     log("Config file, Contra field(s) is missing.")
         else:
-            log("config file is missing:" + str(config_file))
+            log("config file is missing:" + str(config_file_path))
 
     def get_first_signal(self, symbol, long_field, short_field, long_field_first, short_field_first):
         nddf[symbol][long_field_first] = ~(nddf[symbol][long_field] == nddf[symbol][long_field].shift(1)) & \
@@ -1075,7 +1076,8 @@ class n_date_frame2:
                        stock_size,
                        min_profit, min_step_profit,
                        stop,
-                       steps, overlay_steps):
+                       steps, overlay_steps,
+                       full=False):
         """
         :param symbol:
         :param sig_suffix: end of the signal  SIG_ + sig_suffix
@@ -1085,11 +1087,14 @@ class n_date_frame2:
         :param stop: stop loss in USD
         :param steps: maximum steps for profit takeing
         :param overlay_steps: signal overlay, the next qfy signal must be out of overlay_steps
+        :param full: if full, turn off chacking of overlay
         :return: no return auto update nddf
         """
 
         first_sig_field = "SIG_" + sig_suffix
         y_field = "y_" + sig_suffix
+        if full:
+            y_field += "_FULL"
 
         # # save originalfields
         # original_df = pd.DataFrame(None)
@@ -1289,10 +1294,18 @@ class n_date_frame2:
                                         (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
                                          ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"])) & nddf[symbol]["SHIFTED_DAY_OK"]
 
+        if full:
+            full_dif = 1
+        else:
+            full_dif = 0
+
         y_field_temp = y_field + "_TEMP"
-        nddf[symbol][y_field_temp] = 0
-        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_long_field] & (nddf[symbol][first_sig_field] == 0)] = 1
-        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_long_field]) & (nddf[symbol][first_sig_field] == 0)] = 3
+        if full:
+            nddf[symbol][y_field_temp] = 4
+        else:
+            nddf[symbol][y_field_temp] = 0
+        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_long_field] & (nddf[symbol][first_sig_field] == 0)] = (1 - full_dif)
+        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_long_field]) & (nddf[symbol][first_sig_field] == 0)] = (3 - full_dif)
 
         i_remove.append('MIN_PROFIT_OK')
         i_remove.append('LOSS_OVER_STOP_LIMIT')
@@ -1313,8 +1326,8 @@ class n_date_frame2:
                                          (~nddf[symbol]["STOP_POS_AFTER_PROFIT_POS"] &
                                           ~nddf[symbol]["LOSS_OVER_STOP_LIMIT"])) & nddf[symbol]["SHIFTED_DAY_OK"]
 
-        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_short_field] & (nddf[symbol][first_sig_field] == 1)] = 2
-        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_short_field]) & (nddf[symbol][first_sig_field] == 1)] = 4
+        nddf[symbol][y_field_temp].values[nddf[symbol][qfy_short_field] & (nddf[symbol][first_sig_field] == 1)] = (2 - full_dif)
+        nddf[symbol][y_field_temp].values[(~nddf[symbol][qfy_short_field]) & (nddf[symbol][first_sig_field] == 1)] = (4 - full_dif)
 
         i_remove = ['XMAX_USD', 'XMIN_USD',
                     'XMAX_POS', 'XMIN_POS',
@@ -1323,45 +1336,51 @@ class n_date_frame2:
                     qfy_long_field, qfy_short_field]
         self.remove_columns(symbol, i_remove)
 
-        nddf[symbol]["y_1"] = False
-        nddf[symbol]["y_1"].values[nddf[symbol][y_field_temp] == 1] = True
+        if not full:
+            nddf[symbol]["y_1"] = False
+            nddf[symbol]["y_1"].values[nddf[symbol][y_field_temp] == 1] = True
 
-        nddf[symbol]["y_2"] = False
-        nddf[symbol]["y_2"].values[nddf[symbol][y_field_temp] == 2] = True
+            nddf[symbol]["y_2"] = False
+            nddf[symbol]["y_2"].values[nddf[symbol][y_field_temp] == 2] = True
 
-        nddf[symbol]["y_3"] = False
-        nddf[symbol]["y_3"].values[nddf[symbol][y_field_temp] == 3] = True
+            nddf[symbol]["y_3"] = False
+            nddf[symbol]["y_3"].values[nddf[symbol][y_field_temp] == 3] = True
 
-        nddf[symbol]["y_4"] = False
-        nddf[symbol]["y_4"].values[nddf[symbol][y_field_temp] == 4] = True
+            nddf[symbol]["y_4"] = False
+            nddf[symbol]["y_4"].values[nddf[symbol][y_field_temp] == 4] = True
 
-        qfy_bad_befo(symbol, 'y_1', overlay_steps)
-        qfy_bad_befo(symbol, 'y_2', overlay_steps)
+            qfy_bad_befo(symbol, 'y_1', overlay_steps)
+            qfy_bad_befo(symbol, 'y_2', overlay_steps)
 
-        qfy_bad_cross_rnd(symbol, 'y_1', 'y_2', overlay_steps)
-        qfy_bad_cross(symbol, 'y_2', 'y_1', overlay_steps)
+            qfy_bad_cross_rnd(symbol, 'y_1', 'y_2', overlay_steps)
+            qfy_bad_cross(symbol, 'y_2', 'y_1', overlay_steps)
 
-        qfy_bad_cross(symbol, 'y_3', 'y_1', overlay_steps)
-        qfy_bad_cross(symbol, 'y_3', 'y_2', overlay_steps)
+            qfy_bad_cross(symbol, 'y_3', 'y_1', overlay_steps)
+            qfy_bad_cross(symbol, 'y_3', 'y_2', overlay_steps)
 
-        qfy_bad_cross(symbol, 'y_4', 'y_1', overlay_steps)
-        qfy_bad_cross(symbol, 'y_4', 'y_2', overlay_steps)
+            qfy_bad_cross(symbol, 'y_4', 'y_1', overlay_steps)
+            qfy_bad_cross(symbol, 'y_4', 'y_2', overlay_steps)
 
-        qfy_bad_befo(symbol, 'y_3', overlay_steps)
-        qfy_bad_befo(symbol, 'y_4', overlay_steps)
+            qfy_bad_befo(symbol, 'y_3', overlay_steps)
+            qfy_bad_befo(symbol, 'y_4', overlay_steps)
 
-        qfy_bad_cross_rnd(symbol, 'y_3', 'y_4', overlay_steps)
-        qfy_bad_cross(symbol, 'y_4', 'y_3', overlay_steps)
+            qfy_bad_cross_rnd(symbol, 'y_3', 'y_4', overlay_steps)
+            qfy_bad_cross(symbol, 'y_4', 'y_3', overlay_steps)
 
-        nddf[symbol][y_field] = 4
-        nddf[symbol][y_field].values[nddf[symbol]['y_1']] = 0
-        nddf[symbol][y_field].values[nddf[symbol]['y_2']] = 1
-        nddf[symbol][y_field].values[nddf[symbol]['y_3']] = 2
-        nddf[symbol][y_field].values[nddf[symbol]['y_4']] = 3
+            nddf[symbol][y_field] = 4
+            nddf[symbol][y_field].values[nddf[symbol]['y_1']] = 0
+            nddf[symbol][y_field].values[nddf[symbol]['y_2']] = 1
+            nddf[symbol][y_field].values[nddf[symbol]['y_3']] = 2
+            nddf[symbol][y_field].values[nddf[symbol]['y_4']] = 3
 
-        i_remove = ['y_1', 'y_2', 'y_3', 'y_4',
-                    y_field_temp]
-        self.remove_columns(symbol, i_remove)
+            i_remove = ['y_1', 'y_2', 'y_3', 'y_4',
+                        y_field_temp]
+            self.remove_columns(symbol, i_remove)
+
+        if full:
+            nddf[symbol][y_field] = nddf[symbol][y_field_temp]
+            i_remove = [y_field_temp]
+            self.remove_columns(symbol, i_remove)
 
         y0 = (nddf[symbol][y_field] == 4).sum()
         y1 = (nddf[symbol][y_field] == 0).sum()
@@ -1369,7 +1388,10 @@ class n_date_frame2:
         y3 = (nddf[symbol][y_field] == 2).sum()
         y4 = (nddf[symbol][y_field] == 3).sum()
 
-        ychk = y_chk(symbol, y_field, overlay_steps)
+        if full:
+            ychk = -1
+        else:
+            ychk = y_chk(symbol, y_field, overlay_steps)
 
         log(f"  y=4 (None) result: {y0}")
         log(f"  y=0 (GOOD LONG) result: {y1}")
@@ -1739,21 +1761,119 @@ def do(symbol="", p2="", p3=""):
     config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
     description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
     time_window_size = dataset_config['time_window_size']
-    i_index = (tuple(nddf[symbol].loc[nddf[symbol]['SIG_SMA5813'] == 0].index))
 
-    stimt = 0
-    print(stimt, len(i_index))
-    for i_ndx in tqdm(i_index):
-        i_array = ndf.get_dataset_by_index(symbol, i_ndx, time_window_size, original_fields, contras)
+    # ndf.vector_qualify(symbol=symbol,
+    #                    sig_suffix="SMA5813",
+    #                    stock_size=dataset_config['stock_size'],
+    #                    min_profit=dataset_config['min_profit'],
+    #                    min_step_profit=dataset_config['min_step_profit'],
+    #                    stop=dataset_config['stop'],
+    #                    steps=dataset_config['steps'],
+    #                    overlay_steps=dataset_config['overlay_steps'],
+    #                    full=True)
+    #
+    # ndf.set_dt_order(symbol)
+    # # nddb.write(symbol)
+    #
+    # y_type, y_cases = np.unique(nddf[symbol]['y_SMA5813_FULL'], return_counts=True)
+    # print('  y unique: ' + str(y_type) + " " + str(y_cases))
+
+    ago = algo_trade()
+
+    steps = 0
+    for ix in range(590, 750000):
+        # print(ix, "-" * 80)
+        res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813']])
+        price = res[0]
+        sig = res[1]
+        qt = ago.get_qt(price)
+
+        i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
         i_array = i_array.reshape(1, -1)
         X = norm_model.transform(i_array)
         X = X_transform(X)
         y_predict = np.argmax(tf_model.predict(X))
-        # print(y_predict)
-        if y_predict == 0:
-            stimt += 1
 
-    print(stimt, len(i_index))
+        # print('sig: ', sig, 'y_predict: ', y_predict, 'price: ', price, 'qt: ', qt, "steps: ", steps)
+
+        if sig == 0:
+            if y_predict == 0:
+                if ago.qt < 0:
+                    ago.stop(price)
+                    # print("buy stop")
+                ago.buy(qt, price)
+                steps = 0
+                # print("buy")
+
+            else:
+                if ago.trailer(price):
+                    # print("buy trailer stop")
+                    steps = 0
+                else:
+                    # print("buy silent trailer")
+                    steps += 1
+
+        elif sig == 1:
+            if y_predict == 1:
+                if ago.qt > 0:
+                    ago.stop(price)
+                    # print("sell stop")
+                ago.sell(qt, price)
+                # print("sell")
+                steps = 0
+            else:
+                if ago.trailer(price):
+                    steps = 0
+                    # print("sell trailer stop")
+                else:
+                    # print("sell silent trailer")
+                    steps += 1
+        else:
+            if ago.trailer(price):
+                # print("3-4 trailer stop")
+                steps = 0
+            else:
+                # print("3-4 silent trailer")
+                steps += 1
+
+        if steps >= 30:
+            if ago.qt != 0:
+                # print("steps over stop")
+                ago.stop(price)
+            steps = 0
+
+        if ix % 1000 == 0:
+            print(ix, ago.get_position())
+
+
+    # for i_y in range(0, 4):
+    #     i_index = (tuple(nddf[symbol].loc[nddf[symbol]['y_SMA5813_FULL'] == i_y].index))
+    #     # i_index = i_index[0:1000]
+    #
+    #     qf_good = 0
+    #     qf_bad = 0
+    #     for i_ndx in i_index:
+    #         i_array = ndf.get_dataset_by_index(symbol, i_ndx, time_window_size, original_fields, contras)
+    #         i_array = i_array.reshape(1, -1)
+    #         X = norm_model.transform(i_array)
+    #         X = X_transform(X)
+    #         y_predict = np.argmax(tf_model.predict(X))
+    #         # print(y_predict)
+    #         if i_y == 0:
+    #             if y_predict == 0:
+    #                 qf_good += 1
+    #             elif y_predict == 1:
+    #                 qf_bad += 1
+    #         elif i_y == 1:
+    #             if y_predict == 1:
+    #                 qf_good += 1
+    #             elif y_predict == 0:
+    #                 qf_bad += 1
+    #         elif i_y == 2 or i_y == 3:
+    #             if y_predict == 0 or y_predict == 1:
+    #                 qf_bad += 1
+    #
+    #     print(f"position: {i_y} good: {qf_good}, bad: {qf_bad} / len: {len(i_index)}")
 
 
     # symbol = "APA"
