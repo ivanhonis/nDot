@@ -36,7 +36,7 @@ import time
 import sys  # a test parancs használja hdd szabad hely kiíratására
 # from multiprocessing import Process
 import threading  # info párhuzamosítva van illetve ndf.add
-import random  # a image előállításához kell random mintavétel
+# import random  # a image előállításához kell random mintavétel
 import pickle
 import json  # dataset config beolvasóhoz kell
 import re  # dataset config beolvasóhoz kell
@@ -55,7 +55,7 @@ from classes.algo_trade import algo_trade
 # # Ai components
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras.models import load_model
-from tqdm import tqdm
+# from tqdm import tqdm
 
 # import websocket
 
@@ -902,9 +902,11 @@ class n_date_frame2:
                     i_data_array = np.append(i_data_array, i_new)
         return i_data_array
 
-    def create_dataset(self, symbol, project_name):
+    def create_dataset(self, symbol, project_name, full=False):
 
         def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras):
+
+            array_len = time_window_size * (len(original_fields) + len(contras))
 
             for i_il in indexes:
                 i_data_array = self.get_dataset_by_index(symbol=symbol,
@@ -912,8 +914,10 @@ class n_date_frame2:
                                                          time_window_size=time_window_size,
                                                          original_fields=original_fields,
                                                          contras=contras)
-                nd_dset.add_X(i_data_array)
-                nd_dset.add_y(y)
+
+                if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+                    nd_dset.add_X(i_data_array)
+                    nd_dset.add_y(y)
 
         config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
         file = pathlib.Path(config_file_path)
@@ -934,6 +938,8 @@ class n_date_frame2:
             if field_ok_basic and field_ok_original_fields and field_ok_contras:
                 time_window_size = dataset_config["time_window_size"]
                 y_field = "y_" + dataset_config["sig_suffix"]
+                if full:
+                    y_field = y_field + "_FULL"
 
                 ndf.vector_qualify(symbol,
                                    sig_suffix=dataset_config["sig_suffix"],
@@ -942,7 +948,8 @@ class n_date_frame2:
                                    min_step_profit=dataset_config["min_step_profit"],
                                    stop=dataset_config["stop"],
                                    steps=dataset_config["steps"],
-                                   overlay_steps=dataset_config["overlay_steps"])
+                                   overlay_steps=dataset_config["overlay_steps"],
+                                   full=full)
 
                 self.set_dt_order(symbol)
                 nddb.write(symbol)
@@ -965,16 +972,23 @@ class n_date_frame2:
                 nd_dset.add_y_names(y_names)
                 #  beteszem a 'good' signálokat -----------------------------------------
 
-                i_index_good_long = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 0].index))
-                i_index_good_short = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 1].index))
+                i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 0].index)
+                i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + 2)]
+                i_index_good_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 1].index)
+                i_index_good_short = i_index_good_short[(i_index_good_short > time_window_size + 2)]
 
-                i_index_bad_long = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 2].index))
-                i_index_bad_short = (tuple(nddf[symbol].loc[nddf[symbol][y_field] == 3].index))
+                i_index_bad_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 2].index)
+                i_index_bad_long = i_index_bad_long[(i_index_bad_long > time_window_size + 2)]
+                i_index_bad_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 3].index)
+                i_index_bad_short = i_index_bad_short[(i_index_bad_short > time_window_size + 2)]
 
-                max_signals = min(  len(i_index_good_long),
-                                    len(i_index_good_short),
-                                    len(i_index_bad_long),
-                                    len(i_index_bad_short))
+                # max_signals = min(  len(i_index_good_long),
+                #                     len(i_index_good_short),
+                #                     len(i_index_bad_long),
+                #                     len(i_index_bad_short))
+                #
+
+                max_signals = 10000
 
                 i_index_good_long = i_index_good_long[0:max_signals]
                 i_index_good_short = i_index_good_short[0:max_signals]
@@ -1101,7 +1115,7 @@ class n_date_frame2:
         # original_df = nddf[symbol][[long_field, short_field]].copy()
 
         log(f"ndf->vector_qualify: {stock_size} USD p/s:" +
-            f"{min_profit}/{stop} steps:{steps} overlay steps:{overlay_steps}")
+            f"{min_profit}/{stop} steps:{steps} overlay steps:{overlay_steps} full: {str(full)}")
         
         s2(True, 22)
 
@@ -1777,22 +1791,30 @@ def do(symbol="", p2="", p3=""):
     #
     # y_type, y_cases = np.unique(nddf[symbol]['y_SMA5813_FULL'], return_counts=True)
     # print('  y unique: ' + str(y_type) + " " + str(y_cases))
-
+    x_from = np.random.randint(5000, 7000)
+    x_to = 1 + x_from + 25000
+    pdf = pd.DataFrame(columns=['profit'])
     ago = algo_trade()
-
     steps = 0
-    for ix in range(590, 750000):
+    res = tuple(nddf[symbol].loc[x_from, ['ohlc4', 'SIG_SMA5813', 'Date']])
+    basis_date = res[2]
+    for ix in range(x_from, x_to):
         # print(ix, "-" * 80)
-        res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813']])
+        res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
         price = res[0]
         sig = res[1]
+        date = res[2]
         qt = ago.get_qt(price)
+        ago.stop_limit = -50
+        ago.trailer_stop = .2
+        ago.min_profit = 20
 
-        i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-        i_array = i_array.reshape(1, -1)
-        X = norm_model.transform(i_array)
-        X = X_transform(X)
-        y_predict = np.argmax(tf_model.predict(X))
+        if sig == 0 or sig == 1:
+            i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
+            i_array = i_array.reshape(1, -1)
+            X = norm_model.transform(i_array)
+            X = X_transform(X)
+            y_predict = np.argmax(tf_model.predict(X))
 
         # print('sig: ', sig, 'y_predict: ', y_predict, 'price: ', price, 'qt: ', qt, "steps: ", steps)
 
@@ -1842,8 +1864,178 @@ def do(symbol="", p2="", p3=""):
                 ago.stop(price)
             steps = 0
 
-        if ix % 1000 == 0:
-            print(ix, ago.get_position())
+        if ix % 5000 == 0:
+            i_p, i_dc = ago.get_position()
+            i_wd = np.busday_count(str(basis_date.date()), str(date.date()))
+            i_wd = max(1, i_wd)
+            print(f"{ix-x_from} - profit/wday: {int(i_p/i_wd)} deal/wday: {int(i_dc/i_wd)} wday: {i_wd}")
+
+        pdf = pdf.append({'profit': ago.profit}, ignore_index=True)
+
+
+# ---------------------------------
+
+    del ago
+    pdf3 = pd.DataFrame(columns=['profit_limit_setter'])
+    ago = algo_trade()
+    steps = 0
+    for ix in range(x_from, x_to):
+        # print(ix, "-" * 80)
+        res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
+        price = res[0]
+        sig = res[1]
+        date = res[2]
+        qt = ago.get_qt(price)
+
+        if sig == 0 or sig == 1:
+            i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
+            i_array = i_array.reshape(1, -1)
+            X = norm_model.transform(i_array)
+            X = X_transform(X)
+            y_predict = np.argmax(tf_model.predict(X))
+
+        if sig == 0:
+            if y_predict == 0:
+                ago.stop_limit = -50
+                ago.trailer_stop = .2
+                ago.min_profit = 20
+            else:
+                ago.stop_limit = -10
+                ago.trailer_stop = .1
+                ago.min_profit = 10
+
+            if ago.qt < 0:
+                ago.stop(price)
+            ago.buy(qt, price)
+            steps = 0
+
+        elif sig == 1:
+            if y_predict == 0:
+                ago.stop_limit = -50
+                ago.trailer_stop = .2
+                ago.min_profit = 20
+            else:
+                ago.stop_limit = -10
+                ago.trailer_stop = .1
+                ago.min_profit = 10
+
+            if ago.qt > 0:
+                ago.stop(price)
+            ago.sell(qt, price)
+            steps = 0
+
+        else:
+            if ago.trailer(price):
+                steps = 0
+            else:
+                steps += 1
+
+        if steps >= 30:
+            if ago.qt != 0:
+                ago.stop(price)
+            steps = 0
+
+        if ix % 5000 == 0:
+            i_p, i_dc = ago.get_position()
+            i_wd = np.busday_count(str(basis_date.date()), str(date.date()))
+            i_wd = max(1, i_wd)
+            print(f"{ix-x_from} - profit/wday: {int(i_p/i_wd)} deal/wday: {int(i_dc/i_wd)} wday: {i_wd}")
+
+        pdf3 = pdf3.append({'profit_limit_setter': ago.profit}, ignore_index=True)
+
+    pdf['profit_limit_setter'] = pdf3['profit_limit_setter']
+# ----------------------------------
+
+    del ago
+    ago = algo_trade()
+    ago.stop_limit = -50
+    ago.trailer_stop = .2
+    ago.min_profit = 20
+    steps = 0
+    pdf2 = pd.DataFrame(columns=['rnd_profit'])
+    for ix in range(x_from, x_to):
+        # print(ix, "-" * 80)
+        res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
+        price = res[0]
+        sig = res[1]
+        date = res[2]
+        qt = ago.get_qt(price)
+
+        y_predict = sig
+
+        if sig == 0:
+            if y_predict == 0:
+                if ago.qt < 0:
+                    ago.stop(price)
+                    # print("buy stop")
+                ago.buy(qt, price)
+                steps = 0
+                # print("buy")
+
+            else:
+                if ago.trailer(price):
+                    # print("buy trailer stop")
+                    steps = 0
+                else:
+                    # print("buy silent trailer")
+                    steps += 1
+
+        elif sig == 1:
+            if y_predict == 1:
+                if ago.qt > 0:
+                    ago.stop(price)
+                    # print("sell stop")
+                ago.sell(qt, price)
+                # print("sell")
+                steps = 0
+            else:
+                if ago.trailer(price):
+                    steps = 0
+                    # print("sell trailer stop")
+                else:
+                    # print("sell silent trailer")
+                    steps += 1
+        else:
+            if ago.trailer(price):
+                # print("3-4 trailer stop")
+                steps = 0
+            else:
+                # print("3-4 silent trailer")
+                steps += 1
+
+        if steps >= 30:
+            if ago.qt != 0:
+                # print("steps over stop")
+                ago.stop(price)
+            steps = 0
+
+        if ix % 5000 == 0:
+            i_p, i_dc = ago.get_position()
+            i_wd = np.busday_count(str(basis_date.date()), str(date.date()))
+            i_wd = max(1, i_wd)
+            print(f"{ix-x_from} - profit/wday: {int(i_p/i_wd)} deal/wday: {int(i_dc/i_wd)} wday: {i_wd}")
+
+        pdf2 = pdf2.append({'rnd_profit': ago.profit}, ignore_index=True)
+
+    pdf['rnd_profit'] = pdf2['rnd_profit']
+    from bokeh.io import output_file, show
+    from bokeh.plotting import figure
+    from bokeh.models import ColumnDataSource
+    output_file("nchart.html")
+    stock = ColumnDataSource(pdf)
+    p = figure(sizing_mode='fixed',
+               plot_width=1330,
+               plot_height=220,
+               toolbar_location="left",
+               y_axis_location="right",
+               tools="xpan,xwheel_zoom,reset",
+               title="Profit")
+
+    p.line('index', 'profit', color="#0000ff", source=stock)
+    p.line('index', 'rnd_profit', color="#ff0000", source=stock)
+    p.line('index', 'profit_limit_setter', color="#00ff00", source=stock)
+
+    show(p)
 
 
     # for i_y in range(0, 4):
@@ -2138,8 +2330,12 @@ def ndf_tech_refresh_all():
 #     ndf.create_images(symbol, images_for, contras)
 
 
-def ndf_dataset(symbol="", config_file=""):
-    ndf.create_dataset(symbol, config_file)
+def ndf_dataset(symbol="", config_file="", full=""):
+    if full == "FULL" or full == "full":
+        full = True
+    else:
+        full = False
+    ndf.create_dataset(symbol, config_file, full)
 
 
 def ndf_remove(symbol=""):
