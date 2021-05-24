@@ -17,7 +17,8 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 "min_step_profit" : 5, <ennél több lépésből kell, hogy létrejöjjön a profit, hirtelen kiugrásokat kiszűri>
 "stop" : -5, <stop loss mértéke>
 "steps" : 30, <maximum hány lépésből kell létrejönni a profitnak>
-"overlay_steps" : 30 <a szignálok nem fedhetik át egymást, eznem lehet kevesebb mint a steps>
+"overlay_steps" : 30, <a szignálok nem fedhetik át egymást, eznem lehet kevesebb mint a steps>
+"bad_overweight" : 10
 }
 
 ;
@@ -29,7 +30,13 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 "LOW_DIFF",
 "HIGH_DIFF",
 "ADX_8_ONE",
-"MACDh_12_26_9"
+"VWAP_D_R_OHLC4",
+"SMA_5_DIFF",
+"SMA_8_DIFF",
+"SMA_13_DIFF",
+"SMA_5_R_OHLC4",
+"SMA_8_R_OHLC4",
+"SMA_13_R_OHLC4"
 ]
 
 ;
@@ -39,5 +46,5 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <--------------------------------------------------->
 [
 "SPY_LOW_DIFF",
-"SPY_HIGH_DIFF"
+"SPY_HIGH_DIFF",
 ]

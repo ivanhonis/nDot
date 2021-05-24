@@ -45,6 +45,8 @@ class nchart:
         self.elements.append(self.chart_candlestick(i_df, name))
         self.elements.append(self.chart_vol(i_df, name))
         if len(indecators) > 0:
+            if 'VWAP' in indecators:
+                self.elements.append(self.chart_vwap(i_df, "VWAP"))
             if 'BREAKOUT' in indecators:
                 self.elements.append(self.chart_breakout(i_df, "BREAKOUT"))
             if 'SMA30' in indecators:
@@ -311,6 +313,39 @@ class nchart:
         p.outline_line_color = self.gray2
         # end default settings ------------------------------------------------------------------------------------
         return p
+
+    def chart_vwap(self, df, name):
+        stock = ColumnDataSource(df)
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=150,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+        # print ohlc4 price
+        p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        p.line('index', 'ohlc4', color=self.blue, source=stock)
+
+        p.line('index', 'VWAP_D', color=self.green, legend_label="VWAP_D", source=stock)
+        p.legend.visible = False
+
+        # start default settings  ----------------------------------------------------------------------------------
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+        return p
+
 
     def chart_sma_60(self, df, name):
         stock = ColumnDataSource(df)

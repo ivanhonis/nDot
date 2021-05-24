@@ -5,12 +5,13 @@ class algo_trade:
         self.avg_income_price = 0
         self.income_volume = 0  # position + avg_price
         self.trailer_profit = 0
-        self.profit = 0
+        self.realised_profit = 0
         self.trailer_stop = .5
         self.stock_size = 30000  # in USD
         self.stop_limit = -10
         self.min_profit = 10
         self.deal_count = 0
+        self.act_profit = 0
 
     def buy(self, qt, price):
         self.income_volume += int(qt * price)
@@ -27,7 +28,7 @@ class algo_trade:
         self.deal_count +=1
 
     def stop(self, price):
-        self.profit += int((price - self.avg_income_price) * self.qt)
+        self.realised_profit += int((price - self.avg_income_price) * self.qt)
         self.qt = 0
         self.avg_income_price = 0
         self.income_volume = 0  # position + avg_price
@@ -35,25 +36,25 @@ class algo_trade:
         self.deal_count += 1
 
     def trailer(self, price):
-        act_profit = int((price - self.avg_income_price) * self.qt)
+        self.act_profit = int((price - self.avg_income_price) * self.qt)
 
-        if self.qt != 0 and act_profit != self.trailer_profit:
+        if self.qt != 0 and self.act_profit != self.trailer_profit:
 
-            if act_profit < self.stop_limit:
+            if self.act_profit < self.stop_limit:
                 self.stop(price)
                 i_return = True
             else:
 
                 percent = (1 - self.trailer_stop)
-                if act_profit < self.trailer_profit * percent:
-                    if act_profit < self.min_profit:
-                        self.trailer_profit = max(act_profit, self.trailer_profit)
+                if self.act_profit < self.trailer_profit * percent:
+                    if self.act_profit < self.min_profit:
+                        self.trailer_profit = max(self.act_profit, self.trailer_profit)
                         i_return = False
                     else:
                         self.stop(price)
                         i_return = True
                 else:
-                    self.trailer_profit = max(act_profit, self.trailer_profit)
+                    self.trailer_profit = max(self.act_profit, self.trailer_profit)
 
                     i_return = False
                     # print("TRAILER rise")
@@ -72,11 +73,17 @@ class algo_trade:
         #       f"{self.avg_income_price} income_volume: {self.income_volume} / {self.trailer_volume}")
 
     def get_position(self):
-        return [self.profit,self.deal_count]
+        return [self.realised_profit, self.deal_count]
 
         # return (f"profit: {self.profit} qt: {self.qt} avg_income_price:" +
         #       f"{round(self.avg_income_price, 2)} income_volume: {self.income_volume}" +
         #         f" trailer_profit: {self.trailer_profit} deal count: {self.deal_count}")
+
+    def get_pd(self):
+        return {'realised_profit': self.realised_profit,
+                'act_profit': self.trailer_profit,
+                'trailer_profit': self.trailer_profit,
+                'stock_size': self.stock_size}
 
 # ago = algo_trade()
 #
