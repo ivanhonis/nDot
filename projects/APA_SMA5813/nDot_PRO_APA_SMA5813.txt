@@ -29,6 +29,7 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 [
 "LOW_DIFF",
 "HIGH_DIFF",
+"VOLUME_DIFF",
 "ADX_8_ONE",
 "VWAP_D_R_OHLC4",
 "SMA_5_DIFF",

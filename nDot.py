@@ -1,4 +1,6 @@
 # detect is it a local running environment or a cloud running environment
+import random
+
 print("Status: Checking environment.")
 try:
     with open('local_run.txt') as f:
@@ -181,17 +183,17 @@ if LocalRUN:
             self.Tr_info_refresh.clicked.connect(tr_info_refresh)
 
             # Date time setter ----------------------------------------
-            i_now = datetime.now()
-            self.From_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-            self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-            self.From_T.setTime(QTime(i_now.hour, i_now.minute))
-            self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-            self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
-            self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
-            self.Datetime_mod3.clicked.connect(partial(self.date_modifier, "days", 2))
-            self.Datetime_mod4.clicked.connect(partial(self.date_modifier, "days", 4))
-            self.Datetime_mod5.clicked.connect(partial(self.date_modifier, "days", 30))
-            self.Datetime_now.clicked.connect(self.date_now)
+            # i_now = datetime.now()
+            # self.From_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
+            # self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
+            # self.From_T.setTime(QTime(i_now.hour, i_now.minute))
+            # self.To_T.setTime(QTime(i_now.hour, i_now.minute))
+            # self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
+            # self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
+            # self.Datetime_mod3.clicked.connect(partial(self.date_modifier, "days", 2))
+            # self.Datetime_mod4.clicked.connect(partial(self.date_modifier, "days", 4))
+            # self.Datetime_mod5.clicked.connect(partial(self.date_modifier, "days", 30))
+            # self.Datetime_now.clicked.connect(self.date_now)
 
         def refresh_ui(self, mode="full"):
 
@@ -299,15 +301,15 @@ if LocalRUN:
 
         # GUI - DateTime Block  -----------------------------------------------------------
 
-        def date_now(self):
-            i_now = datetime.now()
-            self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-            self.To_T.setTime(QTime(i_now.hour, i_now.minute))
+        # def date_now(self):
+        #     i_now = datetime.now()
+        #     self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
+        #     self.To_T.setTime(QTime(i_now.hour, i_now.minute))
 
-        def date_modifier(self, interval_type, interval_num):
-            i_nowp = datetime.now() - timedelta(**{interval_type: interval_num})
-            self.From_D.setDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
-            self.From_T.setTime(QTime(i_nowp.hour, i_nowp.minute))
+        # def date_modifier(self, interval_type, interval_num):
+        #     i_nowp = datetime.now() - timedelta(**{interval_type: interval_num})
+        #     self.From_D.setDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
+        #     self.From_T.setTime(QTime(i_nowp.hour, i_nowp.minute))
 
         # GUI - Commands -----------------------------------------------------------
 
@@ -806,7 +808,7 @@ class n_date_frame2:
                          'SMA_5_R_OHLC4', 'SMA_8_R_OHLC4', 'SMA_13_R_OHLC4']],
             ['PRICE_DIFF', ['LOW_DIFF', 'HIGH_DIFF',
                             'OPEN_DIFF', 'CLOSE_DIFF',
-                            'OHLC4_DIFF']],
+                            'OHLC4_DIFF', 'VOLUME_DIFF']],
             ['RSI14', ['RSI_14']],
             ['MACD', ['MACD_12_2', 'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9']],
             ['BREAKOUT', ['SIG_BREAKOUT']],
@@ -1105,7 +1107,7 @@ class n_date_frame2:
 
         else:
             log("config file is missing:" + str(config_file_path))
-        s("")
+
 
     def get_first_signal(self, symbol, long_field, short_field, long_field_first, short_field_first):
         nddf[symbol][long_field_first] = ~(nddf[symbol][long_field] == nddf[symbol][long_field].shift(1)) & \
@@ -1459,6 +1461,7 @@ class n_date_frame2:
                 nddf[symbol]["OPEN_DIFF"] = (nddf[symbol]["Open"] / nddf[symbol]["Open"].shift(1)) - 1
                 nddf[symbol]["CLOSE_DIFF"] = (nddf[symbol]["Close"] / nddf[symbol]["Close"].shift(1)) - 1
                 nddf[symbol]["OHLC4_DIFF"] = (nddf[symbol]["ohlc4"] / nddf[symbol]["ohlc4"].shift(1)) - 1
+                nddf[symbol]["VOLUME_DIFF"] = (nddf[symbol]["Volume"] / nddf[symbol]["Volume"].shift(1)) - 1
                 ndf.set_dt_order(symbol)
                 nddb.write(symbol)
 
@@ -1797,44 +1800,53 @@ def do(symbol="", p2="", p3=""):
 
     to_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name
 
+    # copy modell
     from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_TF_MODEL_" + project_name + ".h5"
     copy2(from_path, to_path)
 
+    # copy normal model
     from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_MinMaxScaler_" + project_name + ".pickle"
     copy2(from_path, to_path)
 
+    # init norm model from local drive
     local_path = "projects/" + project_name + "/" + "nDot_MinMaxScaler_" + project_name + ".pickle"
     norm_model = pickle.load(open(local_path, "rb"))
-    print(norm_model)
 
+    # load tf_model fromlocl drive
     local_path = 'projects/' + project_name + '/nDot_TF_MODEL_' + project_name + '.h5'
     tf_model = load_model(local_path)
-    # print(new_model.summary())
-
-    dataset_path = 'projects/' + project_name + '/nDot_DATASET_' + project_name + '.pickle'
-
-    def X_transform(X):
-        X = np.array(X)
-        X = np.reshape(X, (X.shape[0], 1, X.shape[1]))
-        return X
-
-    symbol = "APA"
 
     config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
     gdc_ok, description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
     time_window_size = dataset_config['time_window_size']
+    fields_plus_contras = len(original_fields) + len(contras)
 
-    print(dataset_path)
-    nds = pickle.load(open(dataset_path, "rb"))
-    X = nds['X']
-    print(X.shape)
-    X_norm = norm_model.transform(X)
-    print(X_norm.min())
-    print(X_norm.max())
+    # dataset_path = 'projects/' + project_name + '/nDot_DATASET_' + project_name + '.pickle'
 
-    X_nomr_reshaped = X_transform(X_norm)
-    y_predict = tf_model.predict(X_nomr_reshaped)
-    print(np.argmax(y_predict, axis=1).sum())
+    # def X_transform(X):
+    #     X = np.array(X)
+    #     X = np.reshape(X, (X.shape[0], 1, X.shape[1]))
+    #     return X
+
+    def x_transform(x_np, time_window_size, fields_plus_contras):
+        x_np_mod = np.array(x_np)
+        x_np_mod_reshaped = np.reshape(x_np_mod, (x_np_mod.shape[0], time_window_size, fields_plus_contras))
+        return x_np_mod_reshaped
+
+
+
+
+    # print(dataset_path)
+    # nds = pickle.load(open(dataset_path, "rb"))
+    # X = nds['X']
+    # print(X.shape)
+    # X_norm = norm_model.transform(X)
+    # print(X_norm.min())
+    # print(X_norm.max())
+    #
+    # X_nomr_reshaped = X_transform(X_norm)
+    # y_predict = tf_model.predict(X_nomr_reshaped)
+    # print(np.argmax(y_predict, axis=1).sum())
 
     # for ni in range(0,4):
     #     print(ni)
@@ -1856,358 +1868,111 @@ def do(symbol="", p2="", p3=""):
     #             goodi += 1
     #     print(len(i_index_good_long), goodi, goodi / len(i_index_good_long))
 
-
-
-
-
     run = True
     if run:
-
+        symbol = "APA"
         x_from = np.random.randint(1000, 700000)
-        x_to = 1 + x_from + 5000
+        x_to = 1 + x_from + 3000
         res = tuple(nddf[symbol].loc[x_from, ['ohlc4', 'SIG_SMA5813', 'Date']])
         basis_date = res[2]
-        # pdf = pd.DataFrame(columns=['profit', 'act_profit'])
-        # ago = algo_trade()
-        # steps = 0
 
-        # for ix in range(x_from, x_to):
-        #     # print(ix, "-" * 80)
-        #     res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
-        #     price = res[0]
-        #     sig = res[1]
-        #     date = res[2]
-        #     qt = ago.get_qt(price)
-        #     # ago.stop_limit = -50
-        #     # ago.trailer_stop = .2
-        #     # ago.min_profit = 20
-        #
-        #     if sig in [0, 1]:
-        #         i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-        #         i_array = i_array.reshape(1, -1)
-        #         # print(i_array)
-        #         X_norm = norm_model.transform(i_array)
-        #         # print(X_norm.max(), X_norm.min())
-        #         X_nomr_reshaped = X_transform(X_norm)
-        #         y_predict = tf_model.predict(X_nomr_reshaped)
-        #         y_predict = np.argmax(y_predict, axis=1)[0]
-        #         # print(sig, y_predict)
-        #
-        #     # print('sig: ', sig, 'y_predict: ', y_predict, 'price: ', price, 'qt: ', qt, "steps: ", steps)
-        #
-        #     if sig == 0:
-        #         if y_predict == 0:
-        #             print("ok", ix)
-        #             if ago.qt < 0:
-        #                 ago.stop(price)
-        #                 # print("buy stop")
-        #             ago.buy(qt, price)
-        #             steps = 0
-        #             # print("buy")
-        #
-        #         else:
-        #             if ago.trailer(price):
-        #                 # print("buy trailer stop")
-        #                 steps = 0
-        #             else:
-        #                 # print("buy silent trailer")
-        #                 steps += 1
-        #
-        #     elif sig == 1:
-        #         if y_predict == 1:
-        #             print("ok", ix)
-        #             if ago.qt > 0:
-        #                 ago.stop(price)
-        #                 # print("sell stop")
-        #             ago.sell(qt, price)
-        #             # print("sell")
-        #             steps = 0
-        #         else:
-        #             if ago.trailer(price):
-        #                 steps = 0
-        #                 # print("sell trailer stop")
-        #             else:
-        #                 # print("sell silent trailer")
-        #                 steps += 1
-        #     else:
-        #         if ago.trailer(price):
-        #             # print("3-4 trailer stop")
-        #             steps = 0
-        #         else:
-        #             # print("3-4 silent trailer")
-        #             steps += 1
-        #
-        #     if steps >= 30:
-        #         if ago.qt != 0:
-        #             # print("steps over stop")
-        #             ago.stop(price)
-        #         steps = 0
-        #
-        #     if ix % 5000 == 0:
-        #         i_p, i_dc = ago.get_position()
-        #         i_wd = np.busday_count(str(basis_date.date()), str(date.date()))
-        #         i_wd = max(1, i_wd)
-        #         print(f"{ix-x_from} - profit/wday: {int(i_p/i_wd)} deal/wday: {int(i_dc/i_wd)} wday: {i_wd}")
-        #
-        #     pdf = pdf.append(ago.get_pd(), ignore_index=True)
+        apa_algo_indicator = algo_trade()
+        apa_algo_indicator.config({"name": "APA_ind",
+                                   "value_limit": 40000,
+                                   "stock_size": 19000,
+                                   "stop_loss_limit": -10,
+                                   "trailer_stop": .04,
+                                   "trailer_min_profit": 10,
+                                   "value_limit_profit_reinvest": True,
+                                   "steps_limit": 45,
+                                   "strategy": 1,
+                                   "trade_time_start": (15, 30),
+                                   "trade_time_stop": (21, 30)
+                                   })
 
-    # ---------------------------------
+        apa_algo_ai_decision = algo_trade()
+        apa_algo_ai_decision.config({"name": "APA_ai_decision",
+                                     "value_limit": 40000,
+                                     "stock_size": 19000,
+                                     "stop_loss_limit": -10,
+                                     "trailer_stop": .04,
+                                     "trailer_min_profit": 10,
+                                     "value_limit_profit_reinvest": True,
+                                     "steps_limit": 45,
+                                     "strategy": 2,
+                                     "trade_time_start": (15, 30),
+                                     "trade_time_stop": (21, 30)
+                                     })
 
-        # del ago
-        # pdf = pd.DataFrame(None)
-        # ago = algo_trade()
-        # steps = 0
-        # for ix in range(x_from, x_to):
-        #     # print(ix, "-" * 80)
-        #     res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
-        #     price = res[0]
-        #     sig = res[1]
-        #     date = res[2]
-        #     qt = ago.get_qt(price)
-        #
-        #     if sig == 0 or sig == 1:
-        #         i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-        #         i_array = i_array.reshape(1, -1)
-        #         # print(i_array)
-        #         X_norm = norm_model.transform(i_array)
-        #         # print(X_norm.max(), X_norm.min())
-        #         X_nomr_reshaped = X_transform(X_norm)
-        #         y_predict = tf_model.predict(X_nomr_reshaped)
-        #         y_predict = np.argmax(y_predict, axis=1)[0]
-        #         # print(sig, y_predict)
-        #
-        #     if sig == 0:
-        #         if y_predict == 0:
-        #             ago.stock_size = 50000
-        #             ago.stop_limit = -15
-        #             ago.trailer_stop = .15
-        #             ago.min_profit = 15
-        #         else:
-        #             ago.stock_size = 30000
-        #             ago.stop_limit = -5
-        #             ago.trailer_stop = .5
-        #             ago.min_profit = 5
-        #
-        #         if ago.qt < 0:
-        #             ago.stop(price)
-        #         ago.buy(qt, price)
-        #         steps = 0
-        #
-        #     elif sig == 1:
-        #         if y_predict == 0:
-        #             ago.stock_size = 50000
-        #             ago.stop_limit = -15
-        #             ago.trailer_stop = .15
-        #             ago.min_profit = 15
-        #         else:
-        #             ago.stock_size = 30000
-        #             ago.stop_limit = -5
-        #             ago.trailer_stop = .5
-        #             ago.min_profit = 5
-        #
-        #         if ago.qt > 0:
-        #             ago.stop(price)
-        #         ago.sell(qt, price)
-        #         steps = 0
-        #
-        #     else:
-        #         if ago.trailer(price):
-        #             steps = 0
-        #         else:
-        #             steps += 1
-        #
-        #     if steps >= 30:
-        #         if ago.qt != 0:
-        #             ago.stop(price)
-        #         steps = 0
-        #
-        #     if ix % 1000 == 0:
-        #         i_p, i_dc = ago.get_position()
-        #         i_wd = np.busday_count(str(basis_date.date()), str(date.date()))
-        #         i_wd = max(1, i_wd)
-        #         print(f"{ix-x_from} - profit/wday: {int(i_p/i_wd)} deal/wday: {int(i_dc/i_wd)} wday: {i_wd}")
-        #
-        #     pdf = pdf.append(ago.get_pd(), ignore_index=True)
+        apa_algo_ai_limitter = algo_trade()
+        apa_algo_ai_limitter.config({"name": "APA_ai_limitter",
+                                     "value_limit": 40000,
+                                     "stock_size": 19000,
+                                     "stop_loss_limit": -10,
+                                     "trailer_stop": .04,
+                                     "trailer_min_profit": 10,
+                                     "value_limit_profit_reinvest": True,
+                                     "steps_limit": 45,
+                                     "strategy": 3,
+                                     "trade_time_start": (15, 30),
+                                     "trade_time_stop": (21, 30)
+                                     })
 
-        pdf = pd.DataFrame(None)
-        ago = algo_trade()
-        steps = 0
+        apa_algo_rnd = algo_trade()
+        apa_algo_rnd.config({"name": "APA_rnd",
+                             "value_limit": 40000,
+                             "stock_size": 19000,
+                             "stop_loss_limit": -10,
+                             "trailer_stop": .04,
+                             "trailer_min_profit": 10,
+                             "value_limit_profit_reinvest": True,
+                             "steps_limit": 45,
+                             "strategy": 1,
+                             "trade_time_start": (15, 30),
+                             "trade_time_stop": (21, 30)
+                             })
+
         for ix in range(x_from, x_to):
             # print(ix, "-" * 80)
             res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
             price = res[0]
             sig = res[1]
-            date = res[2]
-            qt = ago.get_qt(price)
+            date_time = res[2]
 
-            i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-            i_array = i_array.reshape(1, -1)
-            # print(i_array)
-            X_norm = norm_model.transform(i_array)
-            # print(X_norm.max(), X_norm.min())
-            X_nomr_reshaped = X_transform(X_norm)
-            y_predict = tf_model.predict(X_nomr_reshaped)
-            y_predict = np.argmax(y_predict, axis=1)[0]
-                # print(sig, y_predict)
-            if y_predict == 0:
-                if ago.qt < 0:
-                    ago.stop(price)
-                ago.buy(qt, price)
-                steps = 0
-            elif y_predict == 1:
-                if ago.qt > 0:
-                    ago.stop(price)
-                ago.sell(qt, price)
-                steps = 0
-
-            # if sig == 0:
-            #     if y_predict == 0:
-            #         ago.stock_size = 50000
-            #         ago.stop_limit = -15
-            #         ago.trailer_stop = .15
-            #         ago.min_profit = 15
-            #     else:
-            #         ago.stock_size = 30000
-            #         ago.stop_limit = -5
-            #         ago.trailer_stop = .5
-            #         ago.min_profit = 5
-            #
-            #     if ago.qt < 0:
-            #         ago.stop(price)
-            #     ago.buy(qt, price)
-            #     steps = 0
-            #
-            # elif sig == 1:
-            #     if y_predict == 0:
-            #         ago.stock_size = 50000
-            #         ago.stop_limit = -15
-            #         ago.trailer_stop = .15
-            #         ago.min_profit = 15
-            #     else:
-            #         ago.stock_size = 30000
-            #         ago.stop_limit = -5
-            #         ago.trailer_stop = .5
-            #         ago.min_profit = 5
-            #
-            #     if ago.qt > 0:
-            #         ago.stop(price)
-            #     ago.sell(qt, price)
-            #     steps = 0
-
+            if sig in [0, 1]:
+                i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
+                i_array = i_array.reshape(1, -1) # tömbe teszem a tömböt
+                x_norm = norm_model.transform(i_array)
+                x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
+                y_predict = tf_model.predict(x_nomr_reshaped)
+                y_predict_sig = np.argmax(y_predict, axis=1)[0]
+                y_predict_perc = y_predict[0][y_predict_sig]
             else:
-                if ago.trailer(price):
-                    steps = 0
-                else:
-                    steps += 1
+                y_predict_sig = 4
+                y_predict_perc = .5
 
-            if steps >= 30:
-                if ago.qt != 0:
-                    ago.stop(price)
-                steps = 0
+            apa_algo_indicator.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+            apa_algo_ai_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+            apa_algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
 
-            if ix % 1000 == 0:
-                i_p, i_dc = ago.get_position()
-                i_wd = np.busday_count(str(basis_date.date()), str(date.date()))
-                i_wd = max(1, i_wd)
-                print(f"{ix-x_from} - profit/wday: {int(i_p/i_wd)} deal/wday: {int(i_dc/i_wd)} wday: {i_wd}")
+            apa_algo_rnd.transaction(random.randint(0, 4), y_predict_sig, y_predict_perc, price, date_time)
 
-            pdf = pdf.append(ago.get_pd(), ignore_index=True)
+        log(f"in profit/day: {apa_algo_indicator.get_profit_per_day()} profit/closed deal: {apa_algo_indicator.get_profit_per_closed_deal()}")
+        log(f"closed_deal/day: {apa_algo_indicator.get_closed_deal_per_day()} transaction/day: {apa_algo_indicator.get_transaction_per_day()}")
 
+        log(f"dec profit/day: {apa_algo_ai_decision.get_profit_per_day()} profit/closed deal: {apa_algo_ai_decision.get_profit_per_closed_deal()}")
+        log(f"closed_deal/day: {apa_algo_ai_decision.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_decision.get_transaction_per_day()}")
 
-    #     pdf['profit_limit_setter'] = pdf3['profit_limit_setter']
-    # # ----------------------------------
-    #
-        del ago
-        ago = algo_trade()
-        ago.stop_limit = -50
-        ago.trailer_stop = .2
-        ago.min_profit = 20
-        steps = 0
-        pdf2 = pd.DataFrame(None)
-        for ix in range(x_from, x_to):
-            # print(ix, "-" * 80)
-            res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
-            price = res[0]
-            sig = res[1]
-            date = res[2]
-            qt = ago.get_qt(price)
+        log(f"lim profit/day: {apa_algo_ai_limitter.get_profit_per_day()} profit/closed deal: {apa_algo_ai_limitter.get_profit_per_closed_deal()}")
+        log(f"closed_deal/day: {apa_algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_limitter.get_transaction_per_day()}")
 
-            y_predict = sig
+        log(f"rnd profit/day: {apa_algo_rnd.get_profit_per_day()} profit/closed deal: {apa_algo_rnd.get_profit_per_closed_deal()}")
+        log(f"closed_deal/day: {apa_algo_rnd.get_closed_deal_per_day()} transaction/day: {apa_algo_rnd.get_transaction_per_day()}")
 
-            if sig == 0:
-                if y_predict == 0:
-                    if ago.qt < 0:
-                        ago.stop(price)
-                        # print("buy stop")
-                    ago.buy(qt, price)
-                    steps = 0
-                    # print("buy")
-
-                else:
-                    if ago.trailer(price):
-                        # print("buy trailer stop")
-                        steps = 0
-                    else:
-                        # print("buy silent trailer")
-                        steps += 1
-
-            elif sig == 1:
-                if y_predict == 1:
-                    if ago.qt > 0:
-                        ago.stop(price)
-                        # print("sell stop")
-                    ago.sell(qt, price)
-                    # print("sell")
-                    steps = 0
-                else:
-                    if ago.trailer(price):
-                        steps = 0
-                        # print("sell trailer stop")
-                    else:
-                        # print("sell silent trailer")
-                        steps += 1
-            else:
-                if ago.trailer(price):
-                    # print("3-4 trailer stop")
-                    steps = 0
-                else:
-                    # print("3-4 silent trailer")
-                    steps += 1
-
-            if steps >= 30:
-                if ago.qt != 0:
-                    # print("steps over stop")
-                    ago.stop(price)
-                steps = 0
-
-            if ix % 5000 == 0:
-                i_p, i_dc = ago.get_position()
-                i_wd = np.busday_count(str(basis_date.date()), str(date.date()))
-                i_wd = max(1, i_wd)
-                print(f"{ix-x_from} - profit/wday: {int(i_p/i_wd)} deal/wday: {int(i_dc/i_wd)} wday: {i_wd}")
-
-            pdf2 = pdf2.append(ago.get_pd(), ignore_index=True)
-    #
-        pdf['rnd_profit'] = pdf2['realised_profit']
-        from bokeh.io import output_file, show
-        from bokeh.plotting import figure
-        from bokeh.models import ColumnDataSource
-        output_file("nchart.html")
-        stock = ColumnDataSource(pdf)
-        p = figure(sizing_mode='fixed',
-                   plot_width=1330,
-                   plot_height=220,
-                   toolbar_location="left",
-                   y_axis_location="right",
-                   tools="xpan,xwheel_zoom,reset",
-                   title="Profit")
-
-        p.line('index', 'realised_profit', color="#0000ff", source=stock)
-        p.dot('index', 'act_profit', color="#0000ff", source=stock)
-        p.line('index', 'trailer_profit', color="#ff0000", source=stock)
-        # p.line('index', 'stock_size', color="#00ff00", source=stock)
-
-        show(p)
+        apa_algo_rnd.show_history()
+        apa_algo_indicator.show_history()
+        apa_algo_ai_decision.show_history()
+        apa_algo_ai_limitter.show_history()
 
 
     # for i_y in range(0, 4):
@@ -2508,6 +2273,7 @@ def ndf_dataset(symbol="", config_file="", full=""):
     else:
         full = False
     ndf.create_dataset(symbol, config_file, full)
+    s("")
 
 
 def ndf_remove(symbol=""):

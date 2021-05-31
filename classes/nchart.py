@@ -78,7 +78,7 @@ class nchart:
                 e.min_border_top = 0
             else:
                 if e.title.text != "ADX8" and e.title.text != "RSI14" and e.title.text != "MACD":
-                    ## ADX* és RSI14 nél nem kell összzárni a y rangeotmert az nem egyezik a részvény árfolyammal
+                    # ADX* és RSI14 nél nem kell összzárni a y rangeotmert az nem egyezik a részvény árfolyammal
                     e.y_range = self.elements[0].y_range
                 e.xaxis.visible = False
                 e.x_range = self.elements[0].x_range
