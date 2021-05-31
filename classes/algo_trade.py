@@ -253,14 +253,12 @@ class algo_trade:
     def action(self, decision, decision_qt, date_time):
         dt = np.datetime64(date_time).tolist().time()
         dd = np.datetime64(date_time).tolist().date()
-        if not np.is_busday(dd):
-            print("nem munkanap")
-        self.trading_days[str(dd)] = 0
         is_in_trade_time = datetime.time(*self.trade_time_start) < dt < datetime.time(*self.trade_time_stop)
 
         self.h_buy = False
         self.h_sell = False
-        if is_in_trade_time:
+        if is_in_trade_time and np.is_busday(dd):
+            self.trading_days[str(dd)] = 0  # day register for deal
             if self.steps < self.steps_limit or self.steps_limit == 0:
                 if decision == "BUY":
                     self.h_buy = True
@@ -326,7 +324,7 @@ class algo_trade:
         self.h_stop = False
 
     def show_history(self, last_n=10000000):
-        output_file(self.name + "_algo_history.html")
+        output_file("bokeh_html/" + self.name + "_algo_history.html")
         hdf = self.history.tail(last_n).copy()
         # hdf['index'] = hdf['actual_date_time']
         # hdf.set_index("actual_date_time", inplace=True)

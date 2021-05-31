@@ -40,9 +40,11 @@ import sys  # a test parancs használja hdd szabad hely kiíratására
 import threading  # info párhuzamosítva van illetve ndf.add
 # import random  # a image előállításához kell random mintavétel
 import pickle
+# import pickle as pickle
 import json  # dataset config beolvasóhoz kell
 import re  # dataset config beolvasóhoz kell
 import pathlib  # dataset config beolvasóhoz kell
+from shutil import copy2 # ai.download
 
 # User classes ------------------------------------------------------
 from classes.trade import trade
@@ -324,14 +326,12 @@ if LocalRUN:
                 ['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
                 ['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
                 # ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
-                # ['ndf.add', 'ndf_add', 'ndf.add <symbol>', 1],
                 ['ndf.add', 'ndf_add', 'ndf.add <symbol> <year(s)>', 1],
                 ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
                 ['ndf.tech.remove', 'ndf_tech_remove', 'ndf.tech.remove <symbol> <technical indicator>', 2],
                 ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
                 ['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
                 ['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
-                # ['ndf.images', 'ndf_images', 'ndf.images <symbol> <image> <contras: [symbol,symbol]>', 1],
                 ['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <config_file>', 1],
                 ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
                 ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
@@ -339,18 +339,11 @@ if LocalRUN:
                 ['ndf.info', 'ndf_info', 'ndf.info', 0],
                 ['ndf.columns', 'ndf_columns', 'ndf.columns', 0],
                 ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
-                # ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
-                # ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
                 # ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
-                # ['ndf.chart', 'ndf_chart', 'ndf.chart <symbol> UI date time', 1],
-                # ['ndf.chart.last', 'ndf_chart_last', 'ndf.chart.last <symbol> <numbers / optional>', 1],
-                # ['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
-                # ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
-                # ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
                 ['md.check', 'md_check', 'md.check <symbol>', 0],
                 ['md.symbols', 'md_symbols', 'md.symbols <market>', 0],
-                # ['bp.start', 'bp_start', 'bp.start <> ', 0],
-                # ['bp.stop', 'bp_stop', 'bp.stop <> ', 0],
+                ['ai.download', 'ai_download', 'ai.download <project name>', 0],
+                ['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project>', 3],
                 ['exit', 'exit', 'exit', 0]
             ]
             i_return = pd.DataFrame(i_return)
@@ -1793,26 +1786,16 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-    from shutil import copy2
     import pickle as pickle
     from sklearn import preprocessing
     project_name = "APA_SMA5813"
-
-    to_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name
-
-    # copy modell
-    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_TF_MODEL_" + project_name + ".h5"
-    copy2(from_path, to_path)
-
-    # copy normal model
-    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_MinMaxScaler_" + project_name + ".pickle"
-    copy2(from_path, to_path)
+    ai_download(project_name)
 
     # init norm model from local drive
     local_path = "projects/" + project_name + "/" + "nDot_MinMaxScaler_" + project_name + ".pickle"
     norm_model = pickle.load(open(local_path, "rb"))
 
-    # load tf_model fromlocl drive
+    # init tf_model fromlocl drive
     local_path = 'projects/' + project_name + '/nDot_TF_MODEL_' + project_name + '.h5'
     tf_model = load_model(local_path)
 
@@ -1821,57 +1804,20 @@ def do(symbol="", p2="", p3=""):
     time_window_size = dataset_config['time_window_size']
     fields_plus_contras = len(original_fields) + len(contras)
 
-    # dataset_path = 'projects/' + project_name + '/nDot_DATASET_' + project_name + '.pickle'
-
-    # def X_transform(X):
-    #     X = np.array(X)
-    #     X = np.reshape(X, (X.shape[0], 1, X.shape[1]))
-    #     return X
-
     def x_transform(x_np, time_window_size, fields_plus_contras):
         x_np_mod = np.array(x_np)
         x_np_mod_reshaped = np.reshape(x_np_mod, (x_np_mod.shape[0], time_window_size, fields_plus_contras))
         return x_np_mod_reshaped
 
 
-
-
-    # print(dataset_path)
-    # nds = pickle.load(open(dataset_path, "rb"))
-    # X = nds['X']
-    # print(X.shape)
-    # X_norm = norm_model.transform(X)
-    # print(X_norm.min())
-    # print(X_norm.max())
-    #
-    # X_nomr_reshaped = X_transform(X_norm)
-    # y_predict = tf_model.predict(X_nomr_reshaped)
-    # print(np.argmax(y_predict, axis=1).sum())
-
-    # for ni in range(0,4):
-    #     print(ni)
-    #     i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol]['y_SMA5813'] == ni].index)
-    #     i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + 2)]
-    #     # print(i_index_good_long)
-    #
-    #     goodi = 0
-    #     for ixd in i_index_good_long:
-    #         i_array = ndf.get_dataset_by_index(symbol, ixd, time_window_size, original_fields, contras)
-    #         i_array = i_array.reshape(1, -1)
-    #         # print(i_array)
-    #         X_norm = norm_model.transform(i_array)
-    #         # print(X_norm.max(), X_norm.min())
-    #         X_nomr_reshaped = X_transform(X_norm)
-    #         y_predict = tf_model.predict(X_nomr_reshaped)
-    #         y_predict = np.argmax(y_predict, axis=1)[0]
-    #         if y_predict == ni:
-    #             goodi += 1
-    #     print(len(i_index_good_long), goodi, goodi / len(i_index_good_long))
-
     run = True
     if run:
         symbol = "APA"
-        x_from = np.random.randint(1000, 700000)
+        run_time_window = 3000
+        rnd_from = 100
+        rnd_to = nddf[symbol].shape[0] - (run_time_window + 100)
+
+        x_from = np.random.randint(rnd_from, rnd_to)
         x_to = 1 + x_from + 3000
         res = tuple(nddf[symbol].loc[x_from, ['ohlc4', 'SIG_SMA5813', 'Date']])
         basis_date = res[2]
@@ -1956,18 +1902,21 @@ def do(symbol="", p2="", p3=""):
             apa_algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
 
             apa_algo_rnd.transaction(random.randint(0, 4), y_predict_sig, y_predict_perc, price, date_time)
+        log(f"Indicator drived algo trade.")
+        log(f"  profit/day: {apa_algo_indicator.get_profit_per_day()} profit/closed deal: {apa_algo_indicator.get_profit_per_closed_deal()}")
+        log(f"  closed_deal/day: {apa_algo_indicator.get_closed_deal_per_day()} transaction/day: {apa_algo_indicator.get_transaction_per_day()}")
 
-        log(f"in profit/day: {apa_algo_indicator.get_profit_per_day()} profit/closed deal: {apa_algo_indicator.get_profit_per_closed_deal()}")
-        log(f"closed_deal/day: {apa_algo_indicator.get_closed_deal_per_day()} transaction/day: {apa_algo_indicator.get_transaction_per_day()}")
+        log(f"Ai decision drived algo trade.")
+        log(f"  profit/day: {apa_algo_ai_decision.get_profit_per_day()} profit/closed deal: {apa_algo_ai_decision.get_profit_per_closed_deal()}")
+        log(f"  closed_deal/day: {apa_algo_ai_decision.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_decision.get_transaction_per_day()}")
 
-        log(f"dec profit/day: {apa_algo_ai_decision.get_profit_per_day()} profit/closed deal: {apa_algo_ai_decision.get_profit_per_closed_deal()}")
-        log(f"closed_deal/day: {apa_algo_ai_decision.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_decision.get_transaction_per_day()}")
+        log(f"Ai limitter drived algo trade.")
+        log(f"  profit/day: {apa_algo_ai_limitter.get_profit_per_day()} profit/closed deal: {apa_algo_ai_limitter.get_profit_per_closed_deal()}")
+        log(f"  closed_deal/day: {apa_algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_limitter.get_transaction_per_day()}")
 
-        log(f"lim profit/day: {apa_algo_ai_limitter.get_profit_per_day()} profit/closed deal: {apa_algo_ai_limitter.get_profit_per_closed_deal()}")
-        log(f"closed_deal/day: {apa_algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_limitter.get_transaction_per_day()}")
-
-        log(f"rnd profit/day: {apa_algo_rnd.get_profit_per_day()} profit/closed deal: {apa_algo_rnd.get_profit_per_closed_deal()}")
-        log(f"closed_deal/day: {apa_algo_rnd.get_closed_deal_per_day()} transaction/day: {apa_algo_rnd.get_transaction_per_day()}")
+        log(f"Random decision drived algo trade.")
+        log(f"  profit/day: {apa_algo_rnd.get_profit_per_day()} profit/closed deal: {apa_algo_rnd.get_profit_per_closed_deal()}")
+        log(f"  closed_deal/day: {apa_algo_rnd.get_closed_deal_per_day()} transaction/day: {apa_algo_rnd.get_transaction_per_day()}")
 
         apa_algo_rnd.show_history()
         apa_algo_indicator.show_history()
@@ -2133,9 +2082,13 @@ def s2(null=False, steps=0):
             gui.Status.setText(" ".join(["Status:", str(int(s2_value)), "%"]))
             gui.Progress_Bar.setValue(int(s2_value))
         else:
-            gui.Status.setText(" ".join(["Status:", str(int(s2_value / s2_max * 100)), "%"]))
-            gui.Progress_Bar.setValue(int(s2_value / s2_max * 100))
-            s2_value += 1
+            if s2_value <= s2_max:
+                gui.Status.setText(" ".join(["Status:", str(int(s2_value / s2_max * 100)), "%"]))
+                gui.Progress_Bar.setValue(int(s2_value / s2_max * 100))
+                s2_value += 1
+            else:
+                gui.Status.setText("Status: ok")
+                gui.Progress_Bar.setValue(10)
         QApplication.processEvents()
 
 
@@ -2219,6 +2172,170 @@ def test():
 
 def exit_program():
     gui.close()
+
+# ai programs  ----------------------------------------------------------------------------
+
+
+def ai_download(project_name):
+    to_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name
+
+    # copy modell
+    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_TF_MODEL_" + project_name + ".h5"
+    try:
+        copy2(from_path, to_path)
+    except FileNotFoundError as e:
+        log(f"{project_name} - TensorFlow model not found.")
+    else:
+        log(f"{project_name} - TensorFlow model downloaded.")
+
+    # copy normal model
+    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_MinMaxScaler_" + project_name + ".pickle"
+    try:
+        copy2(from_path, to_path)
+    except FileNotFoundError as e:
+        log(f"{project_name} - Norm model not found.")
+    else:
+        log(f"{project_name} - Norm model downloaded.")
+
+
+def ai_backtest(symbol, run_time_window, project_name):
+    log(f"ai_backtest {symbol} {run_time_window} {project_name}")
+    run_time_window = int(run_time_window)
+    # from sklearn import preprocessing
+    # ai_download(project_name)
+
+    # init norm model from local drive
+    local_path = "projects/" + project_name + "/" + "nDot_MinMaxScaler_" + project_name + ".pickle"
+    norm_model = pickle.load(open(local_path, "rb"))
+
+    # init tf_model fromlocl drive
+    local_path = 'projects/' + project_name + '/nDot_TF_MODEL_' + project_name + '.h5'
+    tf_model = load_model(local_path)
+
+    config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
+    gdc_ok, description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
+    time_window_size = dataset_config['time_window_size']
+    fields_plus_contras = len(original_fields) + len(contras)
+
+    def x_transform(x_np, time_window_size, fields_plus_contras):
+        x_np_mod = np.array(x_np)
+        x_np_mod_reshaped = np.reshape(x_np_mod, (x_np_mod.shape[0], time_window_size, fields_plus_contras))
+        return x_np_mod_reshaped
+
+    rnd_from = 100
+    rnd_to = nddf[symbol].shape[0] - (run_time_window + 300)
+
+    x_from = np.random.randint(rnd_from, rnd_to)
+    x_to = 1 + x_from + run_time_window
+    sig_field = "SIG_" + dataset_config['sig_suffix']
+    res = tuple(nddf[symbol].loc[x_from, ['ohlc4', sig_field, 'Date']])
+    from_date = res[2]
+    res = tuple(nddf[symbol].loc[x_to, ['ohlc4', sig_field, 'Date']])
+    to_date = res[2]
+    log(f"Selected test time window: {from_date} - {to_date}")
+
+    apa_algo_indicator = algo_trade()
+    apa_algo_indicator.config({"name": symbol + " Indicator drived",
+                               "value_limit": 40000,
+                               "stock_size": 19000,
+                               "stop_loss_limit": -10,
+                               "trailer_stop": .04,
+                               "trailer_min_profit": 10,
+                               "value_limit_profit_reinvest": True,
+                               "steps_limit": 45,
+                               "strategy": 1,
+                               "trade_time_start": (15, 30),
+                               "trade_time_stop": (21, 30)
+                               })
+
+    apa_algo_ai_decision = algo_trade()
+    apa_algo_ai_decision.config({"name": symbol + " Ai decisions drived",
+                                 "value_limit": 40000,
+                                 "stock_size": 19000,
+                                 "stop_loss_limit": -10,
+                                 "trailer_stop": .04,
+                                 "trailer_min_profit": 10,
+                                 "value_limit_profit_reinvest": True,
+                                 "steps_limit": 45,
+                                 "strategy": 2,
+                                 "trade_time_start": (15, 30),
+                                 "trade_time_stop": (21, 30)
+                                 })
+
+    apa_algo_ai_limitter = algo_trade()
+    apa_algo_ai_limitter.config({"name": symbol + " Ai Limitter drived",
+                                 "value_limit": 40000,
+                                 "stock_size": 19000,
+                                 "stop_loss_limit": -10,
+                                 "trailer_stop": .04,
+                                 "trailer_min_profit": 10,
+                                 "value_limit_profit_reinvest": True,
+                                 "steps_limit": 45,
+                                 "strategy": 3,
+                                 "trade_time_start": (15, 30),
+                                 "trade_time_stop": (21, 30)
+                                 })
+
+    apa_algo_rnd = algo_trade()
+    apa_algo_rnd.config({"name": symbol + " Random decisions drived",
+                         "value_limit": 40000,
+                         "stock_size": 19000,
+                         "stop_loss_limit": -10,
+                         "trailer_stop": .04,
+                         "trailer_min_profit": 10,
+                         "value_limit_profit_reinvest": True,
+                         "steps_limit": 45,
+                         "strategy": 1,
+                         "trade_time_start": (15, 30),
+                         "trade_time_stop": (21, 30)
+                         })
+    s2(True, x_to - x_from -3)
+    for ix in range(x_from, x_to):
+        res = tuple(nddf[symbol].loc[ix, ['ohlc4', sig_field, 'Date']])
+        price = res[0]
+        sig = res[1]
+        date_time = res[2]
+
+        if sig in [0, 1]:
+            i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
+            i_array = i_array.reshape(1, -1) # tömbe teszem a tömböt
+            x_norm = norm_model.transform(i_array)
+            x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
+            y_predict = tf_model.predict(x_nomr_reshaped)
+            y_predict_sig = np.argmax(y_predict, axis=1)[0]
+            y_predict_perc = y_predict[0][y_predict_sig]
+        else:
+            y_predict_sig = 4
+            y_predict_perc = .5
+
+        apa_algo_indicator.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        apa_algo_ai_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        apa_algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        apa_algo_rnd.transaction(random.randint(0, 8), y_predict_sig, y_predict_perc, price, date_time)
+        s2()
+
+    log(f"Random decision drived algo trade.")
+    log(f"  profit/day: {apa_algo_rnd.get_profit_per_day()} profit/closed deal: {apa_algo_rnd.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {apa_algo_rnd.get_closed_deal_per_day()} transaction/day: {apa_algo_rnd.get_transaction_per_day()}")
+
+    log(f"Indicator drived algo trade.")
+    log(f"  profit/day: {apa_algo_indicator.get_profit_per_day()} profit/closed deal: {apa_algo_indicator.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {apa_algo_indicator.get_closed_deal_per_day()} transaction/day: {apa_algo_indicator.get_transaction_per_day()}")
+
+    log(f"Ai decision drived algo trade.")
+    log(f"  profit/day: {apa_algo_ai_decision.get_profit_per_day()} profit/closed deal: {apa_algo_ai_decision.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {apa_algo_ai_decision.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_decision.get_transaction_per_day()}")
+
+    log(f"Ai limitter drived algo trade.")
+    log(f"  profit/day: {apa_algo_ai_limitter.get_profit_per_day()} profit/closed deal: {apa_algo_ai_limitter.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {apa_algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_limitter.get_transaction_per_day()}")
+
+    apa_algo_rnd.show_history()
+    apa_algo_indicator.show_history()
+    apa_algo_ai_decision.show_history()
+    apa_algo_ai_limitter.show_history()
+
+
 
 
 # ndf programs  ----------------------------------------------------------------------------

@@ -7,7 +7,7 @@ from bokeh.layouts import column
 from bokeh.models import HoverTool, ColumnDataSource, BooleanFilter, CDSView, Range1d, Span
 from bokeh.models.callbacks import CustomJS
 
-output_file("nchart.html")
+output_file("bokeh_html/nchart.html")
 
 
 class nchart:
