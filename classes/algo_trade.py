@@ -193,7 +193,7 @@ class algo_trade:
         self.action(decision2, qt2, date_time)
 
     def decision(self, sig, y_predict, y_predict_strength):
-        if self.strategy == 1:
+        if self.strategy == 1:  # signal drived
             if sig == 0:
                 decision = "BUY"
                 decision_qt = self.get_stock_qt()
@@ -204,7 +204,8 @@ class algo_trade:
                 decision = "NONE"
                 decision_qt = 0
             return decision, decision_qt
-        elif self.strategy == 2:
+
+        elif self.strategy == 2:  # ai decision if agree
             if sig == 0 and y_predict == 0:
                 decision = "BUY"
                 decision_qt = self.get_stock_qt()
@@ -216,12 +217,27 @@ class algo_trade:
                 decision_qt = 0
             return decision, decision_qt
 
-        elif self.strategy == 3:
+        elif self.strategy == 22:  # ai decision override
+            if y_predict == 0:
+                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+                decision = "BUY"
+                decision_qt = self.get_stock_qt()
+            elif y_predict == 1:
+                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+                decision = "SELL"
+                decision_qt = self.get_stock_qt()
+            else:
+                self.stock_size = 0
+                decision = "NONE"
+                decision_qt = 0
+            return decision, decision_qt
+
+        elif self.strategy == 3:  # ai limitter
+
             if y_predict == sig:
                 self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
             else:
                 self.stock_size = self.stock_size_orig * .33
-
             if sig == 0:
                 decision = "BUY"
                 decision_qt = self.get_stock_qt()
@@ -330,14 +346,14 @@ class algo_trade:
         # hdf.set_index("actual_date_time", inplace=True)
 
         def algo_price_chart():
-            hdf["actual_price_stop"] = hdf["actual_price"] * 1.015
-            hdf["actual_price_steps"] = hdf["actual_price"] * .985
+            hdf["actual_price_stop"] = hdf["actual_price"] * 1.002
+            hdf["actual_price_steps"] = hdf["actual_price"] * .998
             hdf["avg_income_price"].replace(0, np.nan, inplace=True)
             hdf['steps'] = hdf['steps'].astype(int)
             hdf['steps'] = hdf['steps'].astype(str)
 
-            i_min = hdf['actual_price'].min() * .98
-            i_max = hdf['actual_price'].max() * 1.02
+            i_min = hdf['actual_price'].min() * .995
+            i_max = hdf['actual_price'].max() * 1.005
 
             deals = ColumnDataSource(hdf)
             p = figure(sizing_mode='fixed',
@@ -373,12 +389,12 @@ class algo_trade:
             callback = CustomJS(args=dict(p=p), code="""
             clearTimeout(window._autoscale_timeout);
             var cv_price = cb_obj.plots[0].renderers[0].data_source.data.actual_price;
-            var cv_price_slice = cv_price.slice(p.x_range.star,p.x_range.end);
+            var cv_price_slice = cv_price.slice(p.x_range.start,p.x_range.end);
             var cv_max = Math.max(...cv_price_slice);
             var cv_min = Math.min(...cv_price_slice);
             window._autoscale_timeout = setTimeout(function() {
-                p.y_range.start = cv_min * .98;
-                p.y_range.end = cv_max * 1.02;
+                p.y_range.start = cv_min * .995;
+                p.y_range.end = cv_max * 1.005;
             });
             """)
 

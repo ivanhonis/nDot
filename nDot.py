@@ -343,7 +343,7 @@ if LocalRUN:
                 ['md.check', 'md_check', 'md.check <symbol>', 0],
                 ['md.symbols', 'md_symbols', 'md.symbols <market>', 0],
                 ['ai.download', 'ai_download', 'ai.download <project name>', 0],
-                ['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project>', 3],
+                ['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project> <<start position>>', 3],
                 ['exit', 'exit', 'exit', 0]
             ]
             i_return = pd.DataFrame(i_return)
@@ -378,13 +378,9 @@ if LocalRUN:
             args = []
 
             if i_found:
-                if len(command_partitioned) == 2:
-                    args = [command_partitioned[1]]
-                if len(command_partitioned) == 3:
-                    args = [command_partitioned[1], command_partitioned[2]]
-                if len(command_partitioned) == 4:
-                    args = [command_partitioned[1], command_partitioned[2], command_partitioned[3]]
 
+                args = command_partitioned[1:]
+                
                 if i_params >= 1:
                     if len(command_partitioned) - 1 >= i_params:
                         if len(wl.df.loc[wl.df['symbol'] == command_partitioned[1]]) > 0:
@@ -2198,7 +2194,9 @@ def ai_download(project_name):
         log(f"{project_name} - Norm model downloaded.")
 
 
-def ai_backtest(symbol, run_time_window, project_name):
+def ai_backtest(symbol, run_time_window, project_name, start_position=0):
+    start_position = int(start_position)
+    
     log(f"ai_backtest {symbol} {run_time_window} {project_name}")
     run_time_window = int(run_time_window)
     # from sklearn import preprocessing
@@ -2222,11 +2220,15 @@ def ai_backtest(symbol, run_time_window, project_name):
         x_np_mod_reshaped = np.reshape(x_np_mod, (x_np_mod.shape[0], time_window_size, fields_plus_contras))
         return x_np_mod_reshaped
 
-    rnd_from = 100
-    rnd_to = nddf[symbol].shape[0] - (run_time_window + 300)
-
-    x_from = np.random.randint(rnd_from, rnd_to)
-    x_to = 1 + x_from + run_time_window
+    if start_position == 0:
+        rnd_from = 100
+        rnd_to = nddf[symbol].shape[0] - (run_time_window + 300)
+        x_from = np.random.randint(rnd_from, rnd_to)
+        x_to = 1 + x_from + run_time_window
+    else:
+        x_from = start_position
+        x_to = 1 + x_from + run_time_window
+        
     sig_field = "SIG_" + dataset_config['sig_suffix']
     res = tuple(nddf[symbol].loc[x_from, ['ohlc4', sig_field, 'Date']])
     from_date = res[2]
@@ -2237,102 +2239,136 @@ def ai_backtest(symbol, run_time_window, project_name):
     apa_algo_indicator = algo_trade()
     apa_algo_indicator.config({"name": symbol + " Indicator drived",
                                "value_limit": 40000,
-                               "stock_size": 19000,
+                               "stock_size": 15000,
                                "stop_loss_limit": -10,
-                               "trailer_stop": .04,
+                               "trailer_stop": .07,
                                "trailer_min_profit": 10,
                                "value_limit_profit_reinvest": True,
                                "steps_limit": 45,
                                "strategy": 1,
-                               "trade_time_start": (15, 30),
+                               "trade_time_start": (16, 00),
                                "trade_time_stop": (21, 30)
                                })
 
     apa_algo_ai_decision = algo_trade()
-    apa_algo_ai_decision.config({"name": symbol + " Ai decisions drived",
+    apa_algo_ai_decision.config({"name": symbol + " Ai = indicator decisions drived",
                                  "value_limit": 40000,
-                                 "stock_size": 19000,
+                                 "stock_size": 15000,
                                  "stop_loss_limit": -10,
-                                 "trailer_stop": .04,
+                                 "trailer_stop": .07,
                                  "trailer_min_profit": 10,
                                  "value_limit_profit_reinvest": True,
                                  "steps_limit": 45,
                                  "strategy": 2,
-                                 "trade_time_start": (15, 30),
+                                 "trade_time_start": (16, 00),
+                                 "trade_time_stop": (21, 30)
+                                 })
+
+    apa_algo_ai_override = algo_trade()
+    apa_algo_ai_override.config({"name": symbol + " Ai override decisions drived",
+                                 "value_limit": 40000,
+                                 "stock_size": 15000,
+                                 "stop_loss_limit": -10,
+                                 "trailer_stop": .07,
+                                 "trailer_min_profit": 10,
+                                 "value_limit_profit_reinvest": True,
+                                 "steps_limit": 45,
+                                 "strategy": 22,
+                                 "trade_time_start": (16, 00),
                                  "trade_time_stop": (21, 30)
                                  })
 
     apa_algo_ai_limitter = algo_trade()
     apa_algo_ai_limitter.config({"name": symbol + " Ai Limitter drived",
                                  "value_limit": 40000,
-                                 "stock_size": 19000,
+                                 "stock_size": 15000,
                                  "stop_loss_limit": -10,
-                                 "trailer_stop": .04,
+                                 "trailer_stop": .07,
                                  "trailer_min_profit": 10,
                                  "value_limit_profit_reinvest": True,
                                  "steps_limit": 45,
                                  "strategy": 3,
-                                 "trade_time_start": (15, 30),
+                                 "trade_time_start": (16, 00),
                                  "trade_time_stop": (21, 30)
                                  })
 
     apa_algo_rnd = algo_trade()
     apa_algo_rnd.config({"name": symbol + " Random decisions drived",
                          "value_limit": 40000,
-                         "stock_size": 19000,
+                         "stock_size": 15000,
                          "stop_loss_limit": -10,
-                         "trailer_stop": .04,
+                         "trailer_stop": .07,
                          "trailer_min_profit": 10,
                          "value_limit_profit_reinvest": True,
                          "steps_limit": 45,
                          "strategy": 1,
-                         "trade_time_start": (15, 30),
+                         "trade_time_start": (16, 00),
                          "trade_time_stop": (21, 30)
                          })
-    s2(True, x_to - x_from -3)
+    s2(True, x_to - x_from - 3)
     for ix in range(x_from, x_to):
         res = tuple(nddf[symbol].loc[ix, ['ohlc4', sig_field, 'Date']])
         price = res[0]
         sig = res[1]
         date_time = res[2]
 
-        if sig in [0, 1]:
-            i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-            i_array = i_array.reshape(1, -1) # tömbe teszem a tömböt
-            x_norm = norm_model.transform(i_array)
-            x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
-            y_predict = tf_model.predict(x_nomr_reshaped)
-            y_predict_sig = np.argmax(y_predict, axis=1)[0]
-            y_predict_perc = y_predict[0][y_predict_sig]
-        else:
-            y_predict_sig = 4
-            y_predict_perc = .5
+        # if sig in [0, 1]:
+        #     i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
+        #     i_array = i_array.reshape(1, -1)  # tömbe teszem a tömböt
+        #     x_norm = norm_model.transform(i_array)
+        #     x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
+        #     y_predict = tf_model.predict(x_nomr_reshaped)
+        #     y_predict_sig = np.argmax(y_predict, axis=1)[0]
+        #     y_predict_perc = y_predict[0][y_predict_sig]
+        #     print(y_predict, y_predict_sig, y_predict_perc)
+        # else:
+        #     y_predict_sig = 4
+        #     y_predict_perc = .5
+
+        i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
+        i_array = i_array.reshape(1, -1)  # tömbe teszem a tömböt
+        x_norm = norm_model.transform(i_array)
+        x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
+        y_predict = tf_model.predict(x_nomr_reshaped)
+        y_predict_sig = np.argmax(y_predict, axis=1)[0]
+        y_predict_perc = y_predict[0][y_predict_sig]
 
         apa_algo_indicator.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
         apa_algo_ai_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        apa_algo_ai_override.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
         apa_algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
         apa_algo_rnd.transaction(random.randint(0, 8), y_predict_sig, y_predict_perc, price, date_time)
         s2()
 
     log(f"Random decision drived algo trade.")
+    log(f"  value limit: {apa_algo_rnd.value_limit} stock_size: {apa_algo_rnd.stock_size_orig}")
     log(f"  profit/day: {apa_algo_rnd.get_profit_per_day()} profit/closed deal: {apa_algo_rnd.get_profit_per_closed_deal()}")
     log(f"  closed_deal/day: {apa_algo_rnd.get_closed_deal_per_day()} transaction/day: {apa_algo_rnd.get_transaction_per_day()}")
 
     log(f"Indicator drived algo trade.")
+    log(f"  value limit: {apa_algo_indicator.value_limit} stock_size: {apa_algo_indicator.stock_size_orig}")
     log(f"  profit/day: {apa_algo_indicator.get_profit_per_day()} profit/closed deal: {apa_algo_indicator.get_profit_per_closed_deal()}")
     log(f"  closed_deal/day: {apa_algo_indicator.get_closed_deal_per_day()} transaction/day: {apa_algo_indicator.get_transaction_per_day()}")
 
-    log(f"Ai decision drived algo trade.")
+    log(f"Ai = Indicator decision drived algo trade.")
+    log(f"  value limit: {apa_algo_ai_decision.value_limit} stock_size: {apa_algo_ai_decision.stock_size_orig}")
     log(f"  profit/day: {apa_algo_ai_decision.get_profit_per_day()} profit/closed deal: {apa_algo_ai_decision.get_profit_per_closed_deal()}")
     log(f"  closed_deal/day: {apa_algo_ai_decision.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_decision.get_transaction_per_day()}")
 
+    log(f"Ai decision OVERRIDE algo trade.")
+    log(f"  value limit: {apa_algo_ai_override.value_limit} stock_size: {apa_algo_ai_override.stock_size_orig}")
+    log(f"  profit/day: {apa_algo_ai_override.get_profit_per_day()} profit/closed deal: {apa_algo_ai_override.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {apa_algo_ai_override.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_override.get_transaction_per_day()}")
+
     log(f"Ai limitter drived algo trade.")
+    log(f"  value limit: {apa_algo_ai_limitter.value_limit} stock_size: {apa_algo_ai_limitter.stock_size_orig}")
     log(f"  profit/day: {apa_algo_ai_limitter.get_profit_per_day()} profit/closed deal: {apa_algo_ai_limitter.get_profit_per_closed_deal()}")
     log(f"  closed_deal/day: {apa_algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_limitter.get_transaction_per_day()}")
 
     apa_algo_rnd.show_history()
     apa_algo_indicator.show_history()
     apa_algo_ai_decision.show_history()
+    apa_algo_ai_override.show_history()
     apa_algo_ai_limitter.show_history()
 
 
