@@ -44,7 +44,7 @@ import pickle
 import json  # dataset config beolvasóhoz kell
 import re  # dataset config beolvasóhoz kell
 import pathlib  # dataset config beolvasóhoz kell
-from shutil import copy2 # ai.download
+from shutil import copy2  # ai.download
 
 # User classes ------------------------------------------------------
 from classes.trade import trade
@@ -332,7 +332,7 @@ if LocalRUN:
                 ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
                 ['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
                 ['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
-                ['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <config_file>', 1],
+                ['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project>', 1],
                 ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
                 ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
                 ['ndf.refresh.all', 'ndf_refresh_all', 'ndf.refresh.all', 0],
@@ -788,6 +788,7 @@ class n_date_frame2:
 
     def load_indicators(self):
         i_i = [
+            ['BBANDS', ['BBANDS']],
             ['SMA30', ['SMA_30']],
             ['VWAP', ['VWAP_D', 'VWAP_D_R_OHLC4']],
             ['SMA60', ['SMA_60']],
@@ -797,7 +798,8 @@ class n_date_frame2:
                          'SMA_5_R_OHLC4', 'SMA_8_R_OHLC4', 'SMA_13_R_OHLC4']],
             ['PRICE_DIFF', ['LOW_DIFF', 'HIGH_DIFF',
                             'OPEN_DIFF', 'CLOSE_DIFF',
-                            'OHLC4_DIFF', 'VOLUME_DIFF']],
+                            'OHLC4_DIFF', 'VOLUME_DIFF',
+                            'LOW_R_OHLC4', 'HIGH_R_OHLC4']],
             ['RSI14', ['RSI_14']],
             ['MACD', ['MACD_12_2', 'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9']],
             ['BREAKOUT', ['SIG_BREAKOUT']],
@@ -1451,6 +1453,10 @@ class n_date_frame2:
                 nddf[symbol]["CLOSE_DIFF"] = (nddf[symbol]["Close"] / nddf[symbol]["Close"].shift(1)) - 1
                 nddf[symbol]["OHLC4_DIFF"] = (nddf[symbol]["ohlc4"] / nddf[symbol]["ohlc4"].shift(1)) - 1
                 nddf[symbol]["VOLUME_DIFF"] = (nddf[symbol]["Volume"] / nddf[symbol]["Volume"].shift(1)) - 1
+
+                nddf[symbol]["LOW_R_OHLC4"] = nddf[symbol]["Low"] / nddf[symbol]["ohlc4"]
+                nddf[symbol]["HIGH_R_OHLC4"] = nddf[symbol]["High"] / nddf[symbol]["ohlc4"]
+
                 ndf.set_dt_order(symbol)
                 nddb.write(symbol)
 
@@ -1473,6 +1479,9 @@ class n_date_frame2:
                 nddf[symbol].ta.macd(append=True)
                 ndf.set_dt_order(symbol)
                 nddb.write(symbol)
+
+            elif tech_indicator == "BBANDS":
+                nddf[symbol].ta.bbands(append=True)
 
             elif tech_indicator == "SMA5813":
                 nddf[symbol].ta.sma(length=5, append=True)
@@ -1629,24 +1638,14 @@ class n_date_frame2:
                 nddf[symbol].loc[mask, 'SIG_BREAKOUT_SHORT_ALL'] = False
                 ndf.set_dt_order(symbol)
 
-                nddf[symbol]['SIG_BREAKOUT'] = 0
-                nddf[symbol]['SIG_BREAKOUT'].values[nddf[symbol]['SIG_BREAKOUT_LONG_ALL']] = 1
-                nddf[symbol]['SIG_BREAKOUT'].values[nddf[symbol]['SIG_BREAKOUT_SHORT_ALL']] = 2
+                nddf[symbol]['SIG_BREAKOUT'] = 4
+                nddf[symbol]['SIG_BREAKOUT'].values[nddf[symbol]['SIG_BREAKOUT_LONG_ALL']] = 0
+                nddf[symbol]['SIG_BREAKOUT'].values[nddf[symbol]['SIG_BREAKOUT_SHORT_ALL']] = 1
                 # nddf[symbol]['SIG_BREAKOUT_TEMP_SHIFT'] = nddf[symbol]['SIG_BREAKOUT_TEMP'] != nddf[symbol]['SIG_BREAKOUT_TEMP'].shift(1)
                 # nddf[symbol]['SIG_BREAKOUT'] = nddf[symbol]['SIG_BREAKOUT_TEMP_SHIFT'] * nddf[symbol]['SIG_BREAKOUT_TEMP']
 
                 i_remove = ['SIG_BREAKOUT_LONG_ALL', 'SIG_BREAKOUT_SHORT_ALL']
                 self.remove_columns(symbol, i_remove)
-
-                ndf.vector_qualify(symbol,
-                                   sig_suffix="BREAKOUT",
-                                   stock_size=10000,
-                                   min_profit=70,
-                                   min_step_profit=5,
-                                   stop=-5,
-                                   steps=30,
-                                   overlay_steps=30,
-                                   )
 
                 ndf.set_dt_order(symbol)
                 nddb.write(symbol)
@@ -2173,6 +2172,27 @@ def exit_program():
 
 
 def ai_download(project_name):
+    # rename existing file
+    i_now = str(datetime.now()).replace("-", "_").replace(":", "_").replace(".", "_").replace(" ", "_")
+
+    path_1 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_TF_MODEL_" + project_name + ".h5"
+    path_2 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_TF_MODEL_" + project_name + "_" + i_now + ".h5"
+    try:
+        os.rename(path_1, path_2)
+    except FileNotFoundError as e:
+        pass
+    else:
+        log(f"{project_name} - Acctual TensorFlow model has renamed id: " + i_now)
+
+    path_1 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_MinMaxScaler_" + project_name + ".pickle"
+    path_2 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_MinMaxScaler_" + project_name + "_" + i_now + ".pickle"
+    try:
+        os.rename(path_1, path_2)
+    except FileNotFoundError as e:
+        pass
+    else:
+        log(f"{project_name} - Acctual MinMaxScaler model has renamed id: " + i_now)
+
     to_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name
 
     # copy modell

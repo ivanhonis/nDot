@@ -715,35 +715,36 @@ class nchart:
         p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
         p.line('index', 'ohlc4', color=self.blue, source=stock)
 
-        df['SIG_BREAKOUT_LONG_ALL'] = df['SIG_BREAKOUT'] == 1
+        df['SIG_BREAKOUT_LONG_ALL'] = df['SIG_BREAKOUT'] == 0
         sig = tuple(df['SIG_BREAKOUT_LONG_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
-        df['SIG_BREAKOUT_SHORT_ALL'] = df['SIG_BREAKOUT'] == 2
+        df['SIG_BREAKOUT_SHORT_ALL'] = df['SIG_BREAKOUT'] == 1
         sig = tuple(df['SIG_BREAKOUT_SHORT_ALL'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
-        df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_BREAKOUT'] == 1
-        sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4_up', line_color=self.orange, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
+        if 'y_BREAKOUT' in df.columns:
+            df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_BREAKOUT'] == 0
+            sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4_up', line_color=self.orange, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
 
-        df['SIG_QFY_BREAKOUT_GOOD_SHORT'] = df['y_BREAKOUT'] == 2
-        sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_SHORT'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.inverted_triangle('index', 'ohlc4_down', line_color=self.orange, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
+            df['SIG_QFY_BREAKOUT_GOOD_SHORT'] = df['y_BREAKOUT'] == 1
+            sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_SHORT'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.inverted_triangle('index', 'ohlc4_down', line_color=self.orange, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
 
-        df['SIG_QFY_BREAKOUT_BAD_LONG'] = df['y_BREAKOUT'] == 3
-        sig = tuple(df['SIG_QFY_BREAKOUT_BAD_LONG'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4_up', line_color=self.gray2, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
+            df['SIG_QFY_BREAKOUT_BAD_LONG'] = df['y_BREAKOUT'] == 2
+            sig = tuple(df['SIG_QFY_BREAKOUT_BAD_LONG'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4_up', line_color=self.gray2, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
 
-        df['SIG_QFY_BREAKOUT_BAD_SHORT'] = df['y_BREAKOUT'] == 4
-        sig = tuple(df['SIG_QFY_BREAKOUT_BAD_SHORT'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.inverted_triangle('index', 'ohlc4_down', line_color=self.gray2, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
+            df['SIG_QFY_BREAKOUT_BAD_SHORT'] = df['y_BREAKOUT'] == 3
+            sig = tuple(df['SIG_QFY_BREAKOUT_BAD_SHORT'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.inverted_triangle('index', 'ohlc4_down', line_color=self.gray2, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
 
         p.legend.visible = False
         p.add_tools(HoverTool(
