@@ -29,18 +29,16 @@ class market_data:
 
     def check_finnhub_connection(self, symbol="AAPL"):
         self.log("md-> check_finnhub_connection: " + symbol)
-        i_return = False
         try:
             i_df = pd.DataFrame(self.finnhub_client.stock_candles(symbol, 'D', 1590988249, 1591852249))
         except:
             self.log("Error while connecting to FinnHub.")
-            i_return = False
+            return False
         else:
             if i_df.iloc[0]['s'] == "ok":
-                i_return = True
+                return True
             else:
-                i_return = False
-        return i_return
+                return False
 
     def get_usdhuf(self):
         # self.log("md-> get_usdhuf")
@@ -48,12 +46,11 @@ class market_data:
             i_result = self.finnhub_client.forex_rates(base='USD')
         except:
             self.log("Finnhub exception.")
-            i_return = 0
+            return 0
         else:
             i_usd_price = {}
             i_usd_price = i_result["quote"]
-            i_return = round(i_usd_price["HUF"], 4)
-        return i_return
+            return round(i_usd_price["HUF"], 4)
 
     def get_stock_candles(self, symbol, resolution, from_dt, to_dt, rename=False, log_off=False):
         if not log_off:
@@ -109,24 +106,24 @@ class market_data:
     def news_sentiment(self, symbol):
         return self.finnhub_client.news_sentiment(symbol=symbol)
 
-    def quote(self, symbol):
-        return self.finnhub_client.quote(symbol)
+    # def quote(self, symbol):
+    #     return self.finnhub_client.quote(symbol)
 
-    def technical_indicator_rsi(self, symbol, resolution, from_dt, to_dt):
-        self.log("md-> technical_indicator_rsi:" + symbol +
-                 " - " + self.tools.unixdt_to_dbdt(from_dt) + " - " + self.tools.unixdt_to_dbdt(to_dt))
-        i_df = pd.DataFrame(self.finnhub_client.technical_indicator(symbol=symbol,
-                                                                    resolution=resolution,
-                                                                    _from=from_dt, to=to_dt,
-                                                                    indicator='rsi',
-                                                                    indicator_fields={"timeperiod": 3}))
-        i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
-        i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
-        i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
-        i_df = i_df[['datetime', 't', 'rsi']]
-        i_df = i_df.round({'rsi': 6})
-        i_df.set_index('datetime')
-        return i_df
+    # def technical_indicator_rsi(self, symbol, resolution, from_dt, to_dt):
+    #     self.log("md-> technical_indicator_rsi:" + symbol +
+    #              " - " + self.tools.unixdt_to_dbdt(from_dt) + " - " + self.tools.unixdt_to_dbdt(to_dt))
+    #     i_df = pd.DataFrame(self.finnhub_client.technical_indicator(symbol=symbol,
+    #                                                                 resolution=resolution,
+    #                                                                 _from=from_dt, to=to_dt,
+    #                                                                 indicator='rsi',
+    #                                                                 indicator_fields={"timeperiod": 3}))
+    #     i_df['datetime'] = pd.to_datetime(i_df['t'], unit='s')
+    #     i_df['datetime'] = i_df['datetime'] + pd.Timedelta(hours=2)
+    #     i_df['datetime'] = i_df['datetime'].dt.strftime('%y-%m-%d %h:%I:%s')
+    #     i_df = i_df[['datetime', 't', 'rsi']]
+    #     i_df = i_df.round({'rsi': 6})
+    #     i_df.set_index('datetime')
+    #     return i_df
 
     def stock_symbols(self, market="US"):
         self.log("md-> stock_symbols: " + str(market))

@@ -44,7 +44,7 @@ import pickle
 import json  # dataset config beolvasóhoz kell
 import re  # dataset config beolvasóhoz kell
 import pathlib  # dataset config beolvasóhoz kell
-from shutil import copy2  # ai.download
+
 
 # User classes ------------------------------------------------------
 from classes.trade import trade
@@ -55,6 +55,7 @@ from classes.n_datasets import n_dataset
 from classes.n_data_frame_meta import n_date_frame_meta
 from classes.tools import tools
 from classes.algo_trade import algo_trade
+from classes.n_ai import n_ai
 
 # # Ai components
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -70,6 +71,7 @@ if LocalRUN:
         def __init__(self):
             super(gui, self).__init__()
             self.load_ui()
+            self.refresh_ui("ai_info")
             self.usd_huf = 0
             # self.show_dialog_return = False
             self.commands = self.load_commands()
@@ -215,23 +217,25 @@ if LocalRUN:
                 for i_obj in i_wl_frame_list:
                     i_wl_frame_list[i_obj].hide()
                 i_no = 0
-                for index, row in wl.df.iterrows():
+                for index, row in wl.wl_df.iterrows():
                     i_symbol = row['symbol']
                     f_id = "fr" + str(i_no + 1)
                     i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setText(i_symbol)
                     i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setToolTip(row['profil'])
-                    i_info = self.get_monitor_info_by_symbol(i_symbol)
-                    i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
-                    i_pl = self.get_pl_by_symbol(i_symbol)
-                    i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
                     i_wl_frame_list[f_id].findChild(QProgressBar, "WL_bear" + i_noid[i_no]).setValue(
                         int(row['snt_bearish'] * 100))
+                    # i_info = self.get_monitor_info_by_symbol(i_symbol)
+                    # i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
+                    # i_pl = self.get_pl_by_symbol(i_symbol)
+                    # i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
+
                     i_wl_frame_list[f_id].show()
                     i_no = i_no + 1
-            elif mode == "info":
+                    QApplication.processEvents()
+            elif mode == "info" or mode == "full":
                 i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
                 i_no = 0
-                for index, row in wl.df.iterrows():
+                for index, row in wl.wl_df.iterrows():
                     i_symbol = row['symbol']
                     f_id = "fr" + str(i_no + 1)
 
@@ -261,6 +265,21 @@ if LocalRUN:
                         i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
                         QApplication.processEvents()
                     i_no = i_no + 1
+            elif mode == "ai_info" or mode == "full":
+                i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
+                i_no = 0
+                for index, row in wl.wl_df.iterrows():
+                    i_symbol = row['symbol']
+                    f_id = "fr" + str(i_no + 1)
+
+                    # akkor frissítek ha volt változás
+                    i_info = self.get_ai_info_by_symbol(i_symbol)
+                    i_info_now = i_wl_frame_list[f_id].findChild(QLabel, "WL_ai_info" + i_noid[i_no]).text()
+                    if i_info != i_info_now:
+                        i_wl_frame_list[f_id].findChild(QLabel, "WL_ai_info" + i_noid[i_no]).setText(i_info)
+                        QApplication.processEvents()
+                    i_no = i_no + 1
+
 
         # GUI - Trader Frame ----------------------------------------------------------------------------------------
 
@@ -342,6 +361,8 @@ if LocalRUN:
                 # ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
                 ['md.check', 'md_check', 'md.check <symbol>', 0],
                 ['md.symbols', 'md_symbols', 'md.symbols <market>', 0],
+                ['ai.add', 'ai_add', 'ai.add <symbol> <project>', 1],
+                ['ai.remove', 'ai_remove', 'ai.remove <symbol> <project>', 1],
                 ['ai.download', 'ai_download', 'ai.download <project name>', 0],
                 ['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project> <<start position>>', 3],
                 ['exit', 'exit', 'exit', 0]
@@ -383,7 +404,7 @@ if LocalRUN:
                 
                 if i_params >= 1:
                     if len(command_partitioned) - 1 >= i_params:
-                        if len(wl.df.loc[wl.df['symbol'] == command_partitioned[1]]) > 0:
+                        if len(wl.wl_df.loc[wl.wl_df['symbol'] == command_partitioned[1]]) > 0:
                             run_method(i_program, args)
                         else:
                             self.mark_command_line("Non listed Symbol!")
@@ -562,6 +583,16 @@ if LocalRUN:
                 i_v = 0
             i_return = f"q: {i_qt} / {i_qc}\np: {i_p}$\nv: {i_v}$"
             # print(i_return,"\n\n")
+            return i_return
+
+        def get_ai_info_by_symbol(self, symbol):
+            ai_projects = ai.get_projects_by_symbol(symbol)
+            i_return = f"""<html><head/><body>"""
+            for prj in ai_projects:
+                i_return = i_return + f"""
+            {prj}<br/>LONG 63,25%<br/>"""
+            i_return = i_return + "</body></html>"
+            # # print(i_return,"\n\n")
             return i_return
 
         def tlog(self, add_text, line=False, indent=True, color="normal"):
@@ -967,7 +998,7 @@ class n_date_frame2:
                         self.set_dt_order(symbol)
                         nddb.write(symbol)
 
-                    s2(True, 22)
+                    s2(True, 12)
 
                     log("Creating dataset.")
                     # image fej megcsinálása, minden image nél ugyan az
@@ -1700,77 +1731,73 @@ class n_date_frame2:
 
 
 class watch_list:
-    df = ""
 
     def __init__(self):
-        self.df = self.read()
+        self.wl_df = self.read()
 
-    # self.refresh_close()
     # self.refresh_sentiment()
 
     def read(self):
         return pd.read_csv('wl.csv', sep=';')
 
     def write(self):
-        self.df.to_csv('wl.csv', sep=';', index=False)
-        self.df = self.read()
+        self.wl_df.to_csv('wl.csv', sep=';', index=False)
+        self.wl_df = self.read()
         return
 
-    # def refresh_close(self):
-    #     s("wl.refresh.close " + time.strftime("%H:%M:%S"))
-    #     for index, row in self.df.iterrows():
-    #         i_symbol = row['symbol']
-    #         i_quote = md.quote(i_symbol)
-    #         self.df.loc[self.df['symbol'] == i_symbol, 'c'] = i_quote['c']
-    #         self.df.loc[self.df['symbol'] == i_symbol, 'pc'] = i_quote['pc']
-    #     self.write()
-    #     return
-
-    def refresh_profile(self):
-        for index, row in self.df.iterrows():
+    def refresh_profile(self, symbol="none"):
+        for index, row in self.wl_df.iterrows():
             i_symbol = row['symbol']
-            i_company_profile = md.company_profile(i_symbol)
-            if len(i_company_profile.keys()) == 0:
-                self.df.loc[self.df['symbol'] == i_symbol, 'name'] = i_symbol
-                self.df.loc[self.df['symbol'] == i_symbol, 'profil'] = i_symbol
-            else:
-                self.df.loc[self.df['symbol'] == i_symbol, 'name'] = i_company_profile['name']
-                self.df.loc[self.df['symbol'] == i_symbol, 'profil'] = "Web: " + i_company_profile['weburl']
+            if symbol == i_symbol or symbol == "none":
+                i_company_profile = md.company_profile(i_symbol)
+                if len(i_company_profile.keys()) == 0:
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'name'] = i_symbol
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'profil'] = i_symbol
+                else:
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'name'] = i_company_profile['name']
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'profil'] = "Web: " + i_company_profile['weburl']
         self.write()
         return
 
-    def refresh_sentiment(self):
-        for index, row in self.df.iterrows():
+    def refresh_sentiment(self, symbol="none"):
+        for index, row in self.wl_df.iterrows():
             i_symbol = row['symbol']
-            i_news_sentiment = md.news_sentiment(i_symbol)
-            if i_news_sentiment['sentiment']:
-                self.df.loc[self.df['symbol'] == i_symbol, 'snt_bearish'] = i_news_sentiment['sentiment'][
-                    'bearishPercent']
-                self.df.loc[self.df['symbol'] == i_symbol, 'snt_bullish'] = i_news_sentiment['sentiment'][
-                    'bullishPercent']
-            else:
-                self.df.loc[self.df['symbol'] == i_symbol, 'snt_bearish'] = 0
-                self.df.loc[self.df['symbol'] == i_symbol, 'snt_bullish'] = 0
-
+            if symbol == i_symbol or symbol == "none":
+                i_news_sentiment = md.news_sentiment(i_symbol)
+                if i_news_sentiment['sentiment']:
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bearish'] = i_news_sentiment['sentiment'][
+                        'bearishPercent']
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bullish'] = i_news_sentiment['sentiment'][
+                        'bullishPercent']
+                else:
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bearish'] = 0
+                    self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bullish'] = 0
         self.write()
         return
 
     def add(self, symbol, years=3):
         self.remove(symbol)
         new_row = {'symbol': symbol}
-        self.df = self.df.append(new_row, ignore_index=True)
-        self.refresh_profile()
-        # self.refresh_close()
-        self.refresh_sentiment()
+        self.wl_df = self.wl_df.append(new_row, ignore_index=True)
+        self.refresh_profile(symbol)
+        self.refresh_sentiment(symbol)
+        self.wl_df.loc[self.wl_df['symbol'] == symbol, 'ai_project1'] = ""
         self.write()
         gui.refresh_ui()
         ndf.add(symbol, years)
         return
 
     def remove(self, symbol):
-        self.df.drop(self.df.loc[self.df['symbol'] == symbol].index, inplace=True)
+        self.wl_df.drop(self.wl_df.loc[self.wl_df['symbol'] == symbol].index, inplace=True)
         self.write()
         return
+
+    # def add_ai_project(self, symbol, project):
+    #     self.wl_df.loc[self.wl_df['symbol'] == symbol, 'ai_project1'] = project
+    #     self.wl_df['ai_project1'] = self.wl_df['ai_project1'].fillna("-")
+    #     print(self.wl_df)
+    #     self.write()
+    #     return
 
 
 # PROGRAMS ----------------------------------------------------------------------------
@@ -2171,74 +2198,28 @@ def exit_program():
 # ai programs  ----------------------------------------------------------------------------
 
 
+def ai_add(symbol="", project=""):
+    ai.add(symbol, project)
+    gui.refresh_ui("ai_info")
+
+
+def ai_remove(symbol="", project=""):
+    ai.remove_project(symbol, project)
+    gui.refresh_ui("ai_info")
+
+
 def ai_download(project_name):
-    # rename existing file
-    i_now = str(datetime.now()).replace("-", "_").replace(":", "_").replace(".", "_").replace(" ", "_")
-
-    path_1 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_TF_MODEL_" + project_name + ".h5"
-    path_2 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_TF_MODEL_" + project_name + "_" + i_now + ".h5"
-    try:
-        os.rename(path_1, path_2)
-    except FileNotFoundError as e:
-        pass
-    else:
-        log(f"{project_name} - Acctual TensorFlow model has renamed id: " + i_now)
-
-    path_1 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_MinMaxScaler_" + project_name + ".pickle"
-    path_2 = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name + "\\nDot_MinMaxScaler_" + project_name + "_" + i_now + ".pickle"
-    try:
-        os.rename(path_1, path_2)
-    except FileNotFoundError as e:
-        pass
-    else:
-        log(f"{project_name} - Acctual MinMaxScaler model has renamed id: " + i_now)
-
-    to_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\" + project_name
-
-    # copy modell
-    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_TF_MODEL_" + project_name + ".h5"
-    try:
-        copy2(from_path, to_path)
-    except FileNotFoundError as e:
-        log(f"{project_name} - TensorFlow model not found.")
-    else:
-        log(f"{project_name} - TensorFlow model downloaded.")
-
-    # copy normal model
-    from_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\nDot_MinMaxScaler_" + project_name + ".pickle"
-    try:
-        copy2(from_path, to_path)
-    except FileNotFoundError as e:
-        log(f"{project_name} - Norm model not found.")
-    else:
-        log(f"{project_name} - Norm model downloaded.")
+    ai.download(project_name)
 
 
-def ai_backtest(symbol, run_time_window, project_name, start_position=0):
+def ai_backtest(symbol, run_time_window, project, start_position=0):
     start_position = int(start_position)
-    
-    log(f"ai_backtest {symbol} {run_time_window} {project_name}")
+    log(f"ai_backtest {symbol} {run_time_window} {project}")
     run_time_window = int(run_time_window)
-    # from sklearn import preprocessing
-    # ai_download(project_name)
+    ai.build()
 
-    # init norm model from local drive
-    local_path = "projects/" + project_name + "/" + "nDot_MinMaxScaler_" + project_name + ".pickle"
-    norm_model = pickle.load(open(local_path, "rb"))
-
-    # init tf_model fromlocl drive
-    local_path = 'projects/' + project_name + '/nDot_TF_MODEL_' + project_name + '.h5'
-    tf_model = load_model(local_path)
-
-    config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
-    gdc_ok, description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
-    time_window_size = dataset_config['time_window_size']
-    fields_plus_contras = len(original_fields) + len(contras)
-
-    def x_transform(x_np, time_window_size, fields_plus_contras):
-        x_np_mod = np.array(x_np)
-        x_np_mod_reshaped = np.reshape(x_np_mod, (x_np_mod.shape[0], time_window_size, fields_plus_contras))
-        return x_np_mod_reshaped
+    gdc_ok, description, dataset_config, original_fields, contras = ai.get_project_config(project)
+    time_window_size = int(dataset_config['time_window_size'])
 
     if start_position == 0:
         rnd_from = 100
@@ -2256,140 +2237,129 @@ def ai_backtest(symbol, run_time_window, project_name, start_position=0):
     to_date = res[2]
     log(f"Selected test time window: {from_date} - {to_date}")
 
-    apa_algo_indicator = algo_trade()
-    apa_algo_indicator.config({"name": symbol + " Indicator drived",
-                               "value_limit": 40000,
-                               "stock_size": 15000,
-                               "stop_loss_limit": -10,
-                               "trailer_stop": .07,
-                               "trailer_min_profit": 10,
-                               "value_limit_profit_reinvest": True,
-                               "steps_limit": 45,
-                               "strategy": 1,
-                               "trade_time_start": (16, 00),
-                               "trade_time_stop": (21, 30)
-                               })
+    algo_indicator = algo_trade()
+    algo_indicator.config({"name": symbol + " Indicator drived",
+                           "value_limit": 40000,
+                           "stock_size": 15000,
+                           "stop_loss_limit": -10,
+                           "trailer_stop": .07,
+                           "trailer_min_profit": 10,
+                           "value_limit_profit_reinvest": True,
+                           "steps_limit": 45,
+                           "strategy": 1,
+                           "trade_time_start": (16, 00),
+                           "trade_time_stop": (21, 30)
+                           })
 
-    apa_algo_ai_decision = algo_trade()
-    apa_algo_ai_decision.config({"name": symbol + " Ai = indicator decisions drived",
-                                 "value_limit": 40000,
-                                 "stock_size": 15000,
-                                 "stop_loss_limit": -10,
-                                 "trailer_stop": .07,
-                                 "trailer_min_profit": 10,
-                                 "value_limit_profit_reinvest": True,
-                                 "steps_limit": 45,
-                                 "strategy": 2,
-                                 "trade_time_start": (16, 00),
-                                 "trade_time_stop": (21, 30)
-                                 })
+    algo_ai_indicator_decision = algo_trade()
+    algo_ai_indicator_decision.config({"name": symbol + " Ai = indicator decisions drived",
+                                       "value_limit": 40000,
+                                       "stock_size": 15000,
+                                       "stop_loss_limit": -10,
+                                       "trailer_stop": .07,
+                                       "trailer_min_profit": 10,
+                                       "value_limit_profit_reinvest": True,
+                                       "steps_limit": 45,
+                                       "strategy": 2,
+                                       "trade_time_start": (16, 00),
+                                       "trade_time_stop": (21, 30)
+                                       })
 
-    apa_algo_ai_override = algo_trade()
-    apa_algo_ai_override.config({"name": symbol + " Ai override decisions drived",
-                                 "value_limit": 40000,
-                                 "stock_size": 15000,
-                                 "stop_loss_limit": -10,
-                                 "trailer_stop": .07,
-                                 "trailer_min_profit": 10,
-                                 "value_limit_profit_reinvest": True,
-                                 "steps_limit": 45,
-                                 "strategy": 22,
-                                 "trade_time_start": (16, 00),
-                                 "trade_time_stop": (21, 30)
-                                 })
+    algo_ai_override = algo_trade()
+    algo_ai_override.config({"name": symbol + " Ai override decisions drived",
+                             "value_limit": 40000,
+                             "stock_size": 15000,
+                             "stop_loss_limit": -10,
+                             "trailer_stop": .07,
+                             "trailer_min_profit": 10,
+                             "value_limit_profit_reinvest": True,
+                             "steps_limit": 45,
+                             "strategy": 22,
+                             "trade_time_start": (16, 00),
+                             "trade_time_stop": (21, 30)
+                             })
 
-    apa_algo_ai_limitter = algo_trade()
-    apa_algo_ai_limitter.config({"name": symbol + " Ai Limitter drived",
-                                 "value_limit": 40000,
-                                 "stock_size": 15000,
-                                 "stop_loss_limit": -10,
-                                 "trailer_stop": .07,
-                                 "trailer_min_profit": 10,
-                                 "value_limit_profit_reinvest": True,
-                                 "steps_limit": 45,
-                                 "strategy": 3,
-                                 "trade_time_start": (16, 00),
-                                 "trade_time_stop": (21, 30)
-                                 })
+    algo_ai_limitter = algo_trade()
+    algo_ai_limitter.config({"name": symbol + " Ai Limitter drived",
+                             "value_limit": 40000,
+                             "stock_size": 15000,
+                             "stop_loss_limit": -10,
+                             "trailer_stop": .07,
+                             "trailer_min_profit": 10,
+                             "value_limit_profit_reinvest": True,
+                             "steps_limit": 45,
+                             "strategy": 3,
+                             "trade_time_start": (16, 00),
+                             "trade_time_stop": (21, 30)
+                             })
 
-    apa_algo_rnd = algo_trade()
-    apa_algo_rnd.config({"name": symbol + " Random decisions drived",
-                         "value_limit": 40000,
-                         "stock_size": 15000,
-                         "stop_loss_limit": -10,
-                         "trailer_stop": .07,
-                         "trailer_min_profit": 10,
-                         "value_limit_profit_reinvest": True,
-                         "steps_limit": 45,
-                         "strategy": 1,
-                         "trade_time_start": (16, 00),
-                         "trade_time_stop": (21, 30)
-                         })
+    algo_rnd = algo_trade()
+    algo_rnd.config({"name": symbol + " Random decisions drived",
+                     "value_limit": 40000,
+                     "stock_size": 15000,
+                     "stop_loss_limit": -10,
+                     "trailer_stop": .07,
+                     "trailer_min_profit": 10,
+                     "value_limit_profit_reinvest": True,
+                     "steps_limit": 45,
+                     "strategy": 1,
+                     "trade_time_start": (16, 00),
+                     "trade_time_stop": (21, 30)
+                     })
     s2(True, x_to - x_from - 3)
+
     for ix in range(x_from, x_to):
         res = tuple(nddf[symbol].loc[ix, ['ohlc4', sig_field, 'Date']])
         price = res[0]
         sig = res[1]
         date_time = res[2]
 
-        # if sig in [0, 1]:
-        #     i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-        #     i_array = i_array.reshape(1, -1)  # tömbe teszem a tömböt
-        #     x_norm = norm_model.transform(i_array)
-        #     x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
-        #     y_predict = tf_model.predict(x_nomr_reshaped)
-        #     y_predict_sig = np.argmax(y_predict, axis=1)[0]
-        #     y_predict_perc = y_predict[0][y_predict_sig]
-        #     print(y_predict, y_predict_sig, y_predict_perc)
-        # else:
-        #     y_predict_sig = 4
-        #     y_predict_perc = .5
-
         i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-        i_array = i_array.reshape(1, -1)  # tömbe teszem a tömböt
-        x_norm = norm_model.transform(i_array)
-        x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
-        y_predict = tf_model.predict(x_nomr_reshaped)
-        y_predict_sig = np.argmax(y_predict, axis=1)[0]
-        y_predict_perc = y_predict[0][y_predict_sig]
+        y_predict_sig, y_predict_perc = ai.predict(symbol, project, i_array, date_time)
 
-        apa_algo_indicator.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-        apa_algo_ai_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-        apa_algo_ai_override.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-        apa_algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-        apa_algo_rnd.transaction(random.randint(0, 8), y_predict_sig, y_predict_perc, price, date_time)
+        algo_indicator.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        algo_ai_indicator_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        algo_ai_override.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        algo_rnd.transaction(random.randint(0, 8), y_predict_sig, y_predict_perc, price, date_time)
         s2()
 
     log(f"Random decision drived algo trade.")
-    log(f"  value limit: {apa_algo_rnd.value_limit} stock_size: {apa_algo_rnd.stock_size_orig}")
-    log(f"  profit/day: {apa_algo_rnd.get_profit_per_day()} profit/closed deal: {apa_algo_rnd.get_profit_per_closed_deal()}")
-    log(f"  closed_deal/day: {apa_algo_rnd.get_closed_deal_per_day()} transaction/day: {apa_algo_rnd.get_transaction_per_day()}")
+    log(f"  value limit: {algo_rnd.value_limit} stock_size: {algo_rnd.stock_size_orig}")
+    log(f"  profit/day: {algo_rnd.get_profit_per_day()} profit/closed deal: {algo_rnd.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {algo_rnd.get_closed_deal_per_day()} transaction/day: {algo_rnd.get_transaction_per_day()}")
 
     log(f"Indicator drived algo trade.")
-    log(f"  value limit: {apa_algo_indicator.value_limit} stock_size: {apa_algo_indicator.stock_size_orig}")
-    log(f"  profit/day: {apa_algo_indicator.get_profit_per_day()} profit/closed deal: {apa_algo_indicator.get_profit_per_closed_deal()}")
-    log(f"  closed_deal/day: {apa_algo_indicator.get_closed_deal_per_day()} transaction/day: {apa_algo_indicator.get_transaction_per_day()}")
+    log(f"  value limit: {algo_indicator.value_limit} stock_size: {algo_indicator.stock_size_orig}")
+    log(f"  profit/day: {algo_indicator.get_profit_per_day()} profit/closed deal: {algo_indicator.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {algo_indicator.get_closed_deal_per_day()} transaction/day: {algo_indicator.get_transaction_per_day()}")
 
     log(f"Ai = Indicator decision drived algo trade.")
-    log(f"  value limit: {apa_algo_ai_decision.value_limit} stock_size: {apa_algo_ai_decision.stock_size_orig}")
-    log(f"  profit/day: {apa_algo_ai_decision.get_profit_per_day()} profit/closed deal: {apa_algo_ai_decision.get_profit_per_closed_deal()}")
-    log(f"  closed_deal/day: {apa_algo_ai_decision.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_decision.get_transaction_per_day()}")
+    log(f"  value limit: {algo_ai_indicator_decision.value_limit} stock_size: {algo_ai_indicator_decision.stock_size_orig}")
+    log(f"  profit/day: {algo_ai_indicator_decision.get_profit_per_day()} profit/closed deal: {algo_ai_indicator_decision.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {algo_ai_indicator_decision.get_closed_deal_per_day()} transaction/day: {algo_ai_indicator_decision.get_transaction_per_day()}")
 
     log(f"Ai decision OVERRIDE algo trade.")
-    log(f"  value limit: {apa_algo_ai_override.value_limit} stock_size: {apa_algo_ai_override.stock_size_orig}")
-    log(f"  profit/day: {apa_algo_ai_override.get_profit_per_day()} profit/closed deal: {apa_algo_ai_override.get_profit_per_closed_deal()}")
-    log(f"  closed_deal/day: {apa_algo_ai_override.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_override.get_transaction_per_day()}")
+    log(f"  value limit: {algo_ai_override.value_limit} stock_size: {algo_ai_override.stock_size_orig}")
+    log(f"  profit/day: {algo_ai_override.get_profit_per_day()} profit/closed deal: {algo_ai_override.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {algo_ai_override.get_closed_deal_per_day()} transaction/day: {algo_ai_override.get_transaction_per_day()}")
 
     log(f"Ai limitter drived algo trade.")
-    log(f"  value limit: {apa_algo_ai_limitter.value_limit} stock_size: {apa_algo_ai_limitter.stock_size_orig}")
-    log(f"  profit/day: {apa_algo_ai_limitter.get_profit_per_day()} profit/closed deal: {apa_algo_ai_limitter.get_profit_per_closed_deal()}")
-    log(f"  closed_deal/day: {apa_algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_limitter.get_transaction_per_day()}")
+    log(f"  value limit: {algo_ai_limitter.value_limit} stock_size: {algo_ai_limitter.stock_size_orig}")
+    log(f"  profit/day: {algo_ai_limitter.get_profit_per_day()} profit/closed deal: {algo_ai_limitter.get_profit_per_closed_deal()}")
+    log(f"  closed_deal/day: {algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {algo_ai_limitter.get_transaction_per_day()}")
 
-    apa_algo_rnd.show_history()
-    apa_algo_indicator.show_history()
-    apa_algo_ai_decision.show_history()
-    apa_algo_ai_override.show_history()
-    apa_algo_ai_limitter.show_history()
+    algo_rnd.show_history()
+    algo_indicator.show_history()
+    algo_ai_indicator_decision.show_history()
+    algo_ai_override.show_history()
+    algo_ai_limitter.show_history()
+    
+    del algo_rnd
+    del algo_indicator
+    del algo_ai_indicator_decision
+    del algo_ai_override
+    del algo_ai_limitter
 
 
 
@@ -2547,13 +2517,12 @@ def md_symbols(market):
 
 def wl_add(symbol="", years=3):
     wl.add(symbol, years)
-    # ndf.check(symbol)
-    gui.refresh_ui()
 
 
 def wl_remove(symbol=""):
     wl.remove(symbol)
     ndf.remove(symbol)
+    ai.remove_symbol(symbol)
     gui.refresh_ui()
 
 
@@ -2571,7 +2540,7 @@ def wl_refresh_sentiment():
 
 
 def wl_trade_short(btn_no):
-    symbol = wl.df.loc[btn_no - 1]['symbol']
+    symbol = wl.wl_df.loc[btn_no - 1]['symbol']
     trade.order['symbol'] = symbol
     trade.order['position'] = "SHORT"
     i_market_price = trade.get_market_price_by_symbol(symbol)
@@ -2582,7 +2551,7 @@ def wl_trade_short(btn_no):
 
 
 def wl_trade_long(btn_no):
-    symbol = wl.df.loc[btn_no - 1]['symbol']
+    symbol = wl.wl_df.loc[btn_no - 1]['symbol']
     trade.order['symbol'] = symbol
     trade.order['position'] = "LONG"
     i_market_price = trade.get_market_price_by_symbol(symbol)
@@ -2593,7 +2562,7 @@ def wl_trade_long(btn_no):
 
 
 def wl_btn_chart(btn_no):
-    symbol = wl.df.loc[btn_no - 1]['symbol']
+    symbol = wl.wl_df.loc[btn_no - 1]['symbol']
     log("start: nchart " + symbol, True, False)
     i_indecators = ndf.get_added_indicators(symbol)
     i_df = nddf[symbol].tail(20000).copy()
@@ -2602,7 +2571,7 @@ def wl_btn_chart(btn_no):
 
 
 def wl_btn_show(btn_no):
-    symbol = wl.df.loc[btn_no - 1]['symbol']
+    symbol = wl.wl_df.loc[btn_no - 1]['symbol']
     log("start: ndf.show.last " + symbol, True, False)
     ndf_show_last(symbol)
     log("ready.", False, False)
@@ -2624,7 +2593,7 @@ def tr_set_order():
 
 
 def tr_stop(btn_no):
-    symbol = wl.df.loc[btn_no - 1]['symbol']
+    symbol = wl.wl_df.loc[btn_no - 1]['symbol']
     if gui.confirm("Stop " + symbol, "Are you sure? Stop " + symbol + " position?"):
         trade.order["symbol"] = symbol
         trade.order["position"] = "STOP"
@@ -2650,12 +2619,12 @@ def tr_stop_all():
             gui.tlog(f"Clear orders: {i_o2}", line=False, indent=True, color="normal")
             trade.cancel_orders_by_symbol(i_o2)
 
-        for i_s in tuple(wl.df["symbol"]):
+        for i_s in tuple(wl.wl_df["symbol"]):
             trade.set_tp_position(i_s, 0)
 
         i_pos = trade.get_all_positions()
         for i_s2 in i_pos:
-            if i_s2.symbol not in tuple(wl.df["symbol"]):
+            if i_s2.symbol not in tuple(wl.wl_df["symbol"]):
                 trade.set_tp_position(i_s2.symbol, 0)
 
         gui.refresh_ui("info")
@@ -2683,6 +2652,7 @@ def tr_info_refresh():
 
 if __name__ == "__main__":
 
+    ai = n_ai()
     wl = watch_list()
     nddf = {}
     nddb = nd_db(nddf, log)

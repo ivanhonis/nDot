@@ -362,10 +362,10 @@ class algo_trade:
                        toolbar_location="left",
                        y_axis_location="right",
                        tools="xpan,xwheel_zoom,reset",
-                       title=self.name + " - price",
-                       y_range=(i_min, i_max))
+                       title=self.name + " - price")
+                       # y_range=(i_min, i_max))
 
-            p.y_range = Range1d(i_min, i_max)
+            # p.y_range = Range1d(i_min, i_max)
 
             p.line('index', 'actual_price', color="#0000ff", legend_label="actual price", source=deals)
             p.line('index', 'avg_income_price', color="#ff9100", legend_label="avg income price", source=deals)

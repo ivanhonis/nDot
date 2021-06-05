@@ -1,8 +1,6 @@
-symbol;name;profil;snt_bearish;snt_bullish
-APA;Apache Corp;Web: ;0.0;1.0
-SPY;SPY;SPY;0.4599;0.5401
-PLAY;Dave & Buster's Entertainment Inc;Web: http://www.daveandbusters.com/;0.5;0.5
-IBM;International Business Machines Corp;Web: https://www.ibm.com/;0.2;0.8
-MSFT;Microsoft Corp;Web: https://www.microsoft.com/en-us;0.0715;0.9285
-RDS.A;Royal Dutch Shell PLC;Web: https://www.shell.com/;0.5;0.5
-AAPL;Apple Inc;Web: https://www.apple.com/;0.25;0.75
+symbol;name;profil;snt_bearish;snt_bullish;ai_project1
+APA;Apache Corp;Web: ;0.0;1.0;APA_SMA5813
+SPY;SPY;SPY;0.4599;0.5401;-
+PLAY;Dave & Buster's Entertainment Inc;Web: http://www.daveandbusters.com/;0.5;0.5;-
+MSFT;Microsoft Corp;Web: https://www.microsoft.com/en-us;0.0715;0.9285;-
+RDS.A;Royal Dutch Shell PLC;Web: https://www.shell.com/;0.5;0.5;-
