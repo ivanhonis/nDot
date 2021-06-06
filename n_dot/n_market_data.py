@@ -5,7 +5,7 @@ import threading
 from time import sleep, strftime
 
 
-class market_data:
+class n_market_data:
 
     api_key_finnhubio1 = "c28o33iad3if6b4c0ong"
     finnhub_client = ""

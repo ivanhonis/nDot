@@ -41,8 +41,6 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 "SMA_13_R_OHLC4",
 "VWAP_D_R_OHLC4",
 "VOLUME_DIFF",
-
-
 "SMA_5_R_OHLC4",
 "SMA_8_R_OHLC4",
 "SMA_13_R_OHLC4"
@@ -56,4 +54,15 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 [
 "SPY_LOW_DIFF",
 "SPY_HIGH_DIFF",
+"SPY_ADX_8_ONE",
+]
+;
+
+<--------------------------------------------------->
+<Steam config - Indexes>
+<--------------------------------------------------->
+[
+"PRICE_DIFF",
+"SMA_5813",
+"ADX_8"
 ]

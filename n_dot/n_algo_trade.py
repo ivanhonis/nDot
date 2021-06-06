@@ -11,7 +11,7 @@ from bokeh.layouts import column
 from math import radians
 
 
-class algo_trade:
+class n_algo_trade:
 
     def __init__(self):
 
@@ -39,6 +39,7 @@ class algo_trade:
         self.closed_deal_count = 0
         self.act_profit = 0
         self.steps = 0
+        self.stock_size_orig = 0
         # hisory -------------------------
         self.history = pd.DataFrame(None)
         self.chart_elements = list()
@@ -61,7 +62,6 @@ class algo_trade:
         self.strategy = conf_dict["strategy"]
         self.trade_time_start = conf_dict["trade_time_start"]
         self.trade_time_stop = conf_dict["trade_time_stop"]
-
 
     @property
     def value_limit_actual(self):
@@ -232,6 +232,27 @@ class algo_trade:
                 decision_qt = 0
             return decision, decision_qt
 
+        # elif self.strategy == 22:  # ai decision override
+        #     self.act_profit = int((self.actual_price - self.avg_income_price) * self.actual_qt)
+        #     if self.act_profit < self.trailer_profit or self.act_profit == 0:
+        #         if y_predict == 0:
+        #             self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+        #             decision = "BUY"
+        #             decision_qt = self.get_stock_qt()
+        #         elif y_predict == 1:
+        #             self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+        #             decision = "SELL"
+        #             decision_qt = self.get_stock_qt()
+        #         else:
+        #             self.stock_size = 0
+        #             decision = "NONE"
+        #             decision_qt = 0
+        #     else:
+        #         self.stock_size = 0
+        #         decision = "NONE"
+        #         decision_qt = 0
+        #     return decision, decision_qt
+
         elif self.strategy == 3:  # ai limitter
 
             if y_predict == sig:
@@ -389,12 +410,18 @@ class algo_trade:
             callback = CustomJS(args=dict(p=p), code="""
             clearTimeout(window._autoscale_timeout);
             var cv_price = cb_obj.plots[0].renderers[0].data_source.data.actual_price;
-            var cv_price_slice = cv_price.slice(p.x_range.start,p.x_range.end);
+            var x_start = p.x_range.start;
+            var x_end = p.x_range.end;
+            var x_start_int = Math.floor(x_start);
+            var x_end_int = Math.floor(x_end);
+            x_start_int = Math.max(x_start_int, 1);
+            
+            var cv_price_slice = cv_price.slice(x_start_int,x_end_int);
             var cv_max = Math.max(...cv_price_slice);
             var cv_min = Math.min(...cv_price_slice);
             window._autoscale_timeout = setTimeout(function() {
-                p.y_range.start = cv_min * .995;
-                p.y_range.end = cv_max * 1.005;
+                p.y_range.start = cv_min * .997;
+                p.y_range.end = cv_max * 1.003;
             });
             """)
 
@@ -469,7 +496,7 @@ class algo_trade:
         show(c)
 
 if __name__ == "__main__":
-    algo = algo_trade()
+    algo = n_algo_trade()
 
     algo.config({"name": "APA",
                  "value_limit": 16000,

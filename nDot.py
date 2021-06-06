@@ -46,16 +46,16 @@ import re  # dataset config beolvasóhoz kell
 import pathlib  # dataset config beolvasóhoz kell
 
 
-# User classes ------------------------------------------------------
-from classes.trade import trade
-from classes.market_data import market_data
-from classes.nd_db import nd_db
-from classes.nchart import nchart
-from classes.n_datasets import n_dataset
-from classes.n_data_frame_meta import n_date_frame_meta
-from classes.tools import tools
-from classes.algo_trade import algo_trade
-from classes.n_ai import n_ai
+# User nDot ------------------------------------------------------
+from n_dot.n_trade import n_trade
+from n_dot.n_market_data import n_market_data
+from n_dot.n_db import n_db
+from n_dot.n_chart import n_chart
+from n_dot.n_datasets import n_dataset
+from n_dot.n_data_frame_meta import n_date_frame_meta
+from n_dot.n_tools import n_tools
+from n_dot.n_algo_trade import n_algo_trade
+from n_dot.n_ai import n_ai
 
 # # Ai components
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -71,7 +71,6 @@ if LocalRUN:
         def __init__(self):
             super(gui, self).__init__()
             self.load_ui()
-            self.refresh_ui("ai_info")
             self.usd_huf = 0
             # self.show_dialog_return = False
             self.commands = self.load_commands()
@@ -91,8 +90,8 @@ if LocalRUN:
             app.setWindowIcon(app_icon)
 
         def closeEvent(self, event):
-            trade.monitor_stop()
-            trade.broker_stop()
+            ntrade.monitor_stop()
+            ntrade.broker_stop()
             md.stream_stop()
             nddb.close()
             print("Status: GUI Closed")
@@ -232,7 +231,7 @@ if LocalRUN:
                     i_wl_frame_list[f_id].show()
                     i_no = i_no + 1
                     QApplication.processEvents()
-            elif mode == "info" or mode == "full":
+            if mode == "info" or mode == "full":
                 i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
                 i_no = 0
                 for index, row in wl.wl_df.iterrows():
@@ -250,8 +249,8 @@ if LocalRUN:
                     i_pl = self.get_pl_by_symbol(i_symbol)
                     i_pl_now = i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).text()
                     if i_pl != i_pl_now:
-                        if i_symbol in tuple(trade.cp_df.index):
-                            if float(trade.cp_df.loc[i_symbol, "unrealized_pl"]) > 0:
+                        if i_symbol in tuple(ntrade.cp_df.index):
+                            if float(ntrade.cp_df.loc[i_symbol, "unrealized_pl"]) > 0:
                                 i_wl_frame_list[f_id].findChild(QToolButton,
                                                                 "WL_trade_stop" + i_noid[i_no]).setStyleSheet(
                                     'color: #ffffff; background: #ff9100')
@@ -265,7 +264,7 @@ if LocalRUN:
                         i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
                         QApplication.processEvents()
                     i_no = i_no + 1
-            elif mode == "ai_info" or mode == "full":
+            if mode == "ai_info" or mode == "full":
                 i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
                 i_no = 0
                 for index, row in wl.wl_df.iterrows():
@@ -285,9 +284,9 @@ if LocalRUN:
 
         def set_trade_frame(self):
             self.pause_trader_frame_calculation = True
-            self.Tr_symbol.setText(trade.order["symbol"])
+            self.Tr_symbol.setText(ntrade.order["symbol"])
 
-            if trade.order["position"] == "SHORT":
+            if ntrade.order["position"] == "SHORT":
                 self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
                                                'border-bottom-left-radius: 15px;' + \
                                                'color: #ff3333;')
@@ -297,10 +296,10 @@ if LocalRUN:
                                                'border-bottom-left-radius: 15px;' + \
                                                'color: #078F12;')
                 self.Tr_set_order.setText("SET\nLONG")
-            self.Tr_position.setText(trade.order["position"])
-            self.Tr_market_price.setText(str(trade.order["market_price"]))
+            self.Tr_position.setText(ntrade.order["position"])
+            self.Tr_market_price.setText(str(ntrade.order["market_price"]))
             # self.Tr_trailing_stop.setValue(True)
-            self.Tr_qty.setValue(trade.order["qty"])
+            self.Tr_qty.setValue(ntrade.order["qty"])
             self.pause_trader_frame_calculation = False
             self.tr_change_data()
             self.Tr_frame.show()
@@ -313,8 +312,8 @@ if LocalRUN:
             if not self.pause_trader_frame_calculation:
                 if self.usd_huf == 0:
                     self.usd_huf = md.get_usdhuf()
-                trade.order["qty"] = int(self.Tr_qty.value())
-                i_value_usd = round(trade.order["qty"] * trade.order["market_price"], 2)
+                ntrade.order["qty"] = int(self.Tr_qty.value())
+                i_value_usd = round(ntrade.order["qty"] * ntrade.order["market_price"], 2)
                 i_value_huf = round(i_value_usd * self.usd_huf, 2)
                 i_value_text = '{0:,.2f}'.format(i_value_usd) + " USD\n" + '{0:,.2f}'.format(i_value_huf) + " HUF"
                 self.Tr_value.setText(i_value_text)
@@ -363,7 +362,7 @@ if LocalRUN:
                 ['md.symbols', 'md_symbols', 'md.symbols <market>', 0],
                 ['ai.add', 'ai_add', 'ai.add <symbol> <project>', 1],
                 ['ai.remove', 'ai_remove', 'ai.remove <symbol> <project>', 1],
-                ['ai.download', 'ai_download', 'ai.download <project name>', 0],
+                ['ai.download', 'ai_download', 'ai.download <project name> <<rename>>', 0],
                 ['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project> <<start position>>', 3],
                 ['exit', 'exit', 'exit', 0]
             ]
@@ -476,8 +475,8 @@ if LocalRUN:
         # GUI - Info text creators ------------------------------------------------
 
         def get_pl_by_symbol(self, symbol):
-            if symbol in trade.cp_df.index:
-                i_p = float(trade.cp_df.loc[symbol, "unrealized_pl"])
+            if symbol in ntrade.cp_df.index:
+                i_p = float(ntrade.cp_df.loc[symbol, "unrealized_pl"])
                 i_return = f"STOP {i_p}$"
             else:
                 i_return = "-"
@@ -517,8 +516,8 @@ if LocalRUN:
                 return i_return
 
             def rq():
-                i_max_key = max(trade.request_count.keys())
-                return trade.request_count[i_max_key]
+                i_max_key = max(ntrade.request_count.keys())
+                return ntrade.request_count[i_max_key]
 
             def get_dt(date_time_str):
                 date_time_str = date_time_str[:19]
@@ -532,8 +531,8 @@ if LocalRUN:
                 i_return = f"{i_return:,}"
                 return i_return
 
-            i_a = trade.get_account()
-            i_c = trade.get_clock()
+            i_a = ntrade.get_account()
+            i_c = ntrade.get_clock()
             if i_c.is_open:
                 i_cst = "Close:"
                 i_cs = get_dt(str(i_c.next_close))
@@ -549,16 +548,16 @@ if LocalRUN:
             <html><head/><body>
             <table border="0" cellspacing="5" cellpadding="0">
                 <tr>
-                    <td>Monitor: </td><td>{onf(trade.monitor_is_working)} - {trade.monitor_refresh_rate}</td><td>{nbs(s)}</td><td>Equity:</td><td>{ntofs(i_a.equity)} USD</td><td>{nbs(s)}</td><td>Market:</td><td>{oc(i_c.is_open)}</td>
+                    <td>Monitor: </td><td>{onf(ntrade.monitor_is_working)} - {ntrade.monitor_refresh_rate}</td><td>{nbs(s)}</td><td>Equity:</td><td>{ntofs(i_a.equity)} USD</td><td>{nbs(s)}</td><td>Market:</td><td>{oc(i_c.is_open)}</td>
                 </tr>
                 <tr>
-                    <td>Broker:</td><td>{onf(trade.broker_is_working)}  - {trade.broker_refresh_rate}</td><td>{nbs(s)}</td><td>USD/HUF:</td><td>{self.usd_huf} HUF</td><td>{nbs(s)}</td><td>{i_cst}</td><td>{i_cs}</td>
+                    <td>Broker:</td><td>{onf(ntrade.broker_is_working)}  - {ntrade.broker_refresh_rate}</td><td>{nbs(s)}</td><td>USD/HUF:</td><td>{self.usd_huf} HUF</td><td>{nbs(s)}</td><td>{i_cst}</td><td>{i_cs}</td>
                 </tr>
                 <tr>
-                    <td>Reguests:</td><td>{rq()}/{trade.request_count_max}</td><td>{nbs(s)}</td><td>Cash / power:</td><td>{ntofs(i_a.cash)} / {ntofs(i_a.buying_power)} USD</td><td>{nbs(s)}</td><td>Status:</td><td>{bnb(i_a.trading_blocked)} - {i_a.status}</td>
+                    <td>Reguests:</td><td>{rq()}/{ntrade.request_count_max}</td><td>{nbs(s)}</td><td>Cash / power:</td><td>{ntofs(i_a.cash)} / {ntofs(i_a.buying_power)} USD</td><td>{nbs(s)}</td><td>Status:</td><td>{bnb(i_a.trading_blocked)} - {i_a.status}</td>
                 </tr>
                 <tr>
-                    <td></td><td></td><td>{nbs(s)}</td><td>Block size:</td><td>{int(trade.config["trade_block_size"])} USD</td><td>{nbs(s)}</td><td></td><td></td>
+                    <td></td><td></td><td>{nbs(s)}</td><td>Block size:</td><td>{int(ntrade.config["trade_block_size"])} USD</td><td>{nbs(s)}</td><td></td><td></td>
                 </tr>
             </table>
             </body></html>
@@ -568,15 +567,15 @@ if LocalRUN:
         def get_monitor_info_by_symbol(self, symbol):
             # print("get_monitor_info_by_symbol\n", symbol)
             # print("get_monitor_info_by_symbol\n", trade.tp_df)
-            if symbol in trade.tp_df.index:
-                i_qt = int(trade.tp_df.loc[symbol, "target_position"])
+            if symbol in ntrade.tp_df.index:
+                i_qt = int(ntrade.tp_df.loc[symbol, "target_position"])
             else:
                 i_qt = 0
             # print("get_monitor_info_by_symbol\n", trade.cp_df)
-            if symbol in trade.cp_df.index:
-                i_qc = int(trade.cp_df.loc[symbol, "qty"])
-                i_p = float(trade.cp_df.loc[symbol, "current_price"])
-                i_v = float(trade.cp_df.loc[symbol, "market_value"])
+            if symbol in ntrade.cp_df.index:
+                i_qc = int(ntrade.cp_df.loc[symbol, "qty"])
+                i_p = float(ntrade.cp_df.loc[symbol, "current_price"])
+                i_v = float(ntrade.cp_df.loc[symbol, "market_value"])
             else:
                 i_qc = 0
                 i_p = 0
@@ -590,7 +589,7 @@ if LocalRUN:
             i_return = f"""<html><head/><body>"""
             for prj in ai_projects:
                 i_return = i_return + f"""
-            {prj}<br/>LONG 63,25%<br/>"""
+            <div style="margin-top: 5px;">{prj}<br/>LONG 63,25%</div>"""
             i_return = i_return + "</body></html>"
             # # print(i_return,"\n\n")
             return i_return
@@ -661,44 +660,44 @@ class n_date_frame2:
         self.indicators = pd.DataFrame(None)
         self.load_indicators()
 
-    def get_dataset_config(self, file_name):
-        log("ndf-> get_dataset_config " + file_name )
-        ok = True
-        # ez nem vizsgálja, hogy létezik e file, ezt hívás előtt kell
-
-        def clear_string(contents, space=True):
-            if space:
-                contents = contents.replace(" ", "")
-            contents = contents.replace('\n', '').replace('\r', '')
-            contents = re.sub('<.*?>', '', contents)
-            if contents[-2:] == ",]":
-                contents = contents[:-2] + "]"
-            return contents
-
-        with open(file_name) as f:
-            contents = f.read()
-        contents = contents.split(";")
-        description = clear_string(contents[0], space=False)
-
-        try:
-            dataset_config = json.loads(clear_string(contents[1]))
-        except ValueError:
-            dataset_config = []
-            ok = False
-
-        try:
-            original_fields = json.loads(clear_string(contents[2]))
-        except ValueError:
-            original_fields = []
-            ok = False
-
-        try:
-            contras = json.loads(clear_string(contents[3]))
-        except ValueError:
-            contras = []
-            ok = False
-
-        return ok, description, dataset_config, original_fields, contras
+    # def get_dataset_config(self, file_name):
+    #     log("ndf-> get_dataset_config " + file_name )
+    #     ok = True
+    #     # ez nem vizsgálja, hogy létezik e file, ezt hívás előtt kell
+    #
+    #     def clear_string(contents, space=True):
+    #         if space:
+    #             contents = contents.replace(" ", "")
+    #         contents = contents.replace('\n', '').replace('\r', '')
+    #         contents = re.sub('<.*?>', '', contents)
+    #         if contents[-2:] == ",]":
+    #             contents = contents[:-2] + "]"
+    #         return contents
+    #
+    #     with open(file_name) as f:
+    #         contents = f.read()
+    #     contents = contents.split(";")
+    #     description = clear_string(contents[0], space=False)
+    #
+    #     try:
+    #         dataset_config = json.loads(clear_string(contents[1]))
+    #     except ValueError:
+    #         dataset_config = []
+    #         ok = False
+    #
+    #     try:
+    #         original_fields = json.loads(clear_string(contents[2]))
+    #     except ValueError:
+    #         original_fields = []
+    #         ok = False
+    #
+    #     try:
+    #         contras = json.loads(clear_string(contents[3]))
+    #     except ValueError:
+    #         contras = []
+    #         ok = False
+    #
+    #     return ok, description, dataset_config, original_fields, contras
 
     def get_all_symbol(self):
         return nddf.keys()
@@ -771,8 +770,8 @@ class n_date_frame2:
         i_paralel_req = 0
         threads = list()
         for i_i in range(len(i_datetime_series) - 1):
-            i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=1)))
-            i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i + 1] - timedelta(days=1)))
+            i_tounix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=1)))
+            i_fromunix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i + 1] - timedelta(days=1)))
             # i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True)
             x = threading.Thread(target=threat_function, args=(symbol, i_fromunix, i_tounix, i_paralel_req))
             threads.append(x)
@@ -914,7 +913,29 @@ class n_date_frame2:
                 i_return = False
         return i_return
 
-    def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras):
+    def get_contra_copies(self, contras):
+        result = {}
+        if len(contras) > 0:
+            for i_con in contras:
+                contra_sep_pre = i_con.split('_')
+                con_sep = []
+                if len(contra_sep_pre) > 2:
+                    con_sep.append(contra_sep_pre[0])
+                    s = "_"
+                    con_sep.append(s.join(contra_sep_pre[1:]))
+                else:
+                    con_sep = contra_sep_pre
+            
+                con_symbol = con_sep[0]
+                # con_field = con_sep[1]
+            
+                if con_symbol not in result:
+                    result[con_symbol] = nddf[con_symbol].copy()
+                    result[con_symbol].set_index("Date", inplace=True)
+        return result
+
+    def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras, contra_copies):
+        
         i_int_to = int(index)
         i_int_from = i_int_to - time_window_size + 1
 
@@ -938,31 +959,44 @@ class n_date_frame2:
 
                     con_symbol = con_sep[0]
                     con_field = con_sep[1]
-                    i_new = np.array(nddf[con_symbol].loc[i_int_from:i_int_to, con_field])
+                    
+                    orig_date = nddf[symbol].loc[index, "Date"]
+                    i_int_to_contra = contra_copies[con_symbol].index.get_loc(orig_date, method='ffill')
+                    
+                    i_int_from_contra = i_int_to_contra - time_window_size + 1
+                    i_new = np.array(nddf[con_symbol].loc[i_int_from_contra:i_int_to_contra, con_field])
                     i_data_array = np.append(i_data_array, i_new)
         return i_data_array
 
     def create_dataset(self, symbol, project_name, full=False):
 
         def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras):
-
+    
             array_len = time_window_size * (len(original_fields) + len(contras))
+            
+            contra_copies = self.get_contra_copies(contras)
 
-            for i_il in indexes:
+            for nx, i_il in enumerate(indexes):
                 i_data_array = self.get_dataset_by_index(symbol=symbol,
                                                          index=i_il,
                                                          time_window_size=time_window_size,
                                                          original_fields=original_fields,
-                                                         contras=contras)
-
+                                                         contras=contras,
+                                                         contra_copies=contra_copies
+                                                         # contras_indexes=contras_indexes,
+                                                         # contra_n=nx
+                                                        )
+                
                 if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
                     nd_dset.add_X(i_data_array)
                     nd_dset.add_y(y)
+                s2()
+            del contra_copies
 
         config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
         file = pathlib.Path(config_file_path)
         if file.exists():
-            gdc_ok, description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
+            gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_dataset_config(config_file_path)
             if gdc_ok:
                 sig_field = "SIG_" + dataset_config['sig_suffix']
                 field_ok_basic = ndf.is_field_exist(symbol, sig_field)
@@ -1042,6 +1076,9 @@ class n_date_frame2:
                     i_index_good_short = i_index_good_short[0:max_signals]
                     i_index_bad_long = i_index_bad_long[0:max_signals]
                     i_index_bad_short = i_index_bad_short[0:max_signals]
+
+                    global s2_max
+                    s2_max += len(i_index_good_long) + len(i_index_good_short) + len(i_index_bad_long) + len(i_index_bad_short)
 
                     nd_dset.set_window_size(time_window_size)
                     s2()
@@ -1705,8 +1742,8 @@ class n_date_frame2:
         # print("to", to_dbdt)
         from_dbdt = str(nddf[symbol]["Date"].max())
         # print("from", from_dbdt)
-        i_tounix = tools.dbdt_to_unixdt(to_dbdt)
-        i_fromunix = tools.dbdt_to_unixdt(from_dbdt)
+        i_tounix = n_tools.dbdt_to_unixdt(to_dbdt)
+        i_fromunix = n_tools.dbdt_to_unixdt(from_dbdt)
         i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, log_off)
 
         # fast check tesult
@@ -1808,278 +1845,18 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-    import pickle as pickle
-    from sklearn import preprocessing
-    project_name = "APA_SMA5813"
-    ai_download(project_name)
+    symbol = "APA"
+    a = nddf[symbol].loc[1000, "Date"]
+    contra_copy = nddf["SPY"].copy()
+    contra_copy.set_index("Date", inplace=True)
+    print(contra_copy)
+    
+    print(a)
+    b = contra_copy.index.get_loc(a, method='nearest')
+    print(b)
+    print(nddf["SPY"].loc[b, "Date"])
+    
 
-    # init norm model from local drive
-    local_path = "projects/" + project_name + "/" + "nDot_MinMaxScaler_" + project_name + ".pickle"
-    norm_model = pickle.load(open(local_path, "rb"))
-
-    # init tf_model fromlocl drive
-    local_path = 'projects/' + project_name + '/nDot_TF_MODEL_' + project_name + '.h5'
-    tf_model = load_model(local_path)
-
-    config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
-    gdc_ok, description, dataset_config, original_fields, contras = ndf.get_dataset_config(config_file_path)
-    time_window_size = dataset_config['time_window_size']
-    fields_plus_contras = len(original_fields) + len(contras)
-
-    def x_transform(x_np, time_window_size, fields_plus_contras):
-        x_np_mod = np.array(x_np)
-        x_np_mod_reshaped = np.reshape(x_np_mod, (x_np_mod.shape[0], time_window_size, fields_plus_contras))
-        return x_np_mod_reshaped
-
-
-    run = True
-    if run:
-        symbol = "APA"
-        run_time_window = 3000
-        rnd_from = 100
-        rnd_to = nddf[symbol].shape[0] - (run_time_window + 100)
-
-        x_from = np.random.randint(rnd_from, rnd_to)
-        x_to = 1 + x_from + 3000
-        res = tuple(nddf[symbol].loc[x_from, ['ohlc4', 'SIG_SMA5813', 'Date']])
-        basis_date = res[2]
-
-        apa_algo_indicator = algo_trade()
-        apa_algo_indicator.config({"name": "APA_ind",
-                                   "value_limit": 40000,
-                                   "stock_size": 19000,
-                                   "stop_loss_limit": -10,
-                                   "trailer_stop": .04,
-                                   "trailer_min_profit": 10,
-                                   "value_limit_profit_reinvest": True,
-                                   "steps_limit": 45,
-                                   "strategy": 1,
-                                   "trade_time_start": (15, 30),
-                                   "trade_time_stop": (21, 30)
-                                   })
-
-        apa_algo_ai_decision = algo_trade()
-        apa_algo_ai_decision.config({"name": "APA_ai_decision",
-                                     "value_limit": 40000,
-                                     "stock_size": 19000,
-                                     "stop_loss_limit": -10,
-                                     "trailer_stop": .04,
-                                     "trailer_min_profit": 10,
-                                     "value_limit_profit_reinvest": True,
-                                     "steps_limit": 45,
-                                     "strategy": 2,
-                                     "trade_time_start": (15, 30),
-                                     "trade_time_stop": (21, 30)
-                                     })
-
-        apa_algo_ai_limitter = algo_trade()
-        apa_algo_ai_limitter.config({"name": "APA_ai_limitter",
-                                     "value_limit": 40000,
-                                     "stock_size": 19000,
-                                     "stop_loss_limit": -10,
-                                     "trailer_stop": .04,
-                                     "trailer_min_profit": 10,
-                                     "value_limit_profit_reinvest": True,
-                                     "steps_limit": 45,
-                                     "strategy": 3,
-                                     "trade_time_start": (15, 30),
-                                     "trade_time_stop": (21, 30)
-                                     })
-
-        apa_algo_rnd = algo_trade()
-        apa_algo_rnd.config({"name": "APA_rnd",
-                             "value_limit": 40000,
-                             "stock_size": 19000,
-                             "stop_loss_limit": -10,
-                             "trailer_stop": .04,
-                             "trailer_min_profit": 10,
-                             "value_limit_profit_reinvest": True,
-                             "steps_limit": 45,
-                             "strategy": 1,
-                             "trade_time_start": (15, 30),
-                             "trade_time_stop": (21, 30)
-                             })
-
-        for ix in range(x_from, x_to):
-            # print(ix, "-" * 80)
-            res = tuple(nddf[symbol].loc[ix, ['ohlc4', 'SIG_SMA5813', 'Date']])
-            price = res[0]
-            sig = res[1]
-            date_time = res[2]
-
-            if sig in [0, 1]:
-                i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
-                i_array = i_array.reshape(1, -1) # tömbe teszem a tömböt
-                x_norm = norm_model.transform(i_array)
-                x_nomr_reshaped = x_transform(x_norm, time_window_size, fields_plus_contras)
-                y_predict = tf_model.predict(x_nomr_reshaped)
-                y_predict_sig = np.argmax(y_predict, axis=1)[0]
-                y_predict_perc = y_predict[0][y_predict_sig]
-            else:
-                y_predict_sig = 4
-                y_predict_perc = .5
-
-            apa_algo_indicator.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-            apa_algo_ai_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-            apa_algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-
-            apa_algo_rnd.transaction(random.randint(0, 4), y_predict_sig, y_predict_perc, price, date_time)
-        log(f"Indicator drived algo trade.")
-        log(f"  profit/day: {apa_algo_indicator.get_profit_per_day()} profit/closed deal: {apa_algo_indicator.get_profit_per_closed_deal()}")
-        log(f"  closed_deal/day: {apa_algo_indicator.get_closed_deal_per_day()} transaction/day: {apa_algo_indicator.get_transaction_per_day()}")
-
-        log(f"Ai decision drived algo trade.")
-        log(f"  profit/day: {apa_algo_ai_decision.get_profit_per_day()} profit/closed deal: {apa_algo_ai_decision.get_profit_per_closed_deal()}")
-        log(f"  closed_deal/day: {apa_algo_ai_decision.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_decision.get_transaction_per_day()}")
-
-        log(f"Ai limitter drived algo trade.")
-        log(f"  profit/day: {apa_algo_ai_limitter.get_profit_per_day()} profit/closed deal: {apa_algo_ai_limitter.get_profit_per_closed_deal()}")
-        log(f"  closed_deal/day: {apa_algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {apa_algo_ai_limitter.get_transaction_per_day()}")
-
-        log(f"Random decision drived algo trade.")
-        log(f"  profit/day: {apa_algo_rnd.get_profit_per_day()} profit/closed deal: {apa_algo_rnd.get_profit_per_closed_deal()}")
-        log(f"  closed_deal/day: {apa_algo_rnd.get_closed_deal_per_day()} transaction/day: {apa_algo_rnd.get_transaction_per_day()}")
-
-        apa_algo_rnd.show_history()
-        apa_algo_indicator.show_history()
-        apa_algo_ai_decision.show_history()
-        apa_algo_ai_limitter.show_history()
-
-
-    # for i_y in range(0, 4):
-    #     i_index = (tuple(nddf[symbol].loc[nddf[symbol]['y_SMA5813_FULL'] == i_y].index))
-    #     # i_index = i_index[0:1000]
-    #
-    #     qf_good = 0
-    #     qf_bad = 0
-    #     for i_ndx in i_index:
-    #         i_array = ndf.get_dataset_by_index(symbol, i_ndx, time_window_size, original_fields, contras)
-    #         i_array = i_array.reshape(1, -1)
-    #         X = norm_model.transform(i_array)
-    #         X = X_transform(X)
-    #         y_predict = np.argmax(tf_model.predict(X))
-    #         # print(y_predict)
-    #         if i_y == 0:
-    #             if y_predict == 0:
-    #                 qf_good += 1
-    #             elif y_predict == 1:
-    #                 qf_bad += 1
-    #         elif i_y == 1:
-    #             if y_predict == 1:
-    #                 qf_good += 1
-    #             elif y_predict == 0:
-    #                 qf_bad += 1
-    #         elif i_y == 2 or i_y == 3:
-    #             if y_predict == 0 or y_predict == 1:
-    #                 qf_bad += 1
-    #
-    #     print(f"position: {i_y} good: {qf_good}, bad: {qf_bad} / len: {len(i_index)}")
-
-
-    # symbol = "APA"
-    #
-    # print(nddf[symbol])
-    # nddf[symbol]["T"] = True
-    # print(nddf[symbol]["T"].sum())
-    # nddf[symbol]["T"] = nddf[symbol]["T"].shift(2)
-    # print(nddf[symbol]["T"].sum())
-
-
-# df = pd.DataFrame(None)
-# df = nddf[symbol].copy()
-# df = df.set_index("Date")
-# print("itt")
-# print(df)
-# df = df.asfreq('1Min')
-# print("itt"*20)
-# print(df[1275:1300])
-#
-# # df = df.fillna(0)
-# df = df.interpolate()
-# print("itt2")
-# print(df[1275:1300])
-# print(df.shape)
-# df = df.between_time('16:00', '22:00')
-# print(df.shape)
-# # print(df_slice)
-# # print(df_slice.dtypes)
-# df = df.reset_index(drop=False)
-# print("100")
-# print(nddf[symbol].shape)
-# nddf[symbol] = df
-# print(nddf[symbol].shape)
-#
-# ndf.set_dt_order(symbol)
-# # print(df_slice.head(300))
-# # print("1")
-# # # Take the diff of the first column (drop 1st row since it's undefined)
-# #
-# # # print(df_slice['Date'].diff())
-# deltas = nddf[symbol]['Date'].diff()[1:]
-# # print("2")
-# #
-# # # Filter diffs (here days > 1, but could be seconds, hours, etc)
-# nddf[symbol]['gaps'] = deltas[deltas > timedelta(minutes=1)]
-# nddb.write(symbol)
-# # print(gaps)
-# # print("3")
-# #
-# # print(gaps.shape)
-# # print(max(gaps))
-#
-
-# print(df)
-# print(df.shape)
-# print(df.dtypes)
-# print('-'*80)
-# df = df.ta.reverse
-# print(df)
-# print(df.shape)
-# df = df.set_index("date")
-# print(df)
-# print(df.shape)
-# df = ndf.i_df_dt_order(df)
-# print(df)
-# print(df.shape)
-
-# df.ta.time_range = "minutes"
-# print(df.ta.time_range)
-# print(df.ta.indicators(as_list=True))
-#
-# # print(nddf["APA"].index[0] < nddf["APA"].index[-1])
-# # print(nddf["APA"])
-# #
-# # # print("1")
-# ndf.add("MSFT",1)
-# a = np.array(nddf["MSFT"]["Date"].astype(str))
-# print("2")
-# ndf.add("MSFT",1)
-# b = np.array(nddf["MSFT"]["Date"].astype(str))
-# print("3 előbb")
-# print(np.setdiff1d(a, b))
-# print("4 kicsit később")
-# print(np.setdiff1d(b, a))
-
-# a_df = pd.DataFrame(None)
-# a_df = nddf["APA"][-50:].copy()
-# # a_df.set_index("t", inplace=True)
-# print(a_df)
-# a_df.drop_duplicates('t', keep='last', inplace=True)
-# print(a_df)
-# a_df.reset_index(drop=True, inplace=True)
-# print(a_df)
-#
-# a_df.sort_values(by=['t'], inplace=True, ascending=False)
-# print(a_df)
-#
-# print(a_df)
-# a_df.reset_index(drop=True, inplace=True)
-#
-# print(a_df)
-# a_df.reset_index(drop=True, inplace=True)
-# for smb in nddf:
-#     nddf[smb] = nddf[smb][0:-3]
-#     nddb.write(smb)
 
 
 def s(msg_str):
@@ -2208,8 +1985,8 @@ def ai_remove(symbol="", project=""):
     gui.refresh_ui("ai_info")
 
 
-def ai_download(project_name):
-    ai.download(project_name)
+def ai_download(project_name, rename=""):
+    ai.download(project_name, rename)
 
 
 def ai_backtest(symbol, run_time_window, project, start_position=0):
@@ -2218,7 +1995,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
     run_time_window = int(run_time_window)
     ai.build()
 
-    gdc_ok, description, dataset_config, original_fields, contras = ai.get_project_config(project)
+    gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
     time_window_size = int(dataset_config['time_window_size'])
 
     if start_position == 0:
@@ -2229,15 +2006,16 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
     else:
         x_from = start_position
         x_to = 1 + x_from + run_time_window
-        
+    
     sig_field = "SIG_" + dataset_config['sig_suffix']
     res = tuple(nddf[symbol].loc[x_from, ['ohlc4', sig_field, 'Date']])
     from_date = res[2]
     res = tuple(nddf[symbol].loc[x_to, ['ohlc4', sig_field, 'Date']])
     to_date = res[2]
+    log(f"start_position: {x_from}")
     log(f"Selected test time window: {from_date} - {to_date}")
 
-    algo_indicator = algo_trade()
+    algo_indicator = n_algo_trade()
     algo_indicator.config({"name": symbol + " Indicator drived",
                            "value_limit": 40000,
                            "stock_size": 15000,
@@ -2251,21 +2029,21 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
                            "trade_time_stop": (21, 30)
                            })
 
-    algo_ai_indicator_decision = algo_trade()
-    algo_ai_indicator_decision.config({"name": symbol + " Ai = indicator decisions drived",
-                                       "value_limit": 40000,
-                                       "stock_size": 15000,
-                                       "stop_loss_limit": -10,
-                                       "trailer_stop": .07,
-                                       "trailer_min_profit": 10,
-                                       "value_limit_profit_reinvest": True,
-                                       "steps_limit": 45,
-                                       "strategy": 2,
-                                       "trade_time_start": (16, 00),
-                                       "trade_time_stop": (21, 30)
-                                       })
+    # algo_ai_indicator_decision = n_algo_trade()
+    # algo_ai_indicator_decision.config({"name": symbol + " Ai = indicator decisions drived",
+    #                                    "value_limit": 40000,
+    #                                    "stock_size": 15000,
+    #                                    "stop_loss_limit": -10,
+    #                                    "trailer_stop": .07,
+    #                                    "trailer_min_profit": 10,
+    #                                    "value_limit_profit_reinvest": True,
+    #                                    "steps_limit": 45,
+    #                                    "strategy": 2,
+    #                                    "trade_time_start": (16, 00),
+    #                                    "trade_time_stop": (21, 30)
+    #                                    })
 
-    algo_ai_override = algo_trade()
+    algo_ai_override = n_algo_trade()
     algo_ai_override.config({"name": symbol + " Ai override decisions drived",
                              "value_limit": 40000,
                              "stock_size": 15000,
@@ -2279,7 +2057,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
                              "trade_time_stop": (21, 30)
                              })
 
-    algo_ai_limitter = algo_trade()
+    algo_ai_limitter = n_algo_trade()
     algo_ai_limitter.config({"name": symbol + " Ai Limitter drived",
                              "value_limit": 40000,
                              "stock_size": 15000,
@@ -2293,7 +2071,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
                              "trade_time_stop": (21, 30)
                              })
 
-    algo_rnd = algo_trade()
+    algo_rnd = n_algo_trade()
     algo_rnd.config({"name": symbol + " Random decisions drived",
                      "value_limit": 40000,
                      "stock_size": 15000,
@@ -2308,21 +2086,32 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
                      })
     s2(True, x_to - x_from - 3)
 
+    contra_copies = ndf.get_contra_copies(contras)
+
     for ix in range(x_from, x_to):
         res = tuple(nddf[symbol].loc[ix, ['ohlc4', sig_field, 'Date']])
         price = res[0]
         sig = res[1]
         date_time = res[2]
 
-        i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras)
+        i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras, contra_copies)
+        i_array = ndf.get_dataset_by_index(symbol=symbol,
+                                           index=ix,
+                                           time_window_size=time_window_size,
+                                           original_fields=original_fields,
+                                           contras=contras,
+                                           contra_copies=contra_copies)
+        
         y_predict_sig, y_predict_perc = ai.predict(symbol, project, i_array, date_time)
 
         algo_indicator.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
-        algo_ai_indicator_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
+        # algo_ai_indicator_decision.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
         algo_ai_override.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
         algo_ai_limitter.transaction(sig, y_predict_sig, y_predict_perc, price, date_time)
         algo_rnd.transaction(random.randint(0, 8), y_predict_sig, y_predict_perc, price, date_time)
         s2()
+
+    del contra_copies
 
     log(f"Random decision drived algo trade.")
     log(f"  value limit: {algo_rnd.value_limit} stock_size: {algo_rnd.stock_size_orig}")
@@ -2334,10 +2123,10 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
     log(f"  profit/day: {algo_indicator.get_profit_per_day()} profit/closed deal: {algo_indicator.get_profit_per_closed_deal()}")
     log(f"  closed_deal/day: {algo_indicator.get_closed_deal_per_day()} transaction/day: {algo_indicator.get_transaction_per_day()}")
 
-    log(f"Ai = Indicator decision drived algo trade.")
-    log(f"  value limit: {algo_ai_indicator_decision.value_limit} stock_size: {algo_ai_indicator_decision.stock_size_orig}")
-    log(f"  profit/day: {algo_ai_indicator_decision.get_profit_per_day()} profit/closed deal: {algo_ai_indicator_decision.get_profit_per_closed_deal()}")
-    log(f"  closed_deal/day: {algo_ai_indicator_decision.get_closed_deal_per_day()} transaction/day: {algo_ai_indicator_decision.get_transaction_per_day()}")
+    # log(f"Ai = Indicator decision drived algo trade.")
+    # log(f"  value limit: {algo_ai_indicator_decision.value_limit} stock_size: {algo_ai_indicator_decision.stock_size_orig}")
+    # log(f"  profit/day: {algo_ai_indicator_decision.get_profit_per_day()} profit/closed deal: {algo_ai_indicator_decision.get_profit_per_closed_deal()}")
+    # log(f"  closed_deal/day: {algo_ai_indicator_decision.get_closed_deal_per_day()} transaction/day: {algo_ai_indicator_decision.get_transaction_per_day()}")
 
     log(f"Ai decision OVERRIDE algo trade.")
     log(f"  value limit: {algo_ai_override.value_limit} stock_size: {algo_ai_override.stock_size_orig}")
@@ -2351,13 +2140,13 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 
     algo_rnd.show_history()
     algo_indicator.show_history()
-    algo_ai_indicator_decision.show_history()
+    # algo_ai_indicator_decision.show_history()
     algo_ai_override.show_history()
     algo_ai_limitter.show_history()
     
     del algo_rnd
     del algo_indicator
-    del algo_ai_indicator_decision
+    # del algo_ai_indicator_decision
     del algo_ai_override
     del algo_ai_limitter
 
@@ -2541,23 +2330,23 @@ def wl_refresh_sentiment():
 
 def wl_trade_short(btn_no):
     symbol = wl.wl_df.loc[btn_no - 1]['symbol']
-    trade.order['symbol'] = symbol
-    trade.order['position'] = "SHORT"
-    i_market_price = trade.get_market_price_by_symbol(symbol)
-    trade.order['market_price'] = float(i_market_price)
-    trade.order['qty'] = int(trade.config["trade_block_size"] / trade.order['market_price'])
-    trade.order['stop_trailing'] = False
+    ntrade.order['symbol'] = symbol
+    ntrade.order['position'] = "SHORT"
+    i_market_price = ntrade.get_market_price_by_symbol(symbol)
+    ntrade.order['market_price'] = float(i_market_price)
+    ntrade.order['qty'] = int(ntrade.config["trade_block_size"] / ntrade.order['market_price'])
+    ntrade.order['stop_trailing'] = False
     gui.set_trade_frame()
 
 
 def wl_trade_long(btn_no):
     symbol = wl.wl_df.loc[btn_no - 1]['symbol']
-    trade.order['symbol'] = symbol
-    trade.order['position'] = "LONG"
-    i_market_price = trade.get_market_price_by_symbol(symbol)
-    trade.order['market_price'] = float(i_market_price)
-    trade.order['qty'] = int(trade.config["trade_block_size"] / trade.order['market_price'])
-    trade.order['stop_trailing'] = False
+    ntrade.order['symbol'] = symbol
+    ntrade.order['position'] = "LONG"
+    i_market_price = ntrade.get_market_price_by_symbol(symbol)
+    ntrade.order['market_price'] = float(i_market_price)
+    ntrade.order['qty'] = int(ntrade.config["trade_block_size"] / ntrade.order['market_price'])
+    ntrade.order['stop_trailing'] = False
     gui.set_trade_frame()
 
 
@@ -2566,8 +2355,8 @@ def wl_btn_chart(btn_no):
     log("start: nchart " + symbol, True, False)
     i_indecators = ndf.get_added_indicators(symbol)
     i_df = nddf[symbol].tail(20000).copy()
-    nchart.fit(i_df, symbol, i_indecators)
-    nchart.show()
+    n_chart.fit(i_df, symbol, i_indecators)
+    n_chart.show()
 
 
 def wl_btn_show(btn_no):
@@ -2581,29 +2370,29 @@ def wl_btn_show(btn_no):
 
 
 def tr_set_order():
-    if trade.order["position"] == "LONG":
-        i_qty = int(trade.order["qty"])
+    if ntrade.order["position"] == "LONG":
+        i_qty = int(ntrade.order["qty"])
     else:
-        i_qty = -1 * int(trade.order["qty"])
-    trade.set_tp_position(trade.order["symbol"], i_qty)
+        i_qty = -1 * int(ntrade.order["qty"])
+    ntrade.set_tp_position(ntrade.order["symbol"], i_qty)
     gui.Tr_frame.hide()
     QApplication.processEvents()
     gui.refresh_ui("info")
-    trade.broker_run()
+    ntrade.broker_run()
 
 
 def tr_stop(btn_no):
     symbol = wl.wl_df.loc[btn_no - 1]['symbol']
     if gui.confirm("Stop " + symbol, "Are you sure? Stop " + symbol + " position?"):
-        trade.order["symbol"] = symbol
-        trade.order["position"] = "STOP"
-        trade.order["qty"] = 0
-        trade.order["stop_trailing"] = False
-        trade.set_tp_position(trade.order["symbol"], 0)
+        ntrade.order["symbol"] = symbol
+        ntrade.order["position"] = "STOP"
+        ntrade.order["qty"] = 0
+        ntrade.order["stop_trailing"] = False
+        ntrade.set_tp_position(ntrade.order["symbol"], 0)
         gui.Tr_frame.hide()
         QApplication.processEvents()
         gui.refresh_ui("info")
-        trade.broker_run()
+        ntrade.broker_run()
 
 
 def tr_stop_all():
@@ -2611,32 +2400,32 @@ def tr_stop_all():
     QApplication.processEvents()
     if gui.confirm("Stop all!", "Are you sure? Stop all position?"):
         gui.tlog(f"Start: STOP ALL!", line=True, indent=False, color="normal")
-        i_open_orders = trade.get_all_open_orders()
+        i_open_orders = ntrade.get_all_open_orders()
         i_symbol_dic = {}
         for i_o1 in i_open_orders:
             i_symbol_dic[i_o1.symbol] = 1
         for i_o2 in i_symbol_dic:
             gui.tlog(f"Clear orders: {i_o2}", line=False, indent=True, color="normal")
-            trade.cancel_orders_by_symbol(i_o2)
+            ntrade.cancel_orders_by_symbol(i_o2)
 
         for i_s in tuple(wl.wl_df["symbol"]):
-            trade.set_tp_position(i_s, 0)
+            ntrade.set_tp_position(i_s, 0)
 
-        i_pos = trade.get_all_positions()
+        i_pos = ntrade.get_all_positions()
         for i_s2 in i_pos:
             if i_s2.symbol not in tuple(wl.wl_df["symbol"]):
-                trade.set_tp_position(i_s2.symbol, 0)
+                ntrade.set_tp_position(i_s2.symbol, 0)
 
         gui.refresh_ui("info")
         gui.tlog(f"Ready.", line=False, indent=False, color="normal")
-        trade.broker_run()
+        ntrade.broker_run()
 
 
 def tr_portfolio_monitor():
     if gui.Tr_portfolio_monitor.checkState():
-        trade.monitor_run()
+        ntrade.monitor_run()
     else:
-        trade.monitor_stop()
+        ntrade.monitor_stop()
 
 
 def ndf_stream():
@@ -2647,31 +2436,29 @@ def ndf_stream():
 
 
 def tr_info_refresh():
-    trade.refresh_tr_info()
+    ntrade.refresh_tr_info()
 
 
 if __name__ == "__main__":
 
-    ai = n_ai()
+    ai = n_ai(log)
     wl = watch_list()
     nddf = {}
-    nddb = nd_db(nddf, log)
+    nddb = n_db(nddf, log)
 
     if LocalRUN:
         print("Status: GUI Loading...")
         app = QApplication([])
         gui = gui()
-        trade = trade(gui=gui)
-        nchart = nchart(trade)
-
-    if LocalRUN:
+        ntrade = n_trade(gui=gui)
+        nchart = n_chart(ntrade)
         gui.refresh_ui()
         gui.showMaximized()
 
     ndf = n_date_frame2()
     ndf_meta = n_date_frame_meta(log)
-    tools = tools(gui=gui)
-    md = market_data(log, s, tools, ndf, stream_last_refresh)
+    n_tools = n_tools(gui=gui)
+    md = n_market_data(log, s, n_tools, ndf, stream_last_refresh)
 
     if not LocalRUN:
         i_start = datetime.now()

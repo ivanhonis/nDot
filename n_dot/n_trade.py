@@ -7,7 +7,7 @@ from time import sleep, gmtime, time
 from random import randint # azért használom, hogy a rendszres lekérdezések nem pont ugyan olyan ütemben történjenek, ne tűnjek junk nak
 
 
-class trade:
+class n_trade:
 
     def __init__(self, gui):
         self.gui = gui

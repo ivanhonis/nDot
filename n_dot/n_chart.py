@@ -10,7 +10,7 @@ from bokeh.models.callbacks import CustomJS
 output_file("bokeh_html/nchart.html")
 
 
-class nchart:
+class n_chart:
 
     def __init__(self, trade):
         self.trade = trade

@@ -2,7 +2,7 @@ from datetime import datetime, time as dt_time
 import time
 
 
-class tools:
+class n_tools:
 
     def __init__(self, gui):
         self.gui = gui

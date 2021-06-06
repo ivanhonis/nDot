@@ -4,7 +4,7 @@ import os
 import threading
 
 
-class nd_db:
+class n_db:
 
     def __init__(self, nddf, log):
         self.nddf = nddf

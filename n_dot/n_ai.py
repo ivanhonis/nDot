@@ -13,7 +13,8 @@ from tensorflow.keras.models import load_model
 
 class n_ai:
     
-    def __init__(self):
+    def __init__(self, log):
+        self.log = log
         # print("itt")
         self.ai_models = {}
         self.ai_settings = {}
@@ -141,6 +142,11 @@ class n_ai:
         if self.ai_models[symbol][project]["last_y_predict_datetime"] != datetime:
             x = x.reshape(1, -1)  # tömbe teszem a tömböt
             x_norm = self.ai_models[symbol][project]['MinMaxScaler'].transform(x)
+            x_norm_min = x_norm.min()
+            x_norm_max = x_norm.max()
+            if x_norm_max > 1 or x_norm_min < -1:
+                self.ai_log("MinMaxScaler out of rande (-1 , 1)")
+
             time_window_size = int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"])
             x_tansform = int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"])
             number_of_fields = int(self.ai_settings[symbol][project]["number_of_fields"])
@@ -156,14 +162,15 @@ class n_ai:
             return self.ai_models[symbol][project]["last_y_predict_sig"], self.ai_models[symbol][project]["last_y_predict_perc"]
 
     def ai_log(self, text):
-        print(text)
+        self.log(text)
+        # print(text)
         
     def build(self):
         for i_symbol in self.ai_settings:
             for i_project in self.ai_settings[i_symbol]:
                 local_path = self.projects_path + i_project + "\\nDot_PRO_" + i_project + ".txt"
                 if self.ai_settings[i_symbol][i_project]["last_update"] != os_path.getmtime(local_path):
-                    gdc_ok, description, dataset_config, original_fields, contras = self.get_dataset_config(local_path)
+                    gdc_ok, description, dataset_config, original_fields, contras, indexes = self.get_dataset_config(local_path)
                     self.ai_settings[i_symbol][i_project]["dataset_config"] = dataset_config
                     self.ai_settings[i_symbol][i_project]["original_fields"] = original_fields
                     self.ai_settings[i_symbol][i_project]["contras"] = contras
@@ -229,33 +236,40 @@ class n_ai:
             contras = []
             ok = False
 
-        return ok, description, dataset_config, original_fields, contras
+        try:
+            indexes = json_loads(clear_string(contents[4]))
+        except ValueError:
+            indexes = []
+            ok = False
+
+        return ok, description, dataset_config, original_fields, contras, indexes
         
     def print(self):
         print(json_dumps(self.ai_settings, sort_keys=False, indent=6))
         print(self.ai_models)
         
-    def download(self, project_name):
+    def download(self, project_name, rename):
         # rename existing file
-        i_now = str(datetime.now()).replace("-", "_").replace(":", "_").replace(".", "_").replace(" ", "_")
+        if rename == "rename":
+            i_now = str(datetime.now()).replace("-", "_").replace(":", "_").replace(".", "_").replace(" ", "_")
     
-        path_1 = self.projects_path + project_name + "\\nDot_TF_MODEL_" + project_name + ".h5"
-        path_2 = self.projects_path + project_name + "\\nDot_TF_MODEL_" + project_name + "_" + i_now + ".h5"
-        try:
-            os_rename(path_1, path_2)
-        except FileNotFoundError as e:
-            pass
-        else:
-            self.ai_log(f"{project_name} - Acctual TensorFlow model has renamed id: " + i_now)
-    
-        path_1 = self.projects_path + project_name + "\\nDot_MinMaxScaler_" + project_name + ".pickle"
-        path_2 = self.projects_path + + project_name + "\\nDot_MinMaxScaler_" + project_name + "_" + i_now + ".pickle"
-        try:
-            os_rename(path_1, path_2)
-        except FileNotFoundError as e:
-            pass
-        else:
-            self.ai_log(f"{project_name} - Acctual MinMaxScaler model has renamed id: " + i_now)
+            path_1 = self.projects_path + project_name + "\\nDot_TF_MODEL_" + project_name + ".h5"
+            path_2 = self.projects_path + project_name + "\\nDot_TF_MODEL_" + project_name + "_" + i_now + ".h5"
+            try:
+                os_rename(path_1, path_2)
+            except FileNotFoundError as e:
+                pass
+            else:
+                self.ai_log(f"{project_name} - Acctual TensorFlow model has renamed id: " + i_now)
+        
+            path_1 = self.projects_path + project_name + "\\nDot_MinMaxScaler_" + project_name + ".pickle"
+            path_2 = self.projects_path + project_name + "\\nDot_MinMaxScaler_" + project_name + "_" + i_now + ".pickle"
+            try:
+                os_rename(path_1, path_2)
+            except FileNotFoundError as e:
+                pass
+            else:
+                self.ai_log(f"{project_name} - Acctual MinMaxScaler model has renamed id: " + i_now)
     
         to_path = self.projects_path + project_name
     
@@ -269,7 +283,7 @@ class n_ai:
             self.ai_log(f"{project_name} - TensorFlow model downloaded.")
     
         # copy normal model
-        from_path = self.projects_path + "nDot_MinMaxScaler_" + project_name + ".pickle"
+        from_path = self.gdrive_path + "nDot_MinMaxScaler_" + project_name + ".pickle"
         try:
             copy2(from_path, to_path)
         except FileNotFoundError as e:
