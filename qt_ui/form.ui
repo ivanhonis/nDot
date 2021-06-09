@@ -1585,7 +1585,7 @@ padding-bottom:5px;
     <rect>
      <x>720</x>
      <y>40</y>
-     <width>641</width>
+     <width>40</width>
      <height>75</height>
     </rect>
    </property>
@@ -1919,7 +1919,7 @@ background:none;</string>
 background: none;</string>
    </property>
    <property name="text">
-    <string>Algo trade logs:</string>
+    <string>Ai &amp; Algo trade logs:</string>
    </property>
   </widget>
   <widget class="QLabel" name="label_18">
@@ -1944,26 +1944,65 @@ background: none;</string>
 background: none;</string>
    </property>
    <property name="text">
-    <string>Algo trade logs:</string>
+    <string>Ai &amp; Algo trade logs:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_10">
+  <widget class="QScrollArea" name="LT_scrollArea_3">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>574</y>
-     <width>701</width>
-     <height>119</height>
+     <x>-1</x>
+     <y>573</y>
+     <width>703</width>
+     <height>121</height>
     </rect>
    </property>
-   <property name="font">
-    <font>
-     <family>Tahoma</family>
-     <pointsize>9</pointsize>
-    </font>
-   </property>
    <property name="styleSheet">
-    <string notr="true">background-color:#ffffff;
+    <string notr="true">background-color:#ffffff</string>
+   </property>
+   <property name="sizeAdjustPolicy">
+    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+   </property>
+   <property name="widgetResizable">
+    <bool>true</bool>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+   </property>
+   <widget class="QWidget" name="scrollAreaWidgetContents_3">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>701</width>
+      <height>119</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_3">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="Logs_Ai">
+       <property name="font">
+        <font>
+         <family>Tahoma</family>
+         <pointsize>9</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color:#ffffff;
 color: #000000;
 border: 1px solid #ffffff;
 padding-left: 10px;
@@ -1971,13 +2010,20 @@ padding-right: 0px;
 padding-top:0px;
 padding-bottom:5px;
 </string>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;MSFT  LONG 500    MSFT  LONG 500      MSFT  LONG 500 &lt;br/&gt;MSFT  LONG 500    MSFT  LONG 500      MSFT  LONG 500 &lt;br/&gt;MSFT  LONG 500    MSFT  LONG 500      MSFT  LONG 500 &lt;br/&gt;MSFT  LONG 500    MSFT  LONG 500      MSFT  LONG 500 &lt;br/&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::RichText</enum>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QFrame" name="WL_frame">
    <property name="enabled">
@@ -2003,15 +2049,15 @@ padding-bottom:5px;
    <widget class="QToolButton" name="WL_btn_chart">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -2164,15 +2210,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -2194,10 +2240,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>35</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -2224,10 +2270,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>35</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -2272,9 +2318,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -2332,9 +2378,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
+      <y>81</y>
       <width>35</width>
-      <height>30</height>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -2345,7 +2391,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -2367,9 +2413,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
+      <y>55</y>
       <width>35</width>
-      <height>21</height>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -2398,6 +2444,7 @@ border-bottom-left-radius: 0px;</string>
      <string>Hist.</string>
     </property>
    </widget>
+   <zorder>WL_ai_info</zorder>
    <zorder>WL_trade_stop</zorder>
    <zorder>WL_btn_chart</zorder>
    <zorder>WL_symbol</zorder>
@@ -2408,7 +2455,6 @@ border-bottom-left-radius: 0px;</string>
    <zorder>WL_trade_long</zorder>
    <zorder>WL_algo</zorder>
    <zorder>WL_algo_2</zorder>
-   <zorder>WL_ai_info</zorder>
   </widget>
   <widget class="QFrame" name="WL_frame_2">
    <property name="enabled">
@@ -2434,15 +2480,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_2">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -2595,15 +2641,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_2">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -2625,10 +2671,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_2">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -2655,10 +2701,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_2">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -2703,9 +2749,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -2715,9 +2761,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_2">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -2737,7 +2783,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -2747,7 +2793,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -2760,9 +2809,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -2773,7 +2822,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -2795,9 +2844,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -2823,7 +2872,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -2851,15 +2900,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_3">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3012,15 +3061,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_3">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3042,10 +3091,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_3">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -3072,10 +3121,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_3">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -3120,9 +3169,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -3132,9 +3181,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_3">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -3154,7 +3203,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -3164,7 +3213,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -3177,9 +3229,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -3190,7 +3242,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3212,9 +3264,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -3240,7 +3292,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -3268,15 +3320,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_4">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3429,15 +3481,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_4">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3459,10 +3511,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_4">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -3489,10 +3541,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_4">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -3537,9 +3589,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -3549,9 +3601,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_4">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -3571,7 +3623,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -3581,7 +3633,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -3594,9 +3649,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -3607,7 +3662,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3629,9 +3684,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -3657,7 +3712,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -3685,15 +3740,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_5">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3846,15 +3901,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_5">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -3876,10 +3931,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_5">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -3906,10 +3961,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_5">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -3954,9 +4009,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -3966,9 +4021,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_5">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -3988,7 +4043,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -3998,7 +4053,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -4011,9 +4069,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -4024,7 +4082,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -4046,9 +4104,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -4074,7 +4132,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -4102,15 +4160,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_6">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -4263,15 +4321,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_6">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -4293,10 +4351,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_6">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -4323,10 +4381,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_6">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -4371,9 +4429,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -4383,9 +4441,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_6">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -4405,7 +4463,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -4415,7 +4473,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -4428,9 +4489,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -4441,7 +4502,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -4463,9 +4524,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -4491,7 +4552,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -4519,15 +4580,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_7">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -4680,15 +4741,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_7">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -4710,10 +4771,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_7">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -4740,10 +4801,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_7">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -4788,9 +4849,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -4800,9 +4861,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_7">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -4822,7 +4883,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -4832,7 +4893,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -4845,9 +4909,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -4858,7 +4922,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -4880,9 +4944,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -4908,7 +4972,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -4936,15 +5000,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_8">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5097,15 +5161,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_8">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5127,10 +5191,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_8">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -5157,10 +5221,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_8">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -5205,9 +5269,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -5217,9 +5281,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_8">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -5239,7 +5303,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -5249,7 +5313,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -5262,9 +5329,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -5275,7 +5342,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5297,9 +5364,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -5325,7 +5392,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -5353,15 +5420,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_9">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5514,15 +5581,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_9">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5544,10 +5611,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_9">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -5574,10 +5641,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_9">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -5622,9 +5689,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -5634,9 +5701,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_9">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -5656,7 +5723,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -5666,7 +5733,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -5679,9 +5749,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -5692,7 +5762,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5714,9 +5784,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -5742,7 +5812,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -5770,15 +5840,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_10">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5931,15 +6001,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_10">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -5961,10 +6031,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_10">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -5991,10 +6061,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_10">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -6039,9 +6109,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -6051,9 +6121,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_10">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -6073,7 +6143,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -6083,7 +6153,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -6096,9 +6169,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -6109,7 +6182,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -6131,9 +6204,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -6159,7 +6232,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -6187,15 +6260,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_11">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -6348,15 +6421,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_11">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -6378,10 +6451,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_11">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -6408,10 +6481,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_11">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -6456,9 +6529,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -6468,9 +6541,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_11">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -6490,7 +6563,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -6500,7 +6573,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -6513,9 +6589,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -6526,7 +6602,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -6548,9 +6624,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -6576,7 +6652,7 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
@@ -6604,15 +6680,15 @@ border-bottom-left-radius: 0px;</string>
    <widget class="QToolButton" name="WL_btn_chart_12">
     <property name="geometry">
      <rect>
-      <x>51</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>31</y>
+      <width>35</width>
+      <height>23</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -6765,15 +6841,15 @@ background: #ff3333;
    <widget class="QToolButton" name="WL_btn_show_12">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>32</y>
-      <width>44</width>
-      <height>21</height>
+      <x>96</x>
+      <y>5</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -6795,10 +6871,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_short_12">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>36</y>
-      <width>40</width>
-      <height>30</height>
+      <x>51</x>
+      <y>32</y>
+      <width>44</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -6825,10 +6901,10 @@ border-bottom-left-radius: 0px;
    <widget class="QToolButton" name="WL_trade_long_12">
     <property name="geometry">
      <rect>
-      <x>96</x>
-      <y>5</y>
-      <width>40</width>
-      <height>30</height>
+      <x>5</x>
+      <y>32</y>
+      <width>45</width>
+      <height>22</height>
      </rect>
     </property>
     <property name="font">
@@ -6873,9 +6949,9 @@ border-bottom-left-radius: 0px;
      <string notr="true">background: #ff9100;
 color:#ffffff;
 border-top-left-radius: 0px;
-border-top-right-radius:0px;
+border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
+border-bottom-left-radius: 5px;
 </string>
     </property>
     <property name="text">
@@ -6885,9 +6961,9 @@ border-bottom-left-radius: 0px;
    <widget class="QLabel" name="WL_ai_info_12">
     <property name="geometry">
      <rect>
-      <x>138</x>
+      <x>133</x>
       <y>5</y>
-      <width>75</width>
+      <width>80</width>
       <height>114</height>
      </rect>
     </property>
@@ -6907,7 +6983,7 @@ border-bottom-left-radius: 0px;
      <string/>
     </property>
     <property name="styleSheet">
-     <string notr="true">border-left: 3px solid white;
+     <string notr="true">border-left: 1px solid white;
 background: #ffffff;
 color: #232323;
 border-top-left-radius: 0px;
@@ -6917,7 +6993,10 @@ border-bottom-left-radius: 0px;
 </string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Ai:&lt;/span&gt;&lt;br/&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;br/&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -6930,9 +7009,9 @@ border-bottom-left-radius: 0px;
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>67</y>
-      <width>40</width>
-      <height>30</height>
+      <y>81</y>
+      <width>35</width>
+      <height>38</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -6943,7 +7022,7 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial</family>
+      <family>Arial Narrow</family>
       <pointsize>8</pointsize>
       <weight>75</weight>
       <bold>true</bold>
@@ -6965,9 +7044,9 @@ border-bottom-left-radius: 0px;</string>
     <property name="geometry">
      <rect>
       <x>96</x>
-      <y>98</y>
-      <width>40</width>
-      <height>21</height>
+      <y>55</y>
+      <width>35</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -6993,11 +7072,10 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>History</string>
+     <string>Hist.</string>
     </property>
    </widget>
   </widget>
-  <zorder>label_10</zorder>
   <zorder>LT_scrollArea_2</zorder>
   <zorder>LT_scrollArea</zorder>
   <zorder>label_16</zorder>
@@ -7007,7 +7085,6 @@ border-bottom-left-radius: 0px;</string>
   <zorder>Command_Hint</zorder>
   <zorder>Command_Line</zorder>
   <zorder>Run_Button</zorder>
-  <zorder>line</zorder>
   <zorder>line_3</zorder>
   <zorder>line_2</zorder>
   <zorder>label</zorder>
@@ -7018,12 +7095,8 @@ border-bottom-left-radius: 0px;</string>
   <zorder>line_8</zorder>
   <zorder>line_10</zorder>
   <zorder>line_12</zorder>
-  <zorder>line_5</zorder>
-  <zorder>line_7</zorder>
-  <zorder>line_6</zorder>
   <zorder>line_9</zorder>
   <zorder>line_13</zorder>
-  <zorder>line_14</zorder>
   <zorder>line_15</zorder>
   <zorder>Tr_stop_all</zorder>
   <zorder>Tr_frame</zorder>
@@ -7032,7 +7105,6 @@ border-bottom-left-radius: 0px;</string>
   <zorder>label_14</zorder>
   <zorder>line_17</zorder>
   <zorder>line_18</zorder>
-  <zorder>line_19</zorder>
   <zorder>line_20</zorder>
   <zorder>line_22</zorder>
   <zorder>Tr_portfolio_monitor</zorder>
@@ -7050,12 +7122,19 @@ border-bottom-left-radius: 0px;</string>
   <zorder>line_30</zorder>
   <zorder>line_31</zorder>
   <zorder>Ndf_last_update</zorder>
-  <zorder>line_11</zorder>
-  <zorder>line_21</zorder>
   <zorder>Progress_Bar</zorder>
   <zorder>label_7</zorder>
   <zorder>label_17</zorder>
   <zorder>label_18</zorder>
+  <zorder>LT_scrollArea_3</zorder>
+  <zorder>line_5</zorder>
+  <zorder>line</zorder>
+  <zorder>line_7</zorder>
+  <zorder>line_21</zorder>
+  <zorder>line_19</zorder>
+  <zorder>line_11</zorder>
+  <zorder>line_6</zorder>
+  <zorder>line_14</zorder>
   <zorder>WL_frame</zorder>
   <zorder>WL_frame_2</zorder>
   <zorder>WL_frame_3</zorder>

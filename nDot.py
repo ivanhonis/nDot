@@ -257,10 +257,10 @@ if LocalRUN:
                             else:
                                 i_wl_frame_list[f_id].findChild(QToolButton,
                                                                 "WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-                                    'color: #000000; background: #ff9100')
+                                    'color: #000000; background: #ff9100; border-bottom-left-radius: 5px;')
                         else:
                             i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-                                'color: #ffffff; background: #ff9100')
+                                'color: #ffffff; background: #ff9100; border-bottom-left-radius: 5px;')
                         i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
                         QApplication.processEvents()
                     i_no = i_no + 1
@@ -346,12 +346,14 @@ if LocalRUN:
                 # ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
                 ['ndf.add', 'ndf_add', 'ndf.add <symbol> <year(s)>', 1],
                 ['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
+                ['ndf.tech.project', 'ndf_tech_project', 'ndf.tech.project <symbol> <project>', 2],
                 ['ndf.tech.remove', 'ndf_tech_remove', 'ndf.tech.remove <symbol> <technical indicator>', 2],
                 ['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
                 ['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
                 ['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
-                ['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project>', 1],
+                ['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project> <<FULL / FORCE>>', 1],
                 ['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
+                ['ndf.remove.column', 'ndf_remove_column', 'ndf.remove.column <symbol> <column_name> <<SAVE>>', 1],
                 ['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
                 ['ndf.refresh.all', 'ndf_refresh_all', 'ndf.refresh.all', 0],
                 ['ndf.info', 'ndf_info', 'ndf.info', 0],
@@ -959,6 +961,7 @@ class n_date_frame2:
 
                     con_symbol = con_sep[0]
                     con_field = con_sep[1]
+                    # print(con_symbol,con_field)
                     
                     orig_date = nddf[symbol].loc[index, "Date"]
                     i_int_to_contra = contra_copies[con_symbol].index.get_loc(orig_date, method='ffill')
@@ -966,9 +969,10 @@ class n_date_frame2:
                     i_int_from_contra = i_int_to_contra - time_window_size + 1
                     i_new = np.array(nddf[con_symbol].loc[i_int_from_contra:i_int_to_contra, con_field])
                     i_data_array = np.append(i_data_array, i_new)
+            # print(i_data_array.shape)
         return i_data_array
 
-    def create_dataset(self, symbol, project_name, full=False):
+    def create_dataset(self, symbol, project_name, full=False, force=False):
 
         def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras):
     
@@ -1016,6 +1020,8 @@ class n_date_frame2:
                         y_field = y_field + "_FULL"
 
                     y_field = "y_" + dataset_config["sig_suffix"]
+                    if force:  # ha már van y akkor kitörli és mindenképen megcsinálja
+                        ndf.remove_columns(symbol, [y_field])
                     if y_field in nddf[symbol].columns:
                         log(y_field + " already exist.")
                     else:
@@ -1167,7 +1173,6 @@ class n_date_frame2:
         else:
             log("config file is missing:" + str(config_file_path))
 
-
     def get_first_signal(self, symbol, long_field, short_field, long_field_first, short_field_first):
         nddf[symbol][long_field_first] = ~(nddf[symbol][long_field] == nddf[symbol][long_field].shift(1)) & \
                                          nddf[symbol][long_field]
@@ -1225,8 +1230,8 @@ class n_date_frame2:
             i_pos_first = nddf[symbol].columns.get_loc("SXP1")
             i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
 
-            nddf[symbol]["SCPMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-            nddf[symbol]["chk_result"] = nddf[symbol][y_field] * nddf[symbol]["SCPMAX"]
+            nddf[symbol]["SCPMAX"] = nddf[symbol].iloc[:, i_ser].fillna(4).sum(axis=1)
+            nddf[symbol]["chk_result"] = nddf[symbol][y_field] * (nddf[symbol]["SCPMAX"] - (4 * overlay_steps))
             i_remove.append('SCPMAX')
             self.remove_columns(symbol, i_remove)
 
@@ -1240,8 +1245,9 @@ class n_date_frame2:
             i_pos_first = nddf[symbol].columns.get_loc("SXM1")
             i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
 
-            nddf[symbol]["SXMMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-            nddf[symbol]["chk_result"] = nddf[symbol][y_field] * nddf[symbol]["SXMMAX"]
+            nddf[symbol]["SXMMAX"] = nddf[symbol].iloc[:, i_ser].fillna(4).sum(axis=1)
+            nddf[symbol]["chk_result"] = nddf[symbol][y_field] * (nddf[symbol]["SXMMAX"] - (4 * overlay_steps))
+            nddf[symbol].loc[nddf[symbol][y_field] == 4, 'chk_result'] = 0
 
             i_result = nddf[symbol]["chk_result"].sum()
             i_remove.append('SXMMAX')
@@ -1284,6 +1290,39 @@ class n_date_frame2:
             nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
             i_remove.append('SXQFMAX')
             self.remove_columns(symbol, i_remove)
+            
+            # if 1 == 1:
+            #     # nem lehet utána qfy short
+            #     i_remove = []
+            #     for i_dif in range(1, overlay_steps + 1):
+            #         c_name = "SXQF" + str(i_dif)
+            #         i_remove.append(c_name)
+            #         nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(i_dif)
+            #
+            #     i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            #     i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+            #
+            #     nddf[symbol]["qfy_bad_cross1"] = nddf[symbol].iloc[:, i_ser].max(axis=1) * nddf[symbol][ori_field]
+            #     print(ori_field,envi_fileld,'qfy_bad_cross1', nddf[symbol]["qfy_bad_cross1"].sum())
+            #     i_remove.append('qfy_bad_cross1')
+            #     self.remove_columns(symbol, i_remove)
+            #
+            #     s2()
+            #
+            #     # nem lehet utána qfy short
+            #     i_remove = []
+            #     for i_dif in range(1, overlay_steps + 1):
+            #         c_name = "SXQF" + str(i_dif)
+            #         i_remove.append(c_name)
+            #         nddf[symbol][c_name] = nddf[symbol][envi_fileld].shift(0 - i_dif)
+            #
+            #     i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            #     i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+            #
+            #     nddf[symbol]["qfy_bad_cross2"] = nddf[symbol].iloc[:, i_ser].max(axis=1) * nddf[symbol][ori_field]
+            #     print(ori_field,envi_fileld,'qfy_bad_cross2', nddf[symbol]["qfy_bad_cross2"].sum())
+            #     i_remove.append('qfy_bad_cross2')
+            #     self.remove_columns(symbol, i_remove)
 
         def qfy_bad_cross_rnd(symbol, ori_field, envi_fileld, overlay_steps):
             
@@ -1338,18 +1377,35 @@ class n_date_frame2:
             # nem lehet utána qfy short
             i_remove = []
             for i_dif in range(1, overlay_steps + 1):
-                c_name = "SXQF" + str(i_dif)
+                c_name = "SXQFBB" + str(i_dif)
                 i_remove.append(c_name)
                 nddf[symbol][c_name] = nddf[symbol][ori_field].shift(i_dif)
 
-            i_pos_first = nddf[symbol].columns.get_loc("SXQF1")
+            i_pos_first = nddf[symbol].columns.get_loc("SXQFBB1")
             i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
 
-            nddf[symbol]["SXQFMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-            nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFMAX"] == 0)
-            i_remove.append('SXQFMAX')
+            nddf[symbol]["SXQFBBMAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+            nddf[symbol][ori_field] = nddf[symbol][ori_field] & (nddf[symbol]["SXQFBBMAX"] == 0)
+            i_remove.append('SXQFBBMAX')
             self.remove_columns(symbol, i_remove)
-        
+            
+            # check
+            # if 1 == 1:
+            #     # nem lehet utána qfy short
+            #     i_remove = []
+            #     for i_dif in range(1, overlay_steps + 1):
+            #         c_name = "SXQFBB" + str(i_dif)
+            #         i_remove.append(c_name)
+            #         nddf[symbol][c_name] = nddf[symbol][ori_field].shift(i_dif)
+            #
+            #     i_pos_first = nddf[symbol].columns.get_loc("SXQFBB1")
+            #     i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+            #
+            #     nddf[symbol]["qfy_bad_befo_chk"] = nddf[symbol].iloc[:, i_ser].max(axis=1) * nddf[symbol][ori_field]
+            #     print(ori_field, nddf[symbol]["qfy_bad_befo_chk"].sum())
+            #     # i_remove.append('qfy_bad_befo_chk')
+            #     # self.remove_columns(symbol, i_remove)
+
         # adott stepen belül kiválasztoma maiximum és a minimum értékeket
         i_remove = []
         for i_dif in range(1, steps + 1):
@@ -1478,9 +1534,9 @@ class n_date_frame2:
             nddf[symbol][y_field].values[nddf[symbol]['y_3']] = 2
             nddf[symbol][y_field].values[nddf[symbol]['y_4']] = 3
 
-            i_remove = ['y_1', 'y_2', 'y_3', 'y_4',
-                        y_field_temp]
-            self.remove_columns(symbol, i_remove)
+            # i_remove = ['y_1', 'y_2', 'y_3', 'y_4',
+            #             y_field_temp]
+            # self.remove_columns(symbol, i_remove)
 
         if full:
             nddf[symbol][y_field] = nddf[symbol][y_field_temp]
@@ -1845,18 +1901,8 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-    symbol = "APA"
-    a = nddf[symbol].loc[1000, "Date"]
-    contra_copy = nddf["SPY"].copy()
-    contra_copy.set_index("Date", inplace=True)
-    print(contra_copy)
-    
-    print(a)
-    b = contra_copy.index.get_loc(a, method='nearest')
-    print(b)
-    print(nddf["SPY"].loc[b, "Date"])
-    
-
+    i_remove = ['y_SMA5813']
+    ndf.remove_columns(symbol, i_remove)
 
 
 def s(msg_str):
@@ -2087,6 +2133,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
     s2(True, x_to - x_from - 3)
 
     contra_copies = ndf.get_contra_copies(contras)
+    # print(contra_copies)
 
     for ix in range(x_from, x_to):
         res = tuple(nddf[symbol].loc[ix, ['ohlc4', sig_field, 'Date']])
@@ -2094,7 +2141,6 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
         sig = res[1]
         date_time = res[2]
 
-        i_array = ndf.get_dataset_by_index(symbol, ix, time_window_size, original_fields, contras, contra_copies)
         i_array = ndf.get_dataset_by_index(symbol=symbol,
                                            index=ix,
                                            time_window_size=time_window_size,
@@ -2138,6 +2184,8 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
     log(f"  profit/day: {algo_ai_limitter.get_profit_per_day()} profit/closed deal: {algo_ai_limitter.get_profit_per_closed_deal()}")
     log(f"  closed_deal/day: {algo_ai_limitter.get_closed_deal_per_day()} transaction/day: {algo_ai_limitter.get_transaction_per_day()}")
 
+    log(f"""  Average prediction runtime: {round(ai.ai_models[project]["predict_average_runtime"],3)}""")
+
     algo_rnd.show_history()
     algo_indicator.show_history()
     # algo_ai_indicator_decision.show_history()
@@ -2162,6 +2210,13 @@ def ndf_add(symbol="", years=1):
 
 def ndf_tech(symbol, tech_indicator):
     ndf.add_tech(symbol, tech_indicator)
+
+
+def ndf_tech_project(symbol, project):
+    gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
+    if gdc_ok:
+        for indx in indexes:
+            ndf.add_tech(symbol, indx)
 
 
 def ndf_tech_info():
@@ -2199,17 +2254,30 @@ def ndf_tech_refresh_all():
 #     ndf.create_images(symbol, images_for, contras)
 
 
-def ndf_dataset(symbol="", config_file="", full=""):
-    if full == "FULL" or full == "full":
+def ndf_dataset(symbol="", config_file="", extra=""):
+    if extra == "FULL" or extra == "full":
         full = True
     else:
         full = False
-    ndf.create_dataset(symbol, config_file, full)
+        
+    if extra == "FORCE" or extra == "force":
+        force = True
+    else:
+        force = False
+    
+    ndf.create_dataset(symbol, config_file, full, force)
     s("")
 
 
 def ndf_remove(symbol=""):
     ndf.remove(symbol)
+
+
+def ndf_remove_column(symbol="", field="", save=""):
+    ndf.remove_columns(symbol, [field])
+    if save == "SAVE":
+        ndf.set_dt_order(symbol)
+        nddb.write(symbol)
 
 
 def ndf_refresh(symbol=""):

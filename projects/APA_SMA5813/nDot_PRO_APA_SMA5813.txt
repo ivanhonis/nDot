@@ -11,14 +11,14 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <--------------------------------------------------->
 {
 "sig_suffix": "SMA5813", <y>
-"time_window_size": 20, <mekkora legyen az adatszet mérete visszafelé>
+"time_window_size": 18, <mekkora legyen az adatszet mérete visszafelé>
 "stock_size": 10000, <mekkora egy kötés méret>
 "min_profit": 75, <minimum profit>
 "min_step_profit": 5, <ennél több lépésből kell, hogy létrejöjjön a profit, hirtelen kiugrásokat kiszűri>
 "stop": -5, <stop loss mértéke>
 "steps": 30, <maximum hány lépésből kell létrejönni a profitnak>
-"overlay_steps": 30, <a szignálok nem fedhetik át egymást, eznem lehet kevesebb mint a steps>
-"bad_overweight": 10,
+"overlay_steps": 18, <a szignálok nem fedhetik át egymást, eznem lehet kevesebb mint a steps>
+"bad_overweight": 3,
 "x_tansform": 1
 }
 
@@ -54,7 +54,7 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 [
 "SPY_LOW_DIFF",
 "SPY_HIGH_DIFF",
-"SPY_ADX_8_ONE",
+"SPY_ADX_8_ONE"
 ]
 ;
 
@@ -62,7 +62,9 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <Steam config - Indexes>
 <--------------------------------------------------->
 [
+"SMA5813",
 "PRICE_DIFF",
-"SMA_5813",
-"ADX_8"
+"ADX8",
+"RSI14",
+"MACD",
 ]

@@ -48,6 +48,7 @@ class n_algo_trade:
         self.h_stop = False
         self.h_stop_type = "s"
         self.trading_days = {}
+        self.y_predict_strength = 0
 
     def config(self, conf_dict):
         self.name = conf_dict["name"]
@@ -185,6 +186,7 @@ class n_algo_trade:
         print(text)
 
     def transaction(self, sig, y_predict, y_predict_strength, price, date_time):
+        self.y_predict_strength = y_predict_strength
         self.actual_price = price
         self.actual_date_time = date_time
         decision1, qt1 = self.decision(sig, y_predict, y_predict_strength)
@@ -350,7 +352,8 @@ class n_algo_trade:
                "sell": self.h_sell,
                "stop": self.h_stop,
                "stop_type": self.h_stop_type,
-               "stock_size": self.stock_size
+               "stock_size": self.stock_size,
+               "y_predict_strength": self.y_predict_strength
                }
         self.history = self.history.append(add, ignore_index=True)
         self.history['buy'] = self.history['buy'].astype('bool')
@@ -372,9 +375,10 @@ class n_algo_trade:
             hdf["avg_income_price"].replace(0, np.nan, inplace=True)
             hdf['steps'] = hdf['steps'].astype(int)
             hdf['steps'] = hdf['steps'].astype(str)
-
-            i_min = hdf['actual_price'].min() * .995
-            i_max = hdf['actual_price'].max() * 1.005
+            
+            hdf['y_predict_strength'] = hdf['y_predict_strength'] * 100
+            hdf['y_predict_strength'] = hdf['y_predict_strength'].astype(int)
+            hdf['y_predict_strength'] = hdf['y_predict_strength'].astype(str) + "%"
 
             deals = ColumnDataSource(hdf)
             p = figure(sizing_mode='fixed',
@@ -384,9 +388,6 @@ class n_algo_trade:
                        y_axis_location="right",
                        tools="xpan,xwheel_zoom,reset",
                        title=self.name + " - price")
-                       # y_range=(i_min, i_max))
-
-            # p.y_range = Range1d(i_min, i_max)
 
             p.line('index', 'actual_price', color="#0000ff", legend_label="actual price", source=deals)
             p.line('index', 'avg_income_price', color="#ff9100", legend_label="avg income price", source=deals)
@@ -404,6 +405,15 @@ class n_algo_trade:
             p.circle('index', 'actual_price', color="#000000", size=3, source=deals, view=view_sig)
             p.text('index', 'actual_price_stop', text="stop_type", text_font_size="8pt", text_color="#000000", source=deals, view=view_sig)
             p.text('index', 'actual_price_steps', text="steps", text_font_size="8pt", text_color="#0000ff", source=deals)
+
+            sig = tuple(hdf["buy"])
+            view_sig = CDSView(source=deals, filters=[BooleanFilter(sig)])
+            p.text('index', 'actual_price_stop', text="y_predict_strength", text_font_size="8pt", text_color="#00ff00", source=deals, view=view_sig)
+
+            sig = tuple(hdf["sell"])
+            view_sig = CDSView(source=deals, filters=[BooleanFilter(sig)])
+            p.text('index', 'actual_price_stop', text="y_predict_strength", text_font_size="8pt", text_color="#ff0000", source=deals, view=view_sig)
+
 
             p.legend.location = "top_left"
 

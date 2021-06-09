@@ -5,6 +5,8 @@ from os import rename as os_rename, environ as os_environ, path as os_path
 import numpy as np
 from datetime import datetime
 from shutil import copy2  # ai.download
+from pathlib import Path  # dataset config beolvasóhoz kell
+from time import ctime
 
 os_environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras.models import load_model
@@ -26,19 +28,30 @@ class n_ai:
             "MinMaxScaler_last_update": 0,
             "tf_model": "",
             "tf_model_last_update": 0,
-            "last_y_predict_datetime": 0,
-            "last_y_predict_sig": 4,
-            "last_y_predict_perc": 4
+            "predict_used_count": 0,
+            "predict_average_runtime": 0,
         }
 
         self.settings_dict = {
             "dataset_config": {},
             "original_fields": [],
             "contras": [],
-            "last_update": 0
+            "tech": [],
+            "last_update": 0,
+            "last_y_predict_datetime": 0,
+            "last_y_predict_sig": 4,
+            "last_y_predict_perc": 0
         }
         
         self.load()
+
+    def set_avg_runtime(self, project, last_runtime):
+        last_runtime = float(last_runtime.total_seconds())
+        uc = self.ai_models[project]["predict_used_count"]
+        avgrt = self.ai_models[project]["predict_average_runtime"]
+        new_avg = ((uc * avgrt) + (1 * last_runtime)) / (uc + 1)
+        self.ai_models[project]["predict_average_runtime"] = new_avg
+        self.ai_models[project]["predict_used_count"] += 1
         
     def save(self):
         with open(self.ndot_path + 'ai_settings.pickle', 'wb') as f:
@@ -62,27 +75,38 @@ class n_ai:
             pass
         else:
             self.ai_log("X_transfom is out of range.")
+            
+    def is_file_exist(self, path):
+        file = Path(path)
+        if file.exists():
+            return True
+        else:
+            return False
     
     def add(self, symbol, project):
-        try:
-            del self.ai_models[symbol][project]
-        except KeyError as e:
-            pass
-
-        try:
-            del self.ai_settings[symbol][project]
-        except KeyError as e:
-            pass
+        local_path_pro = self.is_file_exist(self.projects_path + project + "\\nDot_PRO_" + project + ".txt")
+        local_path_minmax = self.is_file_exist(self.projects_path + project + "\\nDot_MinMaxScaler_" + project + ".pickle")
+        local_path_tf = self.is_file_exist(self.projects_path + project + '\\nDot_TF_MODEL_' + project + '.h5')
         
-        if symbol not in self.ai_settings.keys():
-            self.ai_settings[symbol] = {}
-            self.ai_models[symbol] = {}
+        if local_path_pro and local_path_minmax and local_path_tf:
             
-        # if project not in self.ai_settings[symbol].keys():
-        #     self.ai_settings[symbol][project] = self.settings_dict
-        #     self.ai_models[symbol][project] = self.model_dict
-        self.ai_settings[symbol][project] = self.settings_dict
-        self.save()
+            try:
+                del self.ai_settings[symbol][project]
+            except KeyError as e:
+                pass
+            
+            if symbol not in self.ai_settings.keys():
+                self.ai_settings[symbol] = {}
+               
+            self.ai_settings[symbol][project] = self.settings_dict
+            self.save()
+        else:
+            if not local_path_pro:
+                self.ai_log("Project config file is missing")
+            if not local_path_minmax:
+                self.ai_log("Project MinMaxScaler file is missing")
+            if not local_path_tf:
+                self.ai_log("Project TF model file is missing")
     
     def get(self, symbol, project, field):
         if symbol in self.ai_settings and project in self.ai_settings[symbol] and field in self.ai_settings[symbol][project]:
@@ -107,11 +131,6 @@ class n_ai:
             del self.ai_settings[symbol]
         except KeyError as e:
             pass
-        
-        try:
-            del self.ai_models[symbol]
-        except KeyError as e:
-            pass
         self.save()
 
     def remove_project(self, symbol, project):
@@ -120,127 +139,140 @@ class n_ai:
         except KeyError as e:
             pass
         
-        try:
-            del self.ai_models[symbol][project]
-        except KeyError as e:
-            pass
-        
         if len(self.ai_settings[symbol].keys()) == 0:
             try:
                 del self.ai_settings[symbol]
-            except KeyError as e:
-                pass
-            
-            try:
-                del self.ai_models[symbol]
             except KeyError as e:
                 pass
         
         self.save()
     
     def predict(self, symbol, project, x, datetime):
-        if self.ai_models[symbol][project]["last_y_predict_datetime"] != datetime:
+        i_start = datetime.now()
+        if self.ai_settings[symbol][project]["last_y_predict_datetime"] != datetime:
             x = x.reshape(1, -1)  # tömbe teszem a tömböt
-            x_norm = self.ai_models[symbol][project]['MinMaxScaler'].transform(x)
-            x_norm_min = x_norm.min()
-            x_norm_max = x_norm.max()
-            if x_norm_max > 1 or x_norm_min < -1:
+            x_norm = self.ai_models[project]['MinMaxScaler'].transform(x)
+            if x_norm.max() > 1 or x_norm.min() < -1:
                 self.ai_log("MinMaxScaler out of rande (-1 , 1)")
 
-            time_window_size = int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"])
-            x_tansform = int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"])
-            number_of_fields = int(self.ai_settings[symbol][project]["number_of_fields"])
-            x_nomr_reshaped = self.x_transform(x_tansform, x_norm,time_window_size=time_window_size, number_of_fields=number_of_fields)
-            y_predict = self.ai_models[symbol][project]['tf_model'].predict(x_nomr_reshaped)
+            x_nomr_reshaped = self.x_transform(use=int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"]),
+                                               x=x_norm,
+                                               time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
+                                               number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
+                                               )
+            
+            y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped)
             y_predict_sig = np.argmax(y_predict, axis=1)[0]
             y_predict_perc = y_predict[0][y_predict_sig]
-            self.ai_models[symbol][project]["last_y_predict_sig"] = y_predict_sig
-            self.ai_models[symbol][project]["last_y_predict_perc"] = y_predict_perc
-            self.ai_models[symbol][project]["last_y_predict_datetime"] = datetime
-            return y_predict_sig, y_predict_perc
+            self.ai_settings[symbol][project]["last_y_predict_sig"] = y_predict_sig
+            self.ai_settings[symbol][project]["last_y_predict_perc"] = y_predict_perc
+            self.ai_settings[symbol][project]["last_y_predict_datetime"] = datetime
+            i_return = y_predict_sig, y_predict_perc
         else:
-            return self.ai_models[symbol][project]["last_y_predict_sig"], self.ai_models[symbol][project]["last_y_predict_perc"]
-
+            i_return = self.ai_settings[symbol][project]["last_y_predict_sig"], self.ai_settings[symbol][project]["last_y_predict_perc"]
+        self.set_avg_runtime(project, datetime.now() - i_start)
+        return i_return
+        
     def ai_log(self, text):
         self.log(text)
         # print(text)
         
     def build(self):
+        used_projects = []
         for i_symbol in self.ai_settings:
             for i_project in self.ai_settings[i_symbol]:
                 local_path = self.projects_path + i_project + "\\nDot_PRO_" + i_project + ".txt"
                 if self.ai_settings[i_symbol][i_project]["last_update"] != os_path.getmtime(local_path):
-                    gdc_ok, description, dataset_config, original_fields, contras, indexes = self.get_dataset_config(local_path)
+                    gdc_ok, description, dataset_config, original_fields, contras, tech = self.get_dataset_config(local_path)
                     self.ai_settings[i_symbol][i_project]["dataset_config"] = dataset_config
                     self.ai_settings[i_symbol][i_project]["original_fields"] = original_fields
                     self.ai_settings[i_symbol][i_project]["contras"] = contras
+                    self.ai_settings[i_symbol][i_project]["tech"] = tech
                     self.ai_settings[i_symbol][i_project]["last_update"] = os_path.getmtime(local_path)
                     self.ai_settings[i_symbol][i_project]["number_of_fields"] = len(self.ai_settings[i_symbol][i_project]["original_fields"]) + \
                                                                                 len(self.ai_settings[i_symbol][i_project]["contras"])
 
                 # init norm model from local drive
                 local_path = self.projects_path + i_project + "\\nDot_MinMaxScaler_" + i_project + ".pickle"
-                if i_symbol not in self.ai_models:
-                    self.ai_models[i_symbol] = {}
-                    
-                if i_project not in self.ai_models[i_symbol]:
-                    self.ai_models[i_symbol][i_project] = self.model_dict
+                if i_project not in self.ai_models:
+                    self.ai_models[i_project] = {}
+                    self.ai_models[i_project] = self.model_dict
                 
-                if self.ai_models[i_symbol][i_project]["MinMaxScaler_last_update"] != os_path.getmtime(local_path):
-                    self.ai_models[i_symbol][i_project]["MinMaxScaler"] = pickle.load(open(local_path, "rb"))
-                    self.ai_models[i_symbol][i_project]["MinMaxScaler_last_update"] = os_path.getmtime(local_path)
+                if self.ai_models[i_project]["MinMaxScaler_last_update"] != os_path.getmtime(local_path):
+                    self.ai_log("MinMaxScaler model as been set.")
+                    self.ai_models[i_project]["MinMaxScaler"] = pickle.load(open(local_path, "rb"))
+                    self.ai_models[i_project]["MinMaxScaler_last_update"] = os_path.getmtime(local_path)
 
                 # init tf_model fromlocl drive
                 local_path = self.projects_path + i_project + '\\nDot_TF_MODEL_' + i_project + '.h5'
-                if self.ai_models[i_symbol][i_project]["tf_model_last_update"] != os_path.getmtime(local_path):
-                    self.ai_models[i_symbol][i_project]["tf_model"] = load_model(local_path)
-                    self.ai_models[i_symbol][i_project]["tf_model_last_update"] = os_path.getmtime(local_path)
-
+                if self.ai_models[i_project]["tf_model_last_update"] != os_path.getmtime(local_path):
+                    self.ai_log("tf_model model as been set.")
+                    self.ai_models[i_project]["tf_model"] = load_model(local_path)
+                    self.ai_models[i_project]["tf_model_last_update"] = os_path.getmtime(local_path)
+                
+                used_projects.append(i_project)
+        
+        # delete all unused projects
+        for allp in self.ai_models:
+            if allp not in used_projects:
+                del self.ai_models[allp]
+            
     def get_project_config(self, project):
         local_path = self.projects_path + project + "\\nDot_PRO_" + project + ".txt"
         return self.get_dataset_config(local_path)
 
     def get_dataset_config(self, config_file_path):
-        ok = True
-        # ez nem vizsgálja, hogy létezik e file, ezt hívás előtt kell
-
-        def clear_string(contents, space=True):
-            if space:
-                contents = contents.replace(" ", "")
-            contents = contents.replace('\n', '').replace('\r', '')
-            contents = re_sub('<.*?>', '', contents)
-            if contents[-2:] == ",]":
-                contents = contents[:-2] + "]"
-            return contents
-
-        with open(config_file_path) as f:
-            contents = f.read()
-        contents = contents.split(";")
-        description = clear_string(contents[0], space=False)
-
-        try:
-            dataset_config = json_loads(clear_string(contents[1]))
-        except ValueError:
-            dataset_config = []
+    
+        file = Path(config_file_path)
+        if file.exists():
+            ok = True
+            # ez nem vizsgálja, hogy létezik e file, ezt hívás előtt kell
+    
+            def clear_string(contents, space=True):
+                if space:
+                    contents = contents.replace(" ", "")
+                contents = contents.replace('\n', '').replace('\r', '')
+                contents = re_sub('<.*?>', '', contents)
+                if contents[-2:] == ",]":
+                    contents = contents[:-2] + "]"
+                return contents
+    
+            with open(config_file_path) as f:
+                contents = f.read()
+            contents = contents.split(";")
+            description = clear_string(contents[0], space=False)
+    
+            try:
+                dataset_config = json_loads(clear_string(contents[1]))
+            except ValueError:
+                dataset_config = []
+                ok = False
+    
+            try:
+                original_fields = json_loads(clear_string(contents[2]))
+            except ValueError:
+                original_fields = []
+                ok = False
+    
+            try:
+                contras = json_loads(clear_string(contents[3]))
+            except ValueError:
+                contras = []
+                ok = False
+    
+            try:
+                indexes = json_loads(clear_string(contents[4]))
+            except ValueError:
+                indexes = []
+                ok = False
+        else:
+            self.ai_log("Project config file is not found.")
             ok = False
-
-        try:
-            original_fields = json_loads(clear_string(contents[2]))
-        except ValueError:
+            description = ""
+            dataset_config = {}
             original_fields = []
-            ok = False
-
-        try:
-            contras = json_loads(clear_string(contents[3]))
-        except ValueError:
             contras = []
-            ok = False
-
-        try:
-            indexes = json_loads(clear_string(contents[4]))
-        except ValueError:
             indexes = []
-            ok = False
 
         return ok, description, dataset_config, original_fields, contras, indexes
         
@@ -281,6 +313,7 @@ class n_ai:
             self.ai_log(f"{project_name} - TensorFlow model not found.")
         else:
             self.ai_log(f"{project_name} - TensorFlow model downloaded.")
+            self.ai_log(f"Last modified: {ctime(os_path.getmtime(from_path))}")
     
         # copy normal model
         from_path = self.gdrive_path + "nDot_MinMaxScaler_" + project_name + ".pickle"
@@ -290,6 +323,7 @@ class n_ai:
             self.ai_log(f"{project_name} - Norm model not found.")
         else:
             self.ai_log(f"{project_name} - Norm model downloaded.")
+            self.ai_log(f"Last modified: {ctime(os_path.getmtime(from_path))}")
 
 
 if __name__ == "__main__":
