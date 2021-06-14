@@ -36,7 +36,6 @@ class n_chart:
 
     def fit(self, i_df, name, indecators=""):
         i_df = i_df.reset_index(drop=True)
-        # print(i_df)
         i_df, nemhasznal = self.trade.time_filter(i_df, "15:30", "22:00")
         # i_df = nddfx_intime.reset_index()
         # print(i_df)
@@ -346,7 +345,6 @@ class n_chart:
         # end default settings ------------------------------------------------------------------------------------
         return p
 
-
     def chart_sma_60(self, df, name):
         stock = ColumnDataSource(df)
         p = figure(sizing_mode='fixed',
@@ -377,7 +375,6 @@ class n_chart:
         p.outline_line_color = self.gray2
         # end default settings ------------------------------------------------------------------------------------
         return p
-
 
     def chart_ichimoku(self, df, name):
 
@@ -416,42 +413,47 @@ class n_chart:
         p.line('index', 'IKS_26', color=self.black, line_width=3, legend_label="Base Line", source=stock)
         p.line('index', 'ICS_26', color=self.green, line_width=1, source=stock, alpha=0.5)
 
-        sig = tuple(df['SIG_ICHI_LONG_ALL'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
+
+        # sig = tuple(df['SIG_ICHI_LONG_ALL'])
+        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        # p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
         # sig = tuple(df['SIG_ICHI_LONG_FIRST'])
         # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         # p.triangle('index', 'ohlc4', color=self.green, size=15, source=stock, view=view_sig)
 
+        df['SIG_QFY_ICHI_LONG'] = df['SIG_ICHIMOKU'] == 0
         sig = tuple(df['SIG_QFY_ICHI_LONG'])
         view_sig_qty = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.triangle('index', 'ohlc4', line_color=self.green, line_width=2, fill_color=self.green, size=15, source=stock, view=view_sig_qty)
 
 
-        sig = tuple(df['SIG_ICHI_SHORT_ALL'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
+        # sig = tuple(df['SIG_ICHI_SHORT_ALL'])
+        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        # p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
         # sig = tuple(df['SIG_ICHI_SHORT_FIRST'])
         # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         # p.triangle('index', 'ohlc4', color=self.red, size=15, source=stock, view=view_sig)
 
+        df['SIG_QFY_ICHI_SHORT'] = df['SIG_ICHIMOKU'] == 1
         sig = tuple(df['SIG_QFY_ICHI_SHORT'])
         view_sig_qty = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.inverted_triangle('index', 'ohlc4', line_color=self.red, line_width=2, fill_color=self.red, size=15, source=stock, view=view_sig_qty)
 
-        # p.add_tools(HoverTool(
-        #     tooltips=[("Datetime", "@Date"),
-        #                         ("Low", "@Low{$0,0.00}"),
-        #                         ("High", "@High{$0,0.00}"),
-        #                         ("Open", "@Open{$0,0.00}"),
-        #                         ("Close", "@Close{$0,0.00}"),
-        #                         ("Volume", "@Volume{($ 0.00 a)}")],
-        #
-        #     formatters={"Date": 'datetime'},
-        #     mode='vline'
-        # ))
+        if "y_ICHIMOKU" in df.columns:
+            print("y")
+            df['Y_LONG'] = df['y_ICHIMOKU'] == 0
+            sig = tuple(df['Y_LONG'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4', line_color=self.orange, line_width=3, fill_color=self.green, size=16,
+                       source=stock, view=view_sig)
+    
+            df['Y_SHORT'] = df['y_ICHIMOKU'] == 1
+            sig = tuple(df['Y_SHORT'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.inverted_triangle('index', 'ohlc4', line_color=self.orange, line_width=3, fill_color=self.red, size=16,
+                                source=stock, view=view_sig)
 
         # start default settings  ----------------------------------------------------------------------------------
         p.legend.location = "top_left"
@@ -645,42 +647,43 @@ class n_chart:
                    title=name)
 
         # print ohlc4 price
-        p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        # p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
         p.line('index', 'ohlc4', color=self.blue, source=stock)
 
         p.line('index', 'SMA_5', color=self.green, legend_label="SMA_5", line_width=1, source=stock)
         p.line('index', 'SMA_8', color=self.orange, legend_label="SMA_8", line_width=2, source=stock)
         p.line('index', 'SMA_13', color=self.red, legend_label="SMA_13", line_width=3, source=stock)
 
-        df['SIG_SMA5813_LONG_ALL_FIRST'] = df['SIG_SMA5813'] == 1
+        df['SIG_SMA5813_LONG_ALL_FIRST'] = df['SIG_SMA5813'] == 0
         sig = tuple(df['SIG_SMA5813_LONG_ALL_FIRST'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
 
-        df['SIG_SMA5813_SHORT_ALL_FIRST'] = df['SIG_SMA5813'] == 2
+        df['SIG_SMA5813_SHORT_ALL_FIRST'] = df['SIG_SMA5813'] == 1
         sig = tuple(df['SIG_SMA5813_SHORT_ALL_FIRST'])
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
-        df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_SMA5813'] == 1
-        sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4_up', line_color=self.orange, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
-
-        df['SIG_QFY_SMA5813_GOOD_SHORT'] = df['y_SMA5813'] == 2
-        sig = tuple(df['SIG_QFY_SMA5813_GOOD_SHORT'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.inverted_triangle('index', 'ohlc4_down', line_color=self.orange, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
-
-        df['SIG_QFY_SMA5813_BAD_LONG'] = df['y_SMA5813'] == 3
-        sig = tuple(df['SIG_QFY_SMA5813_BAD_LONG'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.triangle('index', 'ohlc4_up', line_color=self.gray2, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
-
-        df['SIG_QFY_SMA5813_BAD_SHORT'] = df['y_SMA5813'] == 4
-        sig = tuple(df['SIG_QFY_SMA5813_BAD_SHORT'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.inverted_triangle('index', 'ohlc4_down', line_color=self.gray2, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
+        if "y_SMA5813" in df.columns:
+            df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_SMA5813'] == 0
+            sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.green, size=15, source=stock, view=view_sig)
+    
+            df['SIG_QFY_SMA5813_GOOD_SHORT'] = df['y_SMA5813'] == 1
+            sig = tuple(df['SIG_QFY_SMA5813_GOOD_SHORT'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.red, size=15, source=stock, view=view_sig)
+    
+            df['SIG_QFY_SMA5813_BAD_LONG'] = df['y_SMA5813'] == 2
+            sig = tuple(df['SIG_QFY_SMA5813_BAD_LONG'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
+    
+            df['SIG_QFY_SMA5813_BAD_SHORT'] = df['y_SMA5813'] == 3
+            sig = tuple(df['SIG_QFY_SMA5813_BAD_SHORT'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
 
         p.legend.visible = False
 
@@ -725,6 +728,7 @@ class n_chart:
         view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
         p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
 
+
         if 'y_BREAKOUT' in df.columns:
             df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_BREAKOUT'] == 0
             sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
@@ -736,13 +740,13 @@ class n_chart:
             view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
             p.inverted_triangle('index', 'ohlc4_down', line_color=self.orange, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
 
-            df['SIG_QFY_BREAKOUT_BAD_LONG'] = df['y_BREAKOUT'] == 2
-            sig = tuple(df['SIG_QFY_BREAKOUT_BAD_LONG'])
+            df['SIG_QFY_X1'] = df['y_BREAKOUT'] == 2
+            sig = tuple(df['SIG_QFY_X1'])
             view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-            p.triangle('index', 'ohlc4_up', line_color=self.gray2, line_width=3, fill_color=self.green, size=15, source=stock, view=view_sig)
+            p.triangle('index', 'ohlc4_down', line_color=self.gray2, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
 
-            df['SIG_QFY_BREAKOUT_BAD_SHORT'] = df['y_BREAKOUT'] == 3
-            sig = tuple(df['SIG_QFY_BREAKOUT_BAD_SHORT'])
+            df['SIG_QFY_X2'] = df['y_BREAKOUT'] == 3
+            sig = tuple(df['SIG_QFY_X2'])
             view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
             p.inverted_triangle('index', 'ohlc4_down', line_color=self.gray2, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
 

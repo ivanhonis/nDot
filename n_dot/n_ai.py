@@ -24,9 +24,9 @@ class n_ai:
         self.projects_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\"
         self.gdrive_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\"
         self.model_dict = {
-            "MinMaxScaler": "",
+            "MinMaxScaler": "-",
             "MinMaxScaler_last_update": 0,
-            "tf_model": "",
+            "tf_model": "-",
             "tf_model_last_update": 0,
             "predict_used_count": 0,
             "predict_average_runtime": 0,
@@ -147,6 +147,19 @@ class n_ai:
         
         self.save()
     
+    def predict_multi(self, symbol, project, x):
+        x_norm = self.ai_models[project]['MinMaxScaler'].transform(x)
+
+        x_nomr_reshaped = self.x_transform(use=int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"]),
+                                           x=x_norm,
+                                           time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
+                                           number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
+                                           )
+        y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped)
+        y_predict_sig = np.argmax(y_predict, axis=1)
+        y_predict_perc = np.take_along_axis(y_predict, np.expand_dims(y_predict_sig, axis=-1), axis=-1).squeeze(axis=-1)
+        return y_predict, y_predict_sig, y_predict_perc
+        
     def predict(self, symbol, project, x, datetime):
         i_start = datetime.now()
         if self.ai_settings[symbol][project]["last_y_predict_datetime"] != datetime:
@@ -180,7 +193,9 @@ class n_ai:
     def build(self):
         used_projects = []
         for i_symbol in self.ai_settings:
+            # print(i_symbol)
             for i_project in self.ai_settings[i_symbol]:
+                # print(i_project)
                 local_path = self.projects_path + i_project + "\\nDot_PRO_" + i_project + ".txt"
                 if self.ai_settings[i_symbol][i_project]["last_update"] != os_path.getmtime(local_path):
                     gdc_ok, description, dataset_config, original_fields, contras, tech = self.get_dataset_config(local_path)
@@ -195,27 +210,33 @@ class n_ai:
                 # init norm model from local drive
                 local_path = self.projects_path + i_project + "\\nDot_MinMaxScaler_" + i_project + ".pickle"
                 if i_project not in self.ai_models:
-                    self.ai_models[i_project] = {}
-                    self.ai_models[i_project] = self.model_dict
+                    # self.ai_models[i_project] = {}
+                    self.ai_models[i_project] = self.model_dict.copy()
+                
+                # print('MLUPD: ',self.ai_models[i_project]["MinMaxScaler_last_update"], os_path.getmtime(local_path))
                 
                 if self.ai_models[i_project]["MinMaxScaler_last_update"] != os_path.getmtime(local_path):
-                    self.ai_log("MinMaxScaler model as been set.")
+                    self.ai_log(f"MinMaxScaler model has been set: {i_project}")
                     self.ai_models[i_project]["MinMaxScaler"] = pickle.load(open(local_path, "rb"))
                     self.ai_models[i_project]["MinMaxScaler_last_update"] = os_path.getmtime(local_path)
 
                 # init tf_model fromlocl drive
                 local_path = self.projects_path + i_project + '\\nDot_TF_MODEL_' + i_project + '.h5'
+                # print('TFLMUP: ',self.ai_models[i_project]["tf_model_last_update"], os_path.getmtime(local_path))
                 if self.ai_models[i_project]["tf_model_last_update"] != os_path.getmtime(local_path):
-                    self.ai_log("tf_model model as been set.")
+                    self.ai_log(f"tf_model has been set: {i_project}")
                     self.ai_models[i_project]["tf_model"] = load_model(local_path)
                     self.ai_models[i_project]["tf_model_last_update"] = os_path.getmtime(local_path)
                 
                 used_projects.append(i_project)
         
+        # print("used_projects ", used_projects)
         # delete all unused projects
         for allp in self.ai_models:
             if allp not in used_projects:
                 del self.ai_models[allp]
+                
+        # print(self.ai_models)
             
     def get_project_config(self, project):
         local_path = self.projects_path + project + "\\nDot_PRO_" + project + ".txt"

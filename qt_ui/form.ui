@@ -69,7 +69,7 @@ background: #ff9100;
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>692</y>
+     <y>696</y>
      <width>691</width>
      <height>20</height>
     </rect>
@@ -92,14 +92,14 @@ background: #ff9100;
     <rect>
      <x>130</x>
      <y>47</y>
-     <width>480</width>
+     <width>536</width>
      <height>25</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Arial Narrow</family>
-     <pointsize>11</pointsize>
+     <pointsize>10</pointsize>
     </font>
    </property>
    <property name="styleSheet">
@@ -109,7 +109,7 @@ border-top-right-radius: 0px;
 border-bottom-right-radius: 0px;
 border-bottom-left-radius: 15px;
 padding-left: 10px;
-color: #aaaaaa;
+color: #888888;
 border-bottom: 1px solid #888888;
 border-left: 1px solid #888888;
 </string>
@@ -123,7 +123,7 @@ border-left: 1px solid #888888;
     <rect>
      <x>130</x>
      <y>16</y>
-     <width>480</width>
+     <width>536</width>
      <height>31</height>
     </rect>
    </property>
@@ -157,16 +157,16 @@ border-left: 1px solid #888888;
   <widget class="QPushButton" name="Run_Button">
    <property name="geometry">
     <rect>
-     <x>610</x>
+     <x>640</x>
      <y>16</y>
-     <width>79</width>
+     <width>56</width>
      <height>56</height>
     </rect>
    </property>
    <property name="font">
     <font>
      <family>Arial</family>
-     <pointsize>10</pointsize>
+     <pointsize>9</pointsize>
      <weight>75</weight>
      <bold>true</bold>
     </font>
@@ -175,18 +175,18 @@ border-left: 1px solid #888888;
     <string notr="true">QPushButton {
     background-color: #000000;
 	color: #ffffff;
-	border-top-left-radius: 0px;
-	border-top-right-radius:15px;
-	border-bottom-right-radius: 15px;
-	border-bottom-left-radius: 0px;
+	border-top-left-radius: 28px;
+	border-top-right-radius:28px;
+	border-bottom-right-radius: 28px;
+	border-bottom-left-radius: 28px;
 }
 QPushButton:pressed {
     background-color: #ffffff;
 	color: #000000;
-	border-top-left-radius: 0px;
-	border-top-right-radius:15px;
-	border-bottom-right-radius: 15px;
-	border-bottom-left-radius: 0px;
+	border-top-left-radius: 28px;
+	border-top-right-radius:28px;
+	border-bottom-right-radius: 28px;
+	border-bottom-left-radius: 28px;
 }</string>
    </property>
    <property name="text">
@@ -447,7 +447,7 @@ background-color: none;</string>
   <widget class="Line" name="line_9">
    <property name="geometry">
     <rect>
-     <x>704</x>
+     <x>705</x>
      <y>108</y>
      <width>1000</width>
      <height>20</height>
@@ -1585,7 +1585,7 @@ padding-bottom:5px;
     <rect>
      <x>720</x>
      <y>40</y>
-     <width>40</width>
+     <width>641</width>
      <height>75</height>
     </rect>
    </property>
@@ -1902,7 +1902,7 @@ background:none;</string>
     <rect>
      <x>6</x>
      <y>555</y>
-     <width>121</width>
+     <width>137</width>
      <height>16</height>
     </rect>
    </property>
@@ -1927,7 +1927,7 @@ background: none;</string>
     <rect>
      <x>5</x>
      <y>554</y>
-     <width>121</width>
+     <width>137</width>
      <height>16</height>
     </rect>
    </property>
@@ -7095,9 +7095,7 @@ border-bottom-left-radius: 0px;</string>
   <zorder>line_8</zorder>
   <zorder>line_10</zorder>
   <zorder>line_12</zorder>
-  <zorder>line_9</zorder>
   <zorder>line_13</zorder>
-  <zorder>line_15</zorder>
   <zorder>Tr_stop_all</zorder>
   <zorder>Tr_frame</zorder>
   <zorder>label_13</zorder>
@@ -7122,7 +7120,6 @@ border-bottom-left-radius: 0px;</string>
   <zorder>line_30</zorder>
   <zorder>line_31</zorder>
   <zorder>Ndf_last_update</zorder>
-  <zorder>Progress_Bar</zorder>
   <zorder>label_7</zorder>
   <zorder>label_17</zorder>
   <zorder>label_18</zorder>
@@ -7133,7 +7130,6 @@ border-bottom-left-radius: 0px;</string>
   <zorder>line_21</zorder>
   <zorder>line_19</zorder>
   <zorder>line_11</zorder>
-  <zorder>line_6</zorder>
   <zorder>line_14</zorder>
   <zorder>WL_frame</zorder>
   <zorder>WL_frame_2</zorder>
@@ -7147,6 +7143,10 @@ border-bottom-left-radius: 0px;</string>
   <zorder>WL_frame_10</zorder>
   <zorder>WL_frame_11</zorder>
   <zorder>WL_frame_12</zorder>
+  <zorder>line_6</zorder>
+  <zorder>line_9</zorder>
+  <zorder>line_15</zorder>
+  <zorder>Progress_Bar</zorder>
  </widget>
  <resources/>
  <connections/>

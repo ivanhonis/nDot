@@ -10,16 +10,18 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <dataset creator config>
 <--------------------------------------------------->
 {
-"sig_suffix": "SMA5813", <y>
-"time_window_size": 18, <mekkora legyen az adatszet mérete visszafelé>
-"stock_size": 10000, <mekkora egy kötés méret>
-"min_profit": 75, <minimum profit>
-"min_step_profit": 5, <ennél több lépésből kell, hogy létrejöjjön a profit, hirtelen kiugrásokat kiszűri>
-"stop": -5, <stop loss mértéke>
-"steps": 30, <maximum hány lépésből kell létrejönni a profitnak>
-"overlay_steps": 18, <a szignálok nem fedhetik át egymást, eznem lehet kevesebb mint a steps>
-"bad_overweight": 3,
-"x_tansform": 1
+"sig_suffix": "SMA5813",        <y>
+"time_window_size": 21,         <mekkora legyen az adatszet mérete visszafelé>
+"stock_size": 10000,            <mekkora egy kötés méret>
+"min_profit": 80,               <minimum profit>
+"min_step_profit": 10,          <ennél több lépésből kell, hogy létrejöjjön a profit, hirtelen kiugrásokat kiszűri>
+"stop": -12,                    <stop loss mértéke, a vector qfy nek>
+"steps": 35,                    <maximum hány lépésből kell létrejönni a profitnak>
+"overlay_steps": 21,            <a szignálok nem fedhetik át egymást, eznem lehet kevesebb mint a steps>
+"bad_overweight": 2,           <a rosszakat hányszorosan engedem túlmintavételezni>
+"x_tansform": 1,                <az adatszet reshap függvénye beépített >
+"data_window_back_shift": 0,    <az adatwinow-t ennyivel visszább tolom :) >
+"profit_window_shift": 0        <a good signálok profit számolásánál az ablakot eltplja ennyivel >
 }
 
 ;
@@ -30,7 +32,7 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 [
 "LOW_DIFF",
 "HIGH_DIFF",
-"ADX_8_ONE",
+<"ADX_8_ONE",>
 "RSI_14",
 "MACDh_12_26_9",
 <"SMA_5_DIFF",
@@ -53,8 +55,8 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 <--------------------------------------------------->
 [
 "SPY_LOW_DIFF",
-"SPY_HIGH_DIFF",
-"SPY_ADX_8_ONE"
+"SPY_HIGH_DIFF"
+<"SPY_ADX_8_ONE">
 ]
 ;
 

@@ -8,7 +8,7 @@ from bokeh.models import ColumnDataSource, BooleanFilter, CDSView, Range1d, Date
 from bokeh.models.callbacks import CustomJS
 # from bokeh.models import HoverTool, ColumnDataSource, BooleanFilter, CDSView, Range1d, Span
 from bokeh.layouts import column
-from math import radians
+# from math import radians
 
 
 class n_algo_trade:
@@ -27,6 +27,7 @@ class n_algo_trade:
         self.strategy = 1
         self.trade_time_start = (15, 30)
         self.trade_time_stop = (21, 30)
+        self.next_price_random = False
         # ---------------------------------------
         self.actual_qt = 0
         self.avg_income_price = 0
@@ -40,6 +41,7 @@ class n_algo_trade:
         self.act_profit = 0
         self.steps = 0
         self.stock_size_orig = 0
+        self.price_dict = {}
         # hisory -------------------------
         self.history = pd.DataFrame(None)
         self.chart_elements = list()
@@ -63,6 +65,7 @@ class n_algo_trade:
         self.strategy = conf_dict["strategy"]
         self.trade_time_start = conf_dict["trade_time_start"]
         self.trade_time_stop = conf_dict["trade_time_stop"]
+        self.next_price_random = conf_dict["next_price_random"]
 
     @property
     def value_limit_actual(self):
@@ -82,23 +85,73 @@ class n_algo_trade:
         return self.value_limit_actual - abs(self.actual_qt) * self.avg_income_price
 
     def buy(self, buy_qt):
-        self.income_value += int(buy_qt * self.actual_price)
+        trade_price = self.next_rnd_price("buy")
+        self.income_value += int(buy_qt * trade_price)
         self.actual_qt += buy_qt
         self.avg_income_price = self.income_value / self.actual_qt
-        self.trailer_profit = int((self.actual_price - self.avg_income_price) * self.actual_qt)
+        self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
         self.deal_count += 1
+        return True
 
+        # if not self.next_price_random:
+        #     trade_price = self.next_rnd_price
+        #     self.income_value += int(buy_qt * trade_price)
+        #     self.actual_qt += buy_qt
+        #     self.avg_income_price = self.income_value / self.actual_qt
+        #     self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
+        #     self.deal_count += 1
+        #     return True
+        # else:
+        #     trade_price = self.next_rnd_price
+        #     if trade_price <= self.actual_price:
+        #         self.income_value += int(buy_qt * trade_price)
+        #         self.actual_qt += buy_qt
+        #         self.avg_income_price = self.income_value / self.actual_qt
+        #         self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
+        #         self.deal_count += 1
+        #         return True
+        #     else:
+        #         return False
+            
     def sell(self, sell_qt):
-        # ha sell akkor is pozitív a qt
-        self.income_value -= int(sell_qt * self.actual_price)
+        trade_price = self.next_rnd_price("sell")
+        self.income_value -= int(sell_qt * trade_price)
         self.actual_qt -= sell_qt
         self.avg_income_price = self.income_value / self.actual_qt
-        self.trailer_profit = int((self.actual_price - self.avg_income_price) * self.actual_qt)
+        self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
         self.deal_count += 1
+        return True
+
+        # if not self.next_price_random:
+        #     # ha sell akkor is pozitív a qt
+        #     trade_price = self.next_rnd_price
+        #     self.income_value -= int(sell_qt * trade_price)
+        #     self.actual_qt -= sell_qt
+        #     self.avg_income_price = self.income_value / self.actual_qt
+        #     self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
+        #     self.deal_count += 1
+        #     return True
+        # else:
+        #     # ha sell akkor is pozitív a qt
+        #     trade_price = self.next_rnd_price
+        #     if trade_price >= self.actual_price:
+        #         self.income_value -= int(sell_qt * trade_price)
+        #         self.actual_qt -= sell_qt
+        #         self.avg_income_price = self.income_value / self.actual_qt
+        #         self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
+        #         self.deal_count += 1
+        #         return True
+        #     else:
+        #         return False
 
     def stop(self):
+        if self.actual_qt > 0:
+            trade_price = self.next_rnd_price("sell")
+        else:
+            trade_price = self.next_rnd_price("buy")
+
         self.h_stop = True  # regisztrlom a hsztoryba
-        self.realised_profit += int((self.actual_price - self.avg_income_price) * self.actual_qt)
+        self.realised_profit += int((trade_price - self.avg_income_price) * self.actual_qt)
         self.actual_qt = 0
         self.avg_income_price = 0
         self.income_value = 0  # position + avg_price
@@ -132,7 +185,7 @@ class n_algo_trade:
                 i_return = True
             else:
                 percent = (1 - self.trailer_stop)
-                if self.act_profit < self.trailer_profit * percent:
+                if self.act_profit < self.trailer_profit * percent and self.trailer_stop != -1:
                     if self.act_profit < self.trailer_min_profit:
                         self.trailer_profit = max(self.act_profit, self.trailer_profit)
                         # print("trailer visszaesés, de tovább engedi, mert nincs meg a minimum profit")
@@ -185,13 +238,29 @@ class n_algo_trade:
     def a_log(self, text):
         print(text)
 
-    def transaction(self, sig, y_predict, y_predict_strength, price, date_time):
+    def next_rnd_price(self, buy_or_sell):
+        if self.next_price_random:
+            # if buy_or_sell == "buy":
+            # # next_low = self.price_dict['next_low']
+            # # next_high = self.price_dict['next_high']
+            # # i_rnd_price = next_low + (((next_high - next_low) / 100) * random.randint(0, 101))
+            # elif buy_or_sell == "sell":
+            #     return self.price_dict['next_high']
+
+            next_low = self.price_dict['next_low']
+            next_high = self.price_dict['next_high']
+            i_rnd_price = next_low + (((next_high - next_low) / 100) * random.randint(0, 101))
+            return i_rnd_price
+        else:
+            return self.price_dict['actual_ohlc4']
+
+    def transaction(self, sig, y_predict, y_predict_strength, price_dict, date_time):
+        self.price_dict = price_dict.copy()
         self.y_predict_strength = y_predict_strength
-        self.actual_price = price
+        self.actual_price = self.price_dict['actual_ohlc4']
         self.actual_date_time = date_time
         decision1, qt1 = self.decision(sig, y_predict, y_predict_strength)
         decision2, qt2 = self.limit(decision1, qt1)
-        # print(decision1, qt1, " -> ", decision2, qt2)
         self.action(decision2, qt2, date_time)
 
     def decision(self, sig, y_predict, y_predict_strength):
@@ -300,21 +369,25 @@ class n_algo_trade:
             self.trading_days[str(dd)] = 0  # day register for deal
             if self.steps < self.steps_limit or self.steps_limit == 0:
                 if decision == "BUY":
-                    self.h_buy = True
                     if self.actual_qt < 0:
                         self.h_stop_type = "sDW"
                         # print("Buy ból SELL be fordulok")
                         self.stop()
-                    self.buy(decision_qt)
-                    self.steps = 0
+                    if self.buy(decision_qt):
+                        self.steps = 0
+                        self.h_buy = True
+                    else:
+                        self.steps += 1
                 elif decision == "SELL":
-                    self.h_sell = True
                     if self.actual_qt > 0:
                         self.h_stop_type = "sUP"
                         # print("SELL ből BUY be fordulok")
                         self.stop()
-                    self.sell(decision_qt)
-                    self.steps = 0
+                    if self.sell(decision_qt):
+                        self.steps = 0
+                        self.h_sell = True
+                    else:
+                        self.steps += 1
                 elif decision == "NONE":
                     if self.trailer():
                         self.steps = 0
@@ -327,11 +400,13 @@ class n_algo_trade:
             else:
                 if self.actual_qt != 0:
                     self.h_stop_type = "sST"
+                    # stop STep
                     self.stop()
                     self.steps = 0
         else:
             if self.actual_qt != 0:
                 self.h_stop_type = "sTi"
+                # stop Time
                 self.stop()
                 self.steps = 0
         self.add_history()
@@ -370,9 +445,11 @@ class n_algo_trade:
         # hdf.set_index("actual_date_time", inplace=True)
 
         def algo_price_chart():
-            hdf["actual_price_stop"] = hdf["actual_price"] * 1.002
-            hdf["actual_price_steps"] = hdf["actual_price"] * .998
+            hdf["actual_price_stop"] = hdf["actual_price"] * 1.002  # feliratokhoz
+            hdf["actual_price_steps"] = hdf["actual_price"] * .998  # feliratokhoz
             hdf["avg_income_price"].replace(0, np.nan, inplace=True)
+            
+            # megcsinálom a feliratokat string formában
             hdf['steps'] = hdf['steps'].astype(int)
             hdf['steps'] = hdf['steps'].astype(str)
             
@@ -414,8 +491,8 @@ class n_algo_trade:
             view_sig = CDSView(source=deals, filters=[BooleanFilter(sig)])
             p.text('index', 'actual_price_stop', text="y_predict_strength", text_font_size="8pt", text_color="#ff0000", source=deals, view=view_sig)
 
-
             p.legend.location = "top_left"
+            p.legend.label_text_font_size = '10pt'
 
             callback = CustomJS(args=dict(p=p), code="""
             clearTimeout(window._autoscale_timeout);
