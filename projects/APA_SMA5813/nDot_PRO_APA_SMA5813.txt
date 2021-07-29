@@ -32,21 +32,10 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 [
 "LOW_DIFF",
 "HIGH_DIFF",
-<"ADX_8_ONE",>
 "RSI_14",
 "MACDh_12_26_9",
-<"SMA_5_DIFF",
-"SMA_8_DIFF",
-"SMA_13_DIFF",
-"SMA_5_R_OHLC4",
-"SMA_8_R_OHLC4",
-"SMA_13_R_OHLC4",
-"VWAP_D_R_OHLC4",
-"VOLUME_DIFF",
-"SMA_5_R_OHLC4",
-"SMA_8_R_OHLC4",
-"SMA_13_R_OHLC4"
->]
+"CCI_21_0.015"
+]
 
 ;
 
@@ -56,7 +45,6 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 [
 "SPY_LOW_DIFF",
 "SPY_HIGH_DIFF"
-<"SPY_ADX_8_ONE">
 ]
 ;
 
@@ -66,7 +54,8 @@ klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
 [
 "SMA5813",
 "PRICE_DIFF",
-"ADX8",
 "RSI14",
 "MACD",
+"CCI21",
+"MT" <MT a algo stratégiához kell nem tréninghez>
 ]
