@@ -1071,16 +1071,17 @@ class n_date_frame2:
 							   }
 					nd_dset.add_y_names(y_names)
 					#  beteszem a 'good' signálokat -----------------------------------------
+					first_cut = 1000
 					s2()
 					i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 0].index)
-					i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + 2)]
+					i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + first_cut)]
 					i_index_good_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 1].index)
-					i_index_good_short = i_index_good_short[(i_index_good_short > time_window_size + 2)]
+					i_index_good_short = i_index_good_short[(i_index_good_short > time_window_size + first_cut)]
 					s2()
 					i_index_bad_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 2].index)
-					i_index_bad_long = i_index_bad_long[(i_index_bad_long > time_window_size + 2)]
+					i_index_bad_long = i_index_bad_long[(i_index_bad_long > time_window_size + first_cut)]
 					i_index_bad_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 3].index)
-					i_index_bad_short = i_index_bad_short[(i_index_bad_short > time_window_size + 2)]
+					i_index_bad_short = i_index_bad_short[(i_index_bad_short > time_window_size + first_cut)]
 					
 					# ha egy érték y (0,1,2,3) hinyzik akkor az nem számít bele a minimumna
 					min_array = np.array([len(i_index_good_long),
@@ -2013,41 +2014,91 @@ class n_date_frame2:
 				
 				def prob_profit(low_np, high_np):
 					
-					def lh_steps(low, high):
-						return int(round(round(high, 2) - round(low, 2), 2) * 100) + 1
+					# def lh_steps(low, high):
+					# 	return int(round(round(high, 2) - round(low, 2), 2) * 100) + 1
+					#
+					# time_window_size = len(low_np)
+					# base_low = low_np[0]
+					# base_high = high_np[0]
+					# base_steps = lh_steps(base_low, base_high)
+					stock_size = 10000
+					all_step_profit_reward = 1.25
+					# results = {}
+					# for t in range(1, time_window_size):
+					# 	next_low = low_np[t]
+					# 	next_high = high_np[t]
+					# 	next_steps = lh_steps(next_low, next_high)
+					# 	for bs in range(base_steps):
+					# 		for ns in range(next_steps):
+					# 			qt = int(stock_size / round(base_low + bs * .01, 2))
+					# 			profit = int(qt * (round(next_low + ns * .01, 2) - round(base_low + bs * .01, 2)))
+					# 			if profit not in results:
+					# 				results[profit] = 1
+					# 			else:
+					# 				results[profit] += 1
+					# # print(results)
+					# # print(sorted(results.items(), key=lambda x: x[1]))
 					
 					time_window_size = len(low_np)
-					base_low = low_np[0]
-					base_high = high_np[0]
-					base_steps = lh_steps(base_low, base_high)
-					stock_size = 10000
-					results = {}
-					for t in range(1, time_window_size):
-						next_low = low_np[t]
-						next_high = high_np[t]
-						next_steps = lh_steps(next_low, next_high)
-						for bs in range(base_steps):
-							for ns in range(next_steps):
-								qt = int(stock_size / round(base_low + bs * .01, 2))
-								profit = int(qt * (round(next_low + ns * .01, 2) - round(base_low + bs * .01, 2)))
-								if profit not in results:
-									results[profit] = 1
-								else:
-									results[profit] += 1
-					# print(results)
-					# print(sorted(results.items(), key=lambda x: x[1]))
 					
-					sum_profit = 0
-					sum_case = 0
-					for r in results:
-						# print(r, results[r] )
-						sum_profit += r
-						sum_case += results[r]
-					# print("sum:", sum_profit, sum_case)
-					prob_profit = int(sum_profit / sum_case)
+					def n_arange(low, high, steps):
+						
+						steps_int = int(steps * 100)
+						low_int = int(low * 100)
+						high_int = int(high * 100) + steps_int
+						
+						int_arange = np.array(list(range(low_int, high_int, steps_int)))
+						int_arange = int_arange / 100
+						return int_arange
+					
+					base_array = n_arange(low_np[0], high_np[0], .01)
+					b_lh_dist = len(base_array)
+					bases = np.array([])
+					nexts = np.array([])
+					for x in range(time_window_size - 1):
+						next_arange = n_arange(low_np[x + 1], high_np[x + 1], 0.01)
+						n_lh_dist = len(next_arange)
+						brep = np.repeat(base_array, n_lh_dist)
+						bases = np.append([bases], [brep], axis=1)[0]
+						lh_range = np.tile(next_arange, b_lh_dist)
+						nexts = np.append([nexts], [lh_range], axis=1)[0]
+					
+					qt = stock_size / bases
+					qt = qt.astype(int)
+					
+					profit = (nexts - bases) * qt
+					profit = profit.astype(int)
+					unique_profit = np.unique(profit, return_counts=True)
+					r_keys = np.array(unique_profit[0])
+					r_values = np.array(unique_profit[1])
+					# print(r_keys)
+					# print(r_values)
+					
+					# r_keys = np.array(list(results.keys()))
+					# r_values = np.array(list(results.values()))
+					m_key_value = r_keys * r_values
+					
+					wsum_profit = m_key_value.sum()
+					min_profit = min(r_keys)
+					max_profit = max(r_keys)
+					sum_case = sum(r_values)
+					prob_profit = int(wsum_profit / sum_case)
+					# for r in results:
+					# 	# print(r, results[r] )
+					# 	sum_profit += r
+					# 	sum_case += results[r]
+					# # print("sum:", sum_profit, sum_case)
+					
+					prob_profit = int(wsum_profit / sum_case * all_step_profit_reward)
+					
+					# if (prob_profit > 0 and max_profit >= 50) or (prob_profit < 0 and min_profit <= -50):
+					# 	prob_profit = int(wsum_profit / sum_case * all_step_profit_reward)
+					# else:
+					# 	prob_profit = 0
 					return prob_profit
 				
 				time_frame = 10
+				date_s = nddf[symbol]["Date"]
 				low_s = np.array(nddf[symbol]["Low"])
 				high_s = np.array(nddf[symbol]["High"])
 				
@@ -2055,12 +2106,42 @@ class n_date_frame2:
 				
 				r_array = np.zeros(len(low_s))
 				for g in range(0, len(low_s) - time_frame - 1):
+				# for g in range(0, 1000):
 					s2()
-					low_np = low_s[g: g + time_frame]
-					high_np = high_s[g: g + time_frame]
-					pr = prob_profit(low_np, high_np)
-					r_array[g] = pr
-				nddf[symbol]["P10"] = r_array
+					if 16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date()):
+						low_np = low_s[g: g + time_frame]
+						high_np = high_s[g: g + time_frame]
+						pr = prob_profit(low_np, high_np)
+						r_array[g] = pr
+				nddf[symbol]["y_P10"] = 4
+				nddf[symbol]["SIG_P10"] = r_array
+				nddf[symbol]['SIG_P10'] = nddf[symbol]['SIG_P10'].astype(int)
+				
+				sig_limit_bottom = 25
+				sig_limit_top = 55
+				
+				# nddf[symbol]["y_P10"].values[(nddf[symbol]["SIG_P10"] > sig_limit_bottom) & (nddf[symbol]["SIG_P10"] < sig_limit_top)] = 0
+				# nddf[symbol]["y_P10"].values[(0 < nddf[symbol]["SIG_P10"]) & (nddf[symbol]["SIG_P10"] <= sig_limit_bottom)] = 2
+				# nddf[symbol]["y_P10"].values[(nddf[symbol]["SIG_P10"] < -sig_limit_bottom) & (nddf[symbol]["SIG_P10"] > -sig_limit_top)] = 1
+				# nddf[symbol]["y_P10"].values[(0 > nddf[symbol]["SIG_P10"]) & (nddf[symbol]["SIG_P10"] >= -sig_limit_bottom)] = 3
+				# nddf[symbol]["y_P10"].values[nddf[symbol]["SIG_P10"] == 0] = 4
+
+				nddf[symbol]["y_P10"].values[(nddf[symbol]["SIG_P10"] > sig_limit_bottom) & (nddf[symbol]["SIG_P10"] < sig_limit_top)] = 0
+				nddf[symbol]["y_P10"].values[(nddf[symbol]["SIG_P10"] < -sig_limit_bottom) & (nddf[symbol]["SIG_P10"] > -sig_limit_top)] = 1
+				nddf[symbol]["y_P10"].values[(-15 < nddf[symbol]["SIG_P10"]) & (nddf[symbol]["SIG_P10"] < 15)] = 2
+				nddf[symbol]["y_P10"].values[nddf[symbol]["SIG_P10"] == 0] = 4
+				
+				
+				# get first
+				
+				# nddf[symbol]['y_P10_SHIFT'] = nddf[symbol]['y_P10'] != nddf[symbol]['y_P10'].shift(1)
+				
+				nddf[symbol].set_index('Date', inplace=True)
+				mask = nddf[symbol].between_time('20:00', '16:00').index
+				nddf[symbol].loc[mask, 'y_P10'] = 4
+
+				ndf.set_dt_order(symbol)
+				nddb.write(symbol)
 			
 			elif tech_indicator == "GAM2":
 				log("GAM2")
@@ -2334,63 +2415,8 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-	
-	def prob_profit(low_np, high_np):
-		
-		def lh_steps(low, high):
-			return int(round(round(high, 2) - round(low, 2), 2) * 100) + 1
-		
-		time_window_size = len(low_np)
-		base_low = low_np[0]
-		base_high = high_np[0]
-		base_steps = lh_steps(base_low, base_high)
-		stock_size = 10000
-		results = {}
-		for t in range(1, time_window_size):
-			next_low = low_np[t]
-			next_high = high_np[t]
-			next_steps = lh_steps(next_low, next_high)
-			for bs in range(base_steps):
-				for ns in range(next_steps):
-					qt = int(stock_size / round(base_low + bs * .01, 2))
-					profit = int(qt * (round(next_low + ns * .01, 2) - round(base_low + bs * .01, 2)))
-					if profit not in results:
-						results[profit] = 1
-					else:
-						results[profit] += 1
-		# print(results)
-		# print(sorted(results.items(), key=lambda x: x[1]))
-		
-		sum_profit = 0
-		sum_case = 0
-		for r in results:
-			# print(r, results[r] )
-			sum_profit += r
-			sum_case += results[r]
-		# print("sum:", sum_profit, sum_case)
-		prob_profit = int(sum_profit / sum_case)
-		return prob_profit
-	
-	time_frame = 10
-	low_s = np.array(nddf[symbol]["Low"])
-	high_s = np.array(nddf[symbol]["High"])
-	
-	s2(True, len(low_s) - time_frame - 1)
-	
-	r_array = []
-	for g in range(0, len(low_s) - time_frame - 1):
-		s2()
-		low_np = low_s[g: g + time_frame]
-		high_np = high_s[g: g + time_frame]
-		pr = prob_profit(low_np, high_np)
-		# print(pr)
-		r_array.append(pr)
-	
-	r_array = np.array(r_array)
-	print("-----------------")
-	print(r_array.max())
-	print(r_array.min())
-	print(r_array.mean())
+	nddf[symbol]['y_P10'] = nddf[symbol]['P10']
+	nddf[symbol]['SIG_P10'] = nddf[symbol]['P10']
 
 	# symbol = "APA"
 	# # print(nddf[symbol].shape[0])

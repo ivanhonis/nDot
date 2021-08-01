@@ -36,7 +36,7 @@ class n_chart:
 
     def fit(self, i_df, name, indecators=""):
         i_df = i_df.reset_index(drop=True)
-        # i_df, nemhasznal = self.trade.time_filter(i_df, "15:30", "22:00")
+        i_df, nemhasznal = self.trade.time_filter(i_df, "15:30", "22:00")
         # i_df = nddfx_intime.reset_index()
         # print(i_df)
         i_df['Date_str'] = i_df['Date'].astype(str)
@@ -44,6 +44,8 @@ class n_chart:
         self.elements.append(self.chart_candlestick(i_df, name))
         self.elements.append(self.chart_vol(i_df, name))
         if len(indecators) > 0:
+            if 'P10' in indecators:
+                self.elements.append(self.chart_p10(i_df, "P10"))
             if 'VWAP' in indecators:
                 self.elements.append(self.chart_vwap(i_df, "VWAP"))
             if 'MT' in indecators:
@@ -86,6 +88,7 @@ class n_chart:
             else:
                 if e.title.text != "ADX8" and \
                         e.title.text != "RSI14" and \
+                        e.title.text != "P10" and \
                         e.title.text != "MACD" and \
                         e.title.text != "CCI21":
                     # ADX* és RSI14 nél nem kell összzárni a y rangeotmert az nem egyezik a részvény árfolyammal
@@ -545,6 +548,93 @@ class n_chart:
         p.y_range = Range1d(*desired_range2)
         return p
 
+
+    def chart_p10(self, df, name):
+        df['ohlc4_up'] = -20
+        df['ohlc4_down'] = 20
+        stock = ColumnDataSource(df)
+
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=150,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+        # print ohlc4 price
+        # p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        # p.line('index', 'ohlc4', color=self.blue, source=stock)
+
+        # p.line('index', 'ADX_8', color=self.black, legend_label="ADX_8", source=stock, line_width=2)
+        # p.line('index', 'DMP_8', color=self.green, legend_label="DI+", source=stock)
+        # p.line('index', 'DMN_8', color=self.red, legend_label="DI-", source=stock)
+        # # Vertical line
+        # vline1 = Span(location=20, dimension='width', line_color=self.black, line_width=1)
+        # vline2 = Span(location=0, dimension='width', line_color=self.black, line_width=2)
+        # vline3 = Span(location=-20, dimension='width', line_color=self.black, line_width=1)
+        # p.renderers.extend([vline1])
+        # p.renderers.extend([vline2])
+        # p.renderers.extend([vline3])
+
+        inc = df['SIG_P10'] > 0
+        inc = tuple(inc)
+        dec = df['SIG_P10'] < 0
+        dec = tuple(dec)
+
+        view_inc = CDSView(source=stock, filters=[BooleanFilter(inc)])
+        view_dec = CDSView(source=stock, filters=[BooleanFilter(dec)])
+
+        p.vbar(x='index', width=0.7, top='SIG_P10', bottom=0, fill_color=self.red, line_color=self.red,
+               source=stock, view=view_dec, name="SIG_P10")
+        p.vbar(x='index', width=0.7, top='SIG_P10', bottom=0, fill_color=self.green, line_color=self.green,
+               source=stock, view=view_inc, name="SIG_P10", legend_label=name)
+
+        if "y_P10" in df.columns:
+            df['x1'] = df['y_P10'] == 0
+            sig = tuple(df['x1'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.green, size=15, source=stock, view=view_sig)
+    
+            df['x2'] = df['y_P10'] == 1
+            sig = tuple(df['x2'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.red, size=15, source=stock,
+                                view=view_sig)
+    
+            df['x3'] = df['y_P10'] == 2
+            sig = tuple(df['x3'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
+            #
+            # df['x4'] = df['y_P10'] == 3
+            # sig = tuple(df['x4'])
+            # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            # p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.gray2, size=15, source=stock,
+            #                     view=view_sig)
+
+        p.legend.visible = False
+
+        # start default settings  ----------------------------------------------------------------------------------
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+
+        i_max = 100
+        i_min = -100
+        desired_range2 = (i_min, i_max)
+        p.y_range = Range1d(*desired_range2)
+        return p
+
     def chart_cci_21(self, df, name):
         stock = ColumnDataSource(df)
         p = figure(sizing_mode='fixed',
@@ -843,6 +933,12 @@ class n_chart:
             sig = tuple(df['SIG_QFY_SHORT'])
             view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
             p.inverted_triangle('index', 'ohlc4_down', line_color=self.orange, line_width=3, fill_color=self.red, size=15, source=stock, view=view_sig)
+            
+            df['x3'] = df['y_GAM2'] == 2
+            sig = tuple(df['x3'])
+            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+            p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
+
 
         p.legend.visible = False
         p.add_tools(HoverTool(
