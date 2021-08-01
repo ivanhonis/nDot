@@ -1,0 +1,60 @@
+<--------------------------------------------------->
+<description>
+<--------------------------------------------------->
+otlet: 5 8 13 mozgoatlagokat figyelek, ha 5 alatta 8 alatta 13, akkor az egy LONG jel (visszafele SHORT),
+ezek korul kivalasztom azt amin lehet legalabb x dollart (50 korul) keresni (qualified),
+(pontos parameterek a meta adatok kozott talalhatok) es ezeket megprablom
+klasszifikalni, elvalasztani azoktol amiken nem lehet penzt keresni.)
+;
+<--------------------------------------------------->
+<dataset creator config>
+<--------------------------------------------------->
+{
+"sig_suffix": "GAM2",        <y>
+"time_window_size": 21,         <mekkora legyen az adatszet mérete visszafelé>
+"stock_size": 10000,            <az y az indikátor állítja elő ezért ennek nincs jelentőssége>
+"min_profit": 80,               <-"->
+"min_step_profit": 10,          <-"->
+"stop": -12,                    <-"->
+"steps": 35,                    <-"->
+"overlay_steps": 21,            <-"->
+"bad_overweight": 2,           <a rosszakat hányszorosan engedem túlmintavételezni>
+"x_tansform": 1,                <az adatszet reshap függvénye beépített >
+"data_window_back_shift": 0,    <az adatwinow-t ennyivel visszább tolom :) >
+"profit_window_shift": 0        <a good signálok profit számolásánál az ablakot eltplja ennyivel >
+}
+
+;
+
+<--------------------------------------------------->
+<fields from original>
+<--------------------------------------------------->
+[
+"LOW_DIFF",
+"HIGH_DIFF",
+"RSI_14",
+"MACDh_12_26_9",
+"CCI_21_0.015"
+]
+
+;
+
+<--------------------------------------------------->
+<Contras cross data fields>
+<--------------------------------------------------->
+[
+"SPY_LOW_DIFF",
+"SPY_HIGH_DIFF"
+]
+;
+
+<--------------------------------------------------->
+<Steam config - Indexes  for ndf.tech.project>
+<--------------------------------------------------->
+[
+"GAM2",
+"PRICE_DIFF",
+"RSI14",
+"MACD",
+"CCI21"
+]
