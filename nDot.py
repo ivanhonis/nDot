@@ -337,6 +337,7 @@ if LocalRUN:
 			i_return = [
 				['help', 'help2', 'help - List of all commands!', 0],
 				['do', 'do', 'do', 0],
+				['do2', 'do2', 'do2', 0],
 				['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
 				['wl.add', 'wl_add', 'wl.add <symbol> <year(s)>', 0],
 				['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
@@ -354,6 +355,7 @@ if LocalRUN:
 				['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
 				['ndf.dataset', 'ndf_dataset',
 				 'ndf.dataset <symbol> <project> <<NOFORCE / FORCE>> <<FULL / VECTOR / RND_CHOICE>>', 1],
+				['ndf.dataset.int', 'ndf_dataset_int','ndf.dataset.int <symbol> <project> (only NOFORCE)', 1],
 				['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
 				['ndf.remove.column', 'ndf_remove_column', 'ndf.remove.column <symbol> <column_name> <<SAVE>>', 1],
 				['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
@@ -708,6 +710,7 @@ class n_date_frame2:
 		return nddf.keys()
 	
 	def get_allrow_count(self):
+		""" az összes nddf symbol összes sorát adja vissza """
 		i_count = 0
 		for smb in nddf:
 			i_count += nddf[smb].shape[0]
@@ -825,7 +828,8 @@ class n_date_frame2:
 		i_i = [
 			['BBANDS', ['BBANDS']],
 			['CCI21', ['CCI_21_0.015']],
-			['P10', ['y_10', 'SIG_P10']],
+			['P10', ['y_P10', 'SIG_P10']],
+			['P10INT', ['y_P10INT', 'SIG_P10INT']],
 			['GAM', ['y_GAM', 'SIG_GAM']],
 			['GAM2', ['y_GAM2', 'SIG_GAM2']],
 			['MT', ['MTx']],
@@ -1136,6 +1140,215 @@ class n_date_frame2:
 										contras=contras,
 										back_shift=back_shift)
 					s2()
+					# historic max and min ---------------------------------
+					
+					i_historic_max = np.array([])
+					i_historic_min = np.array([])
+					if len(original_fields) > 0:
+						for i_of in original_fields:
+							nd_dset.add_field(i_of)
+							i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
+							i_conc = np.full(time_window_size, i_conc)
+							i_historic_max = np.concatenate((i_historic_max, i_conc))
+							
+							i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
+							i_conc = np.full(time_window_size, i_conc)
+							i_historic_min = np.concatenate((i_historic_min, i_conc))
+					
+					for i_con in contras:
+						nd_dset.add_field(i_con)
+						contra_sep_pre = i_con.split('_')
+						con_sep = []
+						if len(contra_sep_pre) > 2:
+							con_sep.append(contra_sep_pre[0])
+							s = "_"
+							con_sep.append(s.join(contra_sep_pre[1:]))
+						else:
+							con_sep = contra_sep_pre
+						
+						con_symbol = con_sep[0]
+						con_field = con_sep[1]
+						i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
+						i_conc = np.full(time_window_size, i_conc)
+						i_historic_max = np.concatenate((i_historic_max, i_conc))
+						
+						i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
+						i_conc = np.full(time_window_size, i_conc)
+						i_historic_min = np.concatenate((i_historic_min, i_conc))
+					s2()
+					nd_dset.set_historic_max(i_historic_max)
+					nd_dset.set_historic_min(i_historic_min)
+					s2()
+					nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
+					s2()
+					nd_dset.save()
+					s2()
+					del nd_dset
+				else:
+					if not field_ok_basic:
+						log("Config file, basic parameter(s) is missing.")
+					if not field_ok_original_fields:
+						log("Config file, Orifinal field(s) is missing.")
+					if not field_ok_contras:
+						log("Config file, Contra field(s) is missing.")
+			else:
+				log("config file conversion error. (,) is missing ? :)")
+		
+		else:
+			log("config file is missing:" + str(config_file_path))
+	
+	def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
+		
+		def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, back_shift=0):
+			
+			array_len = time_window_size * (len(original_fields) + len(contras))
+			
+			contra_copies = self.get_contra_copies(contras)
+			
+			for nx, i_il in enumerate(indexes):
+				i_data_array = self.get_dataset_by_index(symbol=symbol,
+														 index=i_il + back_shift,
+														 # :) predict in the present, but trade in the future
+														 time_window_size=time_window_size,
+														 original_fields=original_fields,
+														 contras=contras,
+														 contra_copies=contra_copies
+														 # contras_indexes=contras_indexes,
+														 # contra_n=nx
+														 )
+				
+				if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+					nd_dset.add_X(i_data_array)
+					nd_dset.add_y(y)
+				# s2()
+			del contra_copies
+		
+		config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
+		file = pathlib.Path(config_file_path)
+		if file.exists():
+			gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_dataset_config(
+				config_file_path)
+			if gdc_ok:
+				sig_field = "SIG_" + dataset_config['sig_suffix']
+				field_ok_basic = ndf.is_field_exist(symbol, sig_field)
+				
+				if not force:
+					field_ok_basic = True  # ha force akkor nincs szükség sigre sem
+				
+				field_ok_original_fields = True
+				for o_f in original_fields:
+					field_ok_original_fields = field_ok_original_fields and ndf.is_field_exist(symbol, o_f)
+				
+				field_ok_contras = True
+				for c in contras:
+					field_ok_contras = field_ok_contras and ndf.is_contra(c)
+				
+				if field_ok_basic and field_ok_original_fields and field_ok_contras:
+					time_window_size = dataset_config["time_window_size"]
+					back_shift = dataset_config["data_window_back_shift"]
+					y_field = "y_" + dataset_config["sig_suffix"]
+					if force:  # ha már van y akkor kitörli és mindenképen megcsinálja
+						ndf.remove_columns(symbol, [y_field])
+					if y_field in nddf[symbol].columns:
+						log(y_field + " already exist.")
+					else:
+						log(y_field + " y not found, Intervall has no own quaifyer!!!!!!!")
+				
+					s2(True, 240)
+					
+					log("Creating dataset.")
+					# image fej megcsinálása, minden image nél ugyan az
+					nd_dset = n_dataset(log)
+					nd_dset.set_symbol(symbol)
+					
+					s2()
+					
+					nd_dset.set_source("nDot.py->n_data_frame2->create_dataset")
+					nd_dset.set_name("nDot_DATASET_" + project_name)
+					nd_dset.set_project_name(project_name)
+					
+					nd_dset.set_description(description)
+					
+					y_names = {'0 to 100': "0 srong short ... 50 nothing ...100 strong long"}
+					nd_dset.add_y_names(y_names)
+					#  beteszem a 'good' signálokat -----------------------------------------
+					first_cut = 1000
+					i_indexes = {}
+					
+					for ix in range(101):
+						s2()
+						i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
+						i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
+					
+					# i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 0].index)
+					# i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + first_cut)]
+					# i_index_good_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 1].index)
+					# i_index_good_short = i_index_good_short[(i_index_good_short > time_window_size + first_cut)]
+					# s2()
+					# i_index_bad_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 2].index)
+					# i_index_bad_long = i_index_bad_long[(i_index_bad_long > time_window_size + first_cut)]
+					# i_index_bad_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 3].index)
+					# i_index_bad_short = i_index_bad_short[(i_index_bad_short > time_window_size + first_cut)]
+					
+					# ha egy érték y (0,1,2,3) hinyzik akkor az nem számít bele a minimumna
+					# min_array = np.array([len(i_index_good_long),
+					# 					  len(i_index_good_short),
+					# 					  len(i_index_bad_long),
+					# 					  len(i_index_bad_short)])
+					# min_array = np.ma.masked_equal(min_array, 0, copy=False)
+					#
+					# max_signals = min_array.min()
+					# max_signals = int(max_signals * dataset_config['bad_overweight'])
+					#
+					# i_index_good_long = i_index_good_long[0:max_signals]
+					# i_index_good_short = i_index_good_short[0:max_signals]
+					# i_index_bad_long = i_index_bad_long[0:max_signals]
+					# i_index_bad_short = i_index_bad_short[0:max_signals]
+					
+					nd_dset.set_window_size(time_window_size)
+					for ix in range(101):
+						s2()
+						# print(ix)
+						dataset_constructor(symbol=symbol,
+											indexes=i_indexes[ix],
+											time_window_size=time_window_size,
+											y=ix,
+											original_fields=original_fields,
+											contras=contras,
+											back_shift=back_shift)
+					# s2()
+					# dataset_constructor(symbol=symbol,
+					# 					indexes=i_index_good_long,
+					# 					time_window_size=time_window_size,
+					# 					y=0,
+					# 					original_fields=original_fields,
+					# 					contras=contras,
+					# 					back_shift=back_shift)
+					# s2()
+					# dataset_constructor(symbol=symbol,
+					# 					indexes=i_index_good_short,
+					# 					time_window_size=time_window_size,
+					# 					y=1,
+					# 					original_fields=original_fields,
+					# 					contras=contras,
+					# 					back_shift=back_shift)
+					# s2()
+					# dataset_constructor(symbol=symbol,
+					# 					indexes=i_index_bad_long,
+					# 					time_window_size=time_window_size,
+					# 					y=2,
+					# 					original_fields=original_fields,
+					# 					contras=contras,
+					# 					back_shift=back_shift)
+					# s2()
+					# dataset_constructor(symbol=symbol,
+					# 					indexes=i_index_bad_short,
+					# 					time_window_size=time_window_size,
+					# 					y=3,
+					# 					original_fields=original_fields,
+					# 					contras=contras,
+					# 					back_shift=back_shift)
+					# s2()
 					# historic max and min ---------------------------------
 					
 					i_historic_max = np.array([])
@@ -1687,12 +1900,46 @@ class n_date_frame2:
 						 'ACT_DAY', 'SHIFTED_DAY', 'SHIFTED_DAY_OK', 'XXRND',
 						 qfy_long_field, qfy_short_field])
 		self.remove_columns(symbol, i_remove)
-		
 		s("")
-	
-	def add_tech(self, symbol, tech_indicator="SMA60"):
 		
-		log("ndf-> add_tech " + symbol + " - " + str(tech_indicator))
+	def refresh_tech(self, symbol, indicator, tail_size=500, log_vissible=True):
+		i_rows = nddf[symbol].shape[0]
+		# print("nan", nddf[symbol].isna().sum())
+		
+		indi_overlay = 100
+		reduce_tail = tail_size - indi_overlay
+		# print(nddf[symbol])
+		i_nddf = nddf[symbol].copy()
+		nddf[symbol] = nddf[symbol][-tail_size:].copy()
+		ndf.set_dt_order(symbol)
+		
+		# print("1.")
+		# print(nddf[symbol][["Date", "LOW_DIFF"]])
+		# nddf[symbol] = i_nddf.copy()
+		# print(nddf[symbol])
+		nddb.enable_write = False
+		self.add_tech(symbol, indicator, log_visible=log_vissible)
+		nddb.enable_write = True
+		# print("2.")
+		# print(nddf[symbol][["Date", "LOW_DIFF"]])
+		i_nddf2 = i_nddf.copy()
+		i_nddf2 = i_nddf2[:-reduce_tail].copy()
+		
+		# print(i_nddf2, nddf[symbol][-reduce_tail:])
+		i_nddf3 = pd.concat([i_nddf2, nddf[symbol][-reduce_tail:]], ignore_index=True)
+		# print("3.")
+		# print(i_nddf3[["Date", "LOW_DIFF"]])
+		# print("shape new:", i_nddf3.shape)
+		# print("nan", i_nddf3.isna().sum())
+		nddf[symbol] = i_nddf3.copy()
+		ndf.set_dt_order(symbol)
+		nddb.write(symbol, log_visible=log_vissible)
+		if i_rows - nddf[symbol].shape[0] != 0:
+			log("ndf-> tech_refresh error, row count not equal after refresh")
+		
+	def add_tech(self, symbol, tech_indicator="SMA60", log_visible=True):
+		
+		log("ndf-> add_tech " + symbol + " - " + str(tech_indicator), visible=log_visible)
 		
 		if self.is_indicator(tech_indicator):
 			
@@ -2089,7 +2336,7 @@ class n_date_frame2:
 					# 	sum_case += results[r]
 					# # print("sum:", sum_profit, sum_case)
 					
-					prob_profit = int(wsum_profit / sum_case * all_step_profit_reward)
+					# prob_profit = int(wsum_profit / sum_case * all_step_profit_reward)
 					
 					# if (prob_profit > 0 and max_profit >= 50) or (prob_profit < 0 and min_profit <= -50):
 					# 	prob_profit = int(wsum_profit / sum_case * all_step_profit_reward)
@@ -2131,7 +2378,6 @@ class n_date_frame2:
 				nddf[symbol]["y_P10"].values[(-15 < nddf[symbol]["SIG_P10"]) & (nddf[symbol]["SIG_P10"] < 15)] = 2
 				nddf[symbol]["y_P10"].values[nddf[symbol]["SIG_P10"] == 0] = 4
 				
-				
 				# get first
 				
 				# nddf[symbol]['y_P10_SHIFT'] = nddf[symbol]['y_P10'] != nddf[symbol]['y_P10'].shift(1)
@@ -2139,7 +2385,81 @@ class n_date_frame2:
 				nddf[symbol].set_index('Date', inplace=True)
 				mask = nddf[symbol].between_time('20:00', '16:00').index
 				nddf[symbol].loc[mask, 'y_P10'] = 4
+				nddf[symbol].loc[nddf[symbol].tail(30000).index, 'y_P10'] = 4
 
+				ndf.set_dt_order(symbol)
+				nddb.write(symbol)
+			
+			elif tech_indicator == "P10INT":
+				
+				def prob_profit(low_np, high_np):
+					
+					stock_size = 10000
+					time_window_size = len(low_np)
+					
+					def n_arange(low, high, steps):
+						steps_int = int(steps * 100)
+						low_int = int(low * 100)
+						high_int = int(high * 100) + steps_int
+						
+						int_arange = np.array(list(range(low_int, high_int, steps_int)))
+						int_arange = int_arange / 100
+						return int_arange
+					
+					base_array = n_arange(low_np[0], high_np[0], .01)
+					b_lh_dist = len(base_array)
+					bases = np.array([])
+					nexts = np.array([])
+					for x in range(time_window_size - 1):
+						next_arange = n_arange(low_np[x + 1], high_np[x + 1], 0.01)
+						n_lh_dist = len(next_arange)
+						brep = np.repeat(base_array, n_lh_dist)
+						bases = np.append([bases], [brep], axis=1)[0]
+						lh_range = np.tile(next_arange, b_lh_dist)
+						nexts = np.append([nexts], [lh_range], axis=1)[0]
+					
+					qt = stock_size / bases
+					qt = qt.astype(int)
+					
+					profit = (nexts - bases) * qt
+					profit = profit.astype(int)
+					unique_profit = np.unique(profit, return_counts=True)
+					r_keys = np.array(unique_profit[0])
+					r_values = np.array(unique_profit[1])
+					m_key_value = r_keys * r_values
+					
+					wsum_profit = m_key_value.sum()
+					sum_case = sum(r_values)
+					prob_profit = int(wsum_profit / sum_case)
+					return prob_profit
+				
+				time_frame = 10
+				date_s = nddf[symbol]["Date"]
+				low_s = np.array(nddf[symbol]["Low"])
+				high_s = np.array(nddf[symbol]["High"])
+				
+				s2(True, len(low_s) - time_frame - 1)
+				
+				r_array = np.zeros(len(low_s))
+				for g in range(0, len(low_s) - time_frame - 1):
+					s2()
+					if 16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date()):
+						low_np = low_s[g: g + time_frame]
+						high_np = high_s[g: g + time_frame]
+						pr = prob_profit(low_np, high_np)
+						r_array[g] = pr
+
+				nddf[symbol]["SIG_P10INT"] = r_array
+				nddf[symbol]['SIG_P10INT'] = nddf[symbol]['SIG_P10INT'].astype(int)
+				nddf[symbol]["y_P10INT"] = nddf[symbol]["SIG_P10INT"]
+				
+				nddf[symbol]["y_P10INT"].values[(50 < nddf[symbol]["SIG_P10INT"]) | (nddf[symbol]["SIG_P10INT"] < -50)] = -1050
+				nddf[symbol]["y_P10INT"] = nddf[symbol]["y_P10INT"] + 50
+				
+				nddf[symbol].set_index('Date', inplace=True)
+				mask = nddf[symbol].between_time('20:00', '16:00').index
+				nddf[symbol].loc[mask, 'y_P10INT'] = -1000
+				
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
 			
@@ -2301,12 +2621,12 @@ class n_date_frame2:
 		nddb.remove(symbol)
 		ndf_meta.remove_meta(symbol)
 	
-	def refresh(self, symbol, log_off=False):
-		if not log_off:
-			log("ndf-> refresh " + symbol)
-			log("Time frame (before refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
-				nddf[symbol]["Date"].max()))
-			log("Number of rows (before refresh): " + str(nddf[symbol].shape[0]))
+	def refresh(self, symbol, log_visible=True):
+		log("ndf-> refresh " + symbol, visible=log_visible)
+		log("Time frame (before refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
+			nddf[symbol]["Date"].max()), visible=log_visible)
+		num_of_rows_before = nddf[symbol].shape[0]
+		log("Number of rows (before refresh): " + str(num_of_rows_before), visible=log_visible)
 		to_dbdt = datetime.now() + timedelta(days=1)
 		to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
 		# print("to", to_dbdt)
@@ -2314,22 +2634,26 @@ class n_date_frame2:
 		# print("from", from_dbdt)
 		i_tounix = n_tools.dbdt_to_unixdt(to_dbdt)
 		i_fromunix = n_tools.dbdt_to_unixdt(from_dbdt)
-		i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, log_off)
+		i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, log_visible)
+		# print(i_res)
 		
-		# fast check tesult
+		# fast check result
 		i_array1 = np.array(i_res["Date"])
 		i_array2 = np.array(nddf[symbol]["Date"][-200:])
 		if len(i_array1) != sum(np.isin(i_array1, i_array2)):
 			nddf[symbol] = nddf[symbol].append(i_res)
+			# print(nddf[symbol].shape)
 			self.set_dt_order(symbol)
-			if not log_off:
-				log("Time frame (after refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
-					nddf[symbol]["Date"].max()))
-				log("Number of rows (after refresh): " + str(nddf[symbol].shape[0]))
-			nddb.write(symbol, log_off)
+			# print(nddf[symbol].shape)
+			num_of_rows_after = nddf[symbol].shape[0]
+			log("Time frame (after refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
+				nddf[symbol]["Date"].max()), visible=log_visible)
+			log("Number of rows (after refresh): " + str(num_of_rows_after), visible=log_visible)
+			nddb.write(symbol, log_visible=False)
+			return num_of_rows_after - num_of_rows_before
 		else:
-			if not log_off:
-				log("There is no new data from: " + from_dbdt)
+			log("There is no new data from: " + from_dbdt, visible=log_visible)
+			return 0
 	
 	def remove_columns(self, symbol, columns):
 		for i_c in columns:
@@ -2415,54 +2739,27 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-	nddf[symbol]['y_P10'] = nddf[symbol]['P10']
-	nddf[symbol]['SIG_P10'] = nddf[symbol]['P10']
+	nddf["APA"] = nddf["APA"][0:-3]
+	ndf.set_dt_order("APA")
+	nddb.write("APA")
 
-	# symbol = "APA"
-	# # print(nddf[symbol].shape[0])
-	# np_date = nddf[symbol]["Date"]
-	# np_low = nddf[symbol]["Low"]
-	# np_high = nddf[symbol]["High"]
-	#
-	# rounds = 5
-	# results = np.zeros((len(np_high), rounds))
-	# y = np.zeros(len(np_high))
-	#
-	# steps = 10
-	# stock_size = 10000
-	# min_profit = 50
-	#
-	# for r in range(rounds):
-	# 	for i in range(nddf[symbol].shape[0] - steps - 1):
-	# 		if 16 < np_date[i].hour < 21 and np.is_busday(np_date[i].date()):
-	# 			next_low = np_low[i + 1]
-	# 			next_high = np_high[i + 1]
-	#
-	# 			next_steps_low = np_low[i + steps + 1]
-	# 			next_steps_high = np_high[i + steps + 1]
-	#
-	# 			next_rnd = next_low + (((next_high - next_low) / 100) * random.randint(0, 101))
-	# 			next_steps_rnd = next_steps_low + (((next_steps_high - next_steps_low) / 100) * random.randint(0, 101))
-	# 			profit = int(stock_size / next_rnd) * (next_steps_rnd - next_rnd)
-	# 			results[i, r] = profit
-	#
-	# print(results)
-	# c = 0
-	# for x, res in enumerate(results):
-	# 	if res.sum() == 0:
-	# 		yy = 4
-	# 	elif res.min() < 0:
-	# 		yy = 0
-	# 	elif res.max() > min_profit:
-	# 		yy = 1
-	# 	else:
-	# 		yy = 2
-	#
-	#
-	# 	if yy == 1:
-	# 		c += 1
-	# 		print(c)
+
+def do2(symbol="", p2="", p3=""):
+	print(ai.get_all_indicators_by_symbols())
+	ndf.refresh_tech("APA", "P10", log_vissible=False)
+
+
+def stream_job():
+	print("run outer job")
+
+	i_new_row_count = ndf.get_allrow_count()
+	for smb in ndf.get_all_symbol():
+		if ndf.refresh(smb, visible=False) > 0:
+			pass
 	
+	i_new_row_count = ndf.get_allrow_count() - i_new_row_count
+	if i_new_row_count > 0:  # csak akkor frissítünk ha van új sor
+		stream_last_refresh(time.strftime("%H:%M"))
 
 
 def s(msg_str):
@@ -2502,57 +2799,58 @@ def stream_last_refresh(text):
 	QApplication.processEvents()
 
 
-def log(add_text, line=False, indent=True, color="normal"):
-	if LogTo == "Gui":
-		i_vbar = gui.LT_scrollArea_2.verticalScrollBar()
-		i_vbar.setValue(i_vbar.maximum())
-		QApplication.processEvents()
-		i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
-		i_for_cut = i_for_cut.splitlines()
-		i_cut_html = gui.Logs_Browser2.text()
-		for i_c in i_for_cut:
-			i_cut_html = i_cut_html.replace(i_c, "")
-		
-		i_colors = {'blue': "#078F12",
-					'red': "#ff3333",
-					'orange': "#ff9100",
-					'normal': "#333333"}
-		i_web_color = i_colors[color]
-		
-		if indent:
-			i_ind = "│  "
-		else:
-			i_ind = ""
-		i_log_text = "<html><head/><body>" + i_cut_html
-		if line:
-			i_log_text = i_log_text \
-						 + "<font color='#000000'>" \
-						 + "─" * 65 \
-						 + "</font>" \
-						 + "<br>"
-		
-		lines = add_text.splitlines()
-		
-		for one_line in lines:
-			if one_line[0:2] == "  ":
-				one_line = "&nbsp;&nbsp;" + one_line[2:]
+def log(add_text, line=False, indent=True, color="normal", visible=True):
+	if visible:
+		if LogTo == "Gui":
+			i_vbar = gui.LT_scrollArea_2.verticalScrollBar()
+			i_vbar.setValue(i_vbar.maximum())
+			QApplication.processEvents()
+			i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
+			i_for_cut = i_for_cut.splitlines()
+			i_cut_html = gui.Logs_Browser2.text()
+			for i_c in i_for_cut:
+				i_cut_html = i_cut_html.replace(i_c, "")
 			
-			i_log_text = f"""
-				{i_log_text}
-				<font color='#000000'> {time.strftime("%m-%d %H:%M:%S")} >  {i_ind} </font>
-				<font color='{i_web_color}'> {one_line} </font><br>"""
-		i_log_text = i_log_text + "</body></html>"
-		gui.Logs_Browser2.setText(i_log_text)
-		i_vbar = gui.LT_scrollArea_2.verticalScrollBar()
-		i_vbar.setValue(i_vbar.maximum())
-		QApplication.processEvents()
-	elif LogTo == "Screen":
-		if line:
-			print(time.strftime("%m-%d %H:%M:%S") + " > " + "─" * 80)
-		if indent:
-			print(time.strftime("%m-%d %H:%M:%S") + " > " + "│  " + str(add_text))
-		else:
-			print(time.strftime("%m-%d %H:%M:%S") + " > " + str(add_text))
+			i_colors = {'blue': "#078F12",
+						'red': "#ff3333",
+						'orange': "#ff9100",
+						'normal': "#333333"}
+			i_web_color = i_colors[color]
+			
+			if indent:
+				i_ind = "│  "
+			else:
+				i_ind = ""
+			i_log_text = "<html><head/><body>" + i_cut_html
+			if line:
+				i_log_text = i_log_text \
+							 + "<font color='#000000'>" \
+							 + "─" * 65 \
+							 + "</font>" \
+							 + "<br>"
+			
+			lines = add_text.splitlines()
+			
+			for one_line in lines:
+				if one_line[0:2] == "  ":
+					one_line = "&nbsp;&nbsp;" + one_line[2:]
+				
+				i_log_text = f"""
+					{i_log_text}
+					<font color='#000000'> {time.strftime("%m-%d %H:%M:%S")} >  {i_ind} </font>
+					<font color='{i_web_color}'> {one_line} </font><br>"""
+			i_log_text = i_log_text + "</body></html>"
+			gui.Logs_Browser2.setText(i_log_text)
+			i_vbar = gui.LT_scrollArea_2.verticalScrollBar()
+			i_vbar.setValue(i_vbar.maximum())
+			QApplication.processEvents()
+		elif LogTo == "Screen":
+			if line:
+				print(time.strftime("%m-%d %H:%M:%S") + " > " + "─" * 80)
+			if indent:
+				print(time.strftime("%m-%d %H:%M:%S") + " > " + "│  " + str(add_text))
+			else:
+				print(time.strftime("%m-%d %H:%M:%S") + " > " + str(add_text))
 
 
 def test():
@@ -2617,10 +2915,13 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	log(f"start_position: {x_from}")
 	log(f"Selected test time window: {from_date} - {to_date}")
 	
+	value_limit = 40000
+	stock_size = 10000
+	
 	algo_ai_override = n_algo_trade()
 	algo_ai_override.config({"name": symbol + " Ai override decisions drived",
-							 "value_limit": 30000,
-							 "stock_size": 10000,
+							 "value_limit": value_limit,
+							 "stock_size": stock_size,
 							 "stop_loss_limit": -10,
 							 "profit_take_limit": -1,  # -1 nincs bekapcsolva
 							 "trailer_stop": .1,
@@ -2629,30 +2930,46 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							 "steps_limit": 45,
 							 "strategy": 22,
 							 "trade_time_start": (16, 00),
-							 "trade_time_stop": (19, 30),
+							 "trade_time_stop": (20, 00),
 							 "next_price_random": False
 							 })
 	
 	algo_ai_override2 = n_algo_trade()
 	algo_ai_override2.config({"name": symbol + " Ai drive + rnd next",
-							  "value_limit": 30000,
-							  "stock_size": 10000,
+							  "value_limit": value_limit,
+							  "stock_size": stock_size,
 							  "stop_loss_limit": -10,
 							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							  "trailer_stop": -1,
+							  "trailer_stop": .1,
 							  "trailer_min_profit": 12,
 							  "value_limit_profit_reinvest": False,
-							  "steps_limit": 12,
-							  "strategy": 23,
+							  "steps_limit": 45,
+							  "strategy": 22,
 							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (19, 30),
+							  "trade_time_stop": (20, 00),
 							  "next_price_random": True
 							  })
 	
 	algo_ai_override3 = n_algo_trade()
 	algo_ai_override3.config({"name": symbol + " Ai RND",
-							  "value_limit": 30000,
-							  "stock_size": 10000,
+							  "value_limit": value_limit,
+							  "stock_size": stock_size,
+							  "stop_loss_limit": -10,
+							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
+							  "trailer_stop": .1,
+							  "trailer_min_profit": 12,
+							  "value_limit_profit_reinvest": True,
+							  "steps_limit": 45,
+							  "strategy": 22,
+							  "trade_time_start": (16, 00),
+							  "trade_time_stop": (20, 00),
+							  "next_price_random": True
+							  })
+	
+	algo_ai_override4 = n_algo_trade()
+	algo_ai_override4.config({"name": symbol + " Ai drive + rnd next",
+							  "value_limit": value_limit,
+							  "stock_size": stock_size,
 							  "stop_loss_limit": -10,
 							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
 							  "trailer_stop": .1,
@@ -2661,23 +2978,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							  "steps_limit": 45,
 							  "strategy": 23,
 							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (19, 30),
-							  "next_price_random": True
-							  })
-	
-	algo_ai_override4 = n_algo_trade()
-	algo_ai_override4.config({"name": symbol + " Ai drive + rnd next",
-							  "value_limit": 30000,
-							  "stock_size": 10000,
-							  "stop_loss_limit": -10,
-							  "profit_take_limit": 50,  # -1 nincs bekapcsolva
-							  "trailer_stop": -1,
-							  "trailer_min_profit": 10,
-							  "value_limit_profit_reinvest": False,
-							  "steps_limit": 12,
-							  "strategy": 22,
-							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (19, 30),
+							  "trade_time_stop": (20, 00),
 							  "next_price_random": True
 							  })
 	
@@ -2717,17 +3018,19 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		}
 		algo_ai_override.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
 		algo_ai_override2.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
-		
-		rnd_sig = random.randint(0, 4)
-		rnd_perc = random.uniform(.67, .99)
-		algo_ai_override3.transaction(pre_sig[ix], rnd_sig, rnd_perc, price_dict, pre_date[ix])
+		algo_ai_override3.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
+		algo_ai_override4.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
 
-		pre_x = 4
-		if y_predict_sig[ix] == 0:
-			pre_x = 1
-		elif y_predict_sig[ix] == 1:
-			pre_x = 0
-		algo_ai_override4.transaction(pre_sig[ix], pre_x, y_predict_perc[ix], price_dict, pre_date[ix])
+		# rnd_sig = random.randint(0, 4)
+		# rnd_perc = random.uniform(.67, .99)
+		# algo_ai_override4.transaction(pre_sig[ix], rnd_sig, rnd_perc, price_dict, pre_date[ix])
+
+		# pre_x = 4
+		# if y_predict_sig[ix] == 0:
+		# 	pre_x = 1
+		# elif y_predict_sig[ix] == 1:
+		# 	pre_x = 0
+		# algo_ai_override4.transaction(pre_sig[ix], pre_x, y_predict_perc[ix], price_dict, pre_date[ix])
 		s2()
 	
 	del contra_copies
@@ -2910,6 +3213,16 @@ def ndf_dataset(symbol="", config_file="", force="NOFORCE", overlay_manager="rnd
 	s("")
 
 
+def ndf_dataset_int(symbol="", config_file="", force="NOFORCE", overlay_manager="rnd_choice"):
+	if force.lower() == "force":
+		force = True
+	else:
+		force = False
+	
+	ndf.create_dataset_int(symbol, config_file, force, overlay_manager.lower())
+	s("ok :)")
+
+
 def ndf_remove(symbol=""):
 	ndf.remove(symbol)
 
@@ -2929,7 +3242,6 @@ def ndf_refresh_all():
 	i_symbols = tuple(nddf.keys())
 	for smb in i_symbols:
 		ndf.refresh(smb)
-		log(" ")
 
 
 def ndf_info():
@@ -3150,10 +3462,10 @@ def tr_info_refresh():
 
 if __name__ == "__main__":
 	
-	ai = n_ai(log)
 	wl = watch_list()
 	nddf = {}
 	nddb = n_db(nddf, log)
+	ai = n_ai(log, nddf)
 	
 	if LocalRUN:
 		print("Status: GUI Loading...")
@@ -3167,7 +3479,7 @@ if __name__ == "__main__":
 	ndf = n_date_frame2()
 	ndf_meta = n_date_frame_meta(log)
 	n_tools = n_tools(gui=gui)
-	md = n_market_data(log, s, n_tools, ndf, stream_last_refresh)
+	md = n_market_data(log, s, n_tools, ndf, stream_job)
 	
 	if not LocalRUN:
 		i_start = datetime.now()

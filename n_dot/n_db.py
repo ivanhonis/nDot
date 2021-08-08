@@ -11,6 +11,7 @@ class n_db:
         self.log = log
         self.paralell_load()
         self.store = pd.HDFStore('nDot_db.h5', "a")
+        self.enable_write = True  # erre azért van szükség mert a tech refreshnél hozzáadom a techet, de azt még nem kell elmenteni
 
     def paralell_load(self):
         print("Status: nDot Database loading...")
@@ -49,12 +50,12 @@ class n_db:
         self.close()
         return i_return
 
-    def write(self, symbol, log_off=False):
-        if not log_off:
-            self.log("nd_db-> write:" + symbol)
-        self.open()
-        self.store.put(symbol, self.nddf[symbol], format='table')
-        self.close()
+    def write(self, symbol, log_visible=True):
+        if self.enable_write:
+                self.log("nd_db-> write:" + symbol, visible=log_visible)
+                self.open()
+                self.store.put(symbol, self.nddf[symbol], format='table')
+                self.close()
 
     def read(self, symbol, for_init=False):
         if not for_init:

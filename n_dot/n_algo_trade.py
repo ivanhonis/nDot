@@ -278,8 +278,13 @@ class n_algo_trade:
 
             next_low = self.price_dict['next_low']
             next_high = self.price_dict['next_high']
-            i_rnd_price = next_low + (((next_high - next_low) / 100) * random.randint(0, 101))
-            return i_rnd_price
+            steps = round(next_high * 100, 0) - round(next_low * 100, 0) + 1
+            i_rnd_price1 = next_low + (((next_high - next_low) / steps) * random.randint(0, steps + 1))
+            # i_rnd_price2 = next_low + (((next_high - next_low) / steps) * random.randint(0, steps + 1))
+            i_rnd_price2 = i_rnd_price1
+            # volt egy olyan próbálkozás, hogy ha kétütemben venném meg az adott mennyiséget akkor
+            # jobban közelítene az átlaghoz ezt most kikapcsoltam
+            return round((i_rnd_price1 + i_rnd_price2) / 2, 2)
         else:
             return self.price_dict['actual_ohlc4']
 
@@ -319,6 +324,21 @@ class n_algo_trade:
                 decision_qt = 0
             return decision, decision_qt
 
+        elif self.strategy == 21:  # ai decision override
+            if y_predict == 0:
+                self.stock_size = self.stock_size_orig
+                decision = "BUY"
+                decision_qt = self.get_stock_qt()
+            elif y_predict == 1:
+                self.stock_size = self.stock_size_orig
+                decision = "SELL"
+                decision_qt = self.get_stock_qt()
+            else:
+                self.stock_size = 0
+                decision = "NONE"
+                decision_qt = 0
+            return decision, decision_qt
+
         elif self.strategy == 22:  # ai decision override
             if y_predict == 0:
                 self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
@@ -337,11 +357,11 @@ class n_algo_trade:
         
         elif self.strategy == 23:  # ai decision override
             if y_predict == 0 and y_predict_strength > .95:
-                self.stock_size = self.stock_size_orig
+                self.stock_size = self.stock_size_orig  * (1 + y_predict_strength)
                 decision = "BUY"
                 decision_qt = self.get_stock_qt()
             elif y_predict == 1 and y_predict_strength > .95:
-                self.stock_size = self.stock_size_orig
+                self.stock_size = self.stock_size_orig  * (1 + y_predict_strength)
                 decision = "SELL"
                 decision_qt = self.get_stock_qt()
             else:

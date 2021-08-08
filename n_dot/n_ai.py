@@ -15,7 +15,8 @@ from tensorflow.keras.models import load_model
 
 class n_ai:
     
-    def __init__(self, log):
+    def __init__(self, log, nddf):
+        self.nddf = nddf
         self.log = log
         # print("itt")
         self.ai_models = {}
@@ -300,6 +301,22 @@ class n_ai:
     def print(self):
         print(json_dumps(self.ai_settings, sort_keys=False, indent=6))
         print(self.ai_models)
+        
+    def get_all_indicators_by_symbols(self):
+        i_symbols = tuple(self.nddf.keys())
+        result_dict = {}
+        for smb in i_symbols:
+            i_project = self.get_projects_by_symbol(smb)
+            indexes_array = []
+            for i in i_project:
+                # print(i)
+                ok, description, dataset_config, original_fields, contras, indexes = self.get_project_config(i)
+                # print(indexes)
+                indexes_array = indexes_array + indexes
+            if len(indexes_array) > 0:
+                result_dict[smb] = set(indexes_array)
+        # print(result_dict)
+        return result_dict
         
     def download(self, project_name, rename):
         # rename existing file

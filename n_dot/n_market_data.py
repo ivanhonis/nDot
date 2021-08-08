@@ -10,11 +10,11 @@ class n_market_data:
     api_key_finnhubio1 = "c28o33iad3if6b4c0ong"
     finnhub_client = ""
 
-    def __init__(self, log, s, tools, ndf, stream_last_refresh):
+    def __init__(self, log, s, tools, ndf, stream_job):
+        self.stream_job = stream_job
         self.log = log
         self.s = s
         self.tools = tools
-        self.stream_last_refresh = stream_last_refresh
         self.ndf = ndf
         self.finnhub_client = finnhub.Client(api_key=self.api_key_finnhubio1)
         self.finnhub_client.DEFAULT_TIMEOUT = 100
@@ -52,13 +52,11 @@ class n_market_data:
             i_usd_price = i_result["quote"]
             return round(i_usd_price["HUF"], 4)
 
-    def get_stock_candles(self, symbol, resolution, from_dt, to_dt, rename=False, log_off=False):
-        if not log_off:
-            self.log("md-> get_stock_candles: " + symbol + " - "
-                     + self.tools.unixdt_to_dbdt(from_dt)
-                     + " - "
-                     + self.tools.unixdt_to_dbdt(to_dt))
-
+    def get_stock_candles(self, symbol, resolution, from_dt, to_dt, rename=False, visible=False):
+        self.log("md-> get_stock_candles: " + symbol + " - "
+                 + self.tools.unixdt_to_dbdt(from_dt)
+                 + " - "
+                 + self.tools.unixdt_to_dbdt(to_dt), visible=visible)
         try:
             i_result = self.finnhub_client.stock_candles(symbol=symbol,
                                                          resolution=resolution,
@@ -87,10 +85,9 @@ class n_market_data:
                                        errors="ignore")
                 i_df = self.ndf.i_df_dt_order(i_df)
             else:
-                if not log_off:
-                    self.log("Empty result for this time period: " +
-                             str(self.tools.unixdt_to_dbdt(from_dt)) +
-                             " - " + str(self.tools.unixdt_to_dbdt(to_dt)))
+                self.log("Empty result for this time period: " +
+                         str(self.tools.unixdt_to_dbdt(from_dt)) +
+                         " - " + str(self.tools.unixdt_to_dbdt(to_dt)), visible=visible)
                 i_df = pd.DataFrame(None)
         return i_df
 
@@ -149,16 +146,12 @@ class n_market_data:
                 sleep(1)
                 i_wait_no += 1
         if self.stream_break:
-            print("Status: Data streaming is stopped!")
+            print("Status: Data streaming has stopped!")
         self.stream_break = False
         self.stream_is_working = False
         # self.refresh_tr_info()
 
     def stream_action(self):
-        # print("hello :)")
-        i_new_row_count = self.ndf.get_allrow_count()
-        for smb in self.ndf.get_all_symbol():
-            self.ndf.refresh(smb, log_off=True)
-        i_new_row_count = self.ndf.get_allrow_count() - i_new_row_count
-        if i_new_row_count > 0:  # csak akkor frissítünk ha van új sor
-            self.stream_last_refresh(strftime("%H:%M"))
+        print("hello :)")
+        self.stream_job()
+        
