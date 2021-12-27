@@ -17,7 +17,7 @@ otlet: probabilisztikus dataimage qualification
 "overlay_steps": 21,            <-"->
 "bad_overweight": 4,           <a rosszakat hányszorosan engedem túlmintavételezni>
 "x_tansform": 1,                <az adatszet reshap függvénye beépített >
-"data_window_back_shift": 1,    <az adatwinow-t ennyivel visszább tolom :) >
+"data_window_back_shift": 0,    <az adatwinow-t ennyivel visszább tolom :) >
 "profit_window_shift": 0        <miven az y nem a dataset képzi nem releváns>
 }
 

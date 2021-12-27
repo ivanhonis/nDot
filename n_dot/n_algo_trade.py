@@ -32,6 +32,7 @@ class n_algo_trade:
         # ---------------------------------------
         self.actual_qt = 0
         self.avg_income_price = 0
+        self.avg_income_price_h = 0
         self.income_value = 0  # position + avg_price
         self.actual_price = 0
         self.actual_date_time = ""
@@ -111,6 +112,7 @@ class n_algo_trade:
         self.income_value += int(buy_qt * trade_price)
         self.actual_qt += buy_qt
         self.avg_income_price = self.income_value / self.actual_qt
+        self.avg_income_price_h = self.avg_income_price
         self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
         self.deal_count += 1
 
@@ -139,6 +141,7 @@ class n_algo_trade:
         self.income_value -= int(sell_qt * trade_price)
         self.actual_qt -= sell_qt
         self.avg_income_price = self.income_value / self.actual_qt
+        self.avg_income_price_h = self.avg_income_price
         self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
         self.deal_count += 1
         return True
@@ -177,6 +180,7 @@ class n_algo_trade:
         self.h_actual_realised_pnl = int((trade_price - self.avg_income_price) * self.actual_qt)
         self.realised_profit += self.h_actual_realised_pnl
         self.actual_qt = 0
+        self.avg_income_price_h = self.avg_income_price
         self.avg_income_price = 0
         self.income_value = 0  # position + avg_price
         self.trailer_profit = 0
@@ -280,11 +284,8 @@ class n_algo_trade:
             next_high = self.price_dict['next_high']
             steps = round(next_high * 100, 0) - round(next_low * 100, 0) + 1
             i_rnd_price1 = next_low + (((next_high - next_low) / steps) * random.randint(0, steps + 1))
-            # i_rnd_price2 = next_low + (((next_high - next_low) / steps) * random.randint(0, steps + 1))
-            i_rnd_price2 = i_rnd_price1
-            # volt egy olyan próbálkozás, hogy ha kétütemben venném meg az adott mennyiséget akkor
-            # jobban közelítene az átlaghoz ezt most kikapcsoltam
-            return round((i_rnd_price1 + i_rnd_price2) / 2, 2)
+            i_rnd_price1 = max(min(i_rnd_price1, next_high), next_low)
+            return i_rnd_price1
         else:
             return self.price_dict['actual_ohlc4']
 
@@ -357,11 +358,11 @@ class n_algo_trade:
         
         elif self.strategy == 23:  # ai decision override
             if y_predict == 0 and y_predict_strength > .95:
-                self.stock_size = self.stock_size_orig  * (1 + y_predict_strength)
+                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
                 decision = "BUY"
                 decision_qt = self.get_stock_qt()
             elif y_predict == 1 and y_predict_strength > .95:
-                self.stock_size = self.stock_size_orig  * (1 + y_predict_strength)
+                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
                 decision = "SELL"
                 decision_qt = self.get_stock_qt()
             else:
@@ -465,6 +466,7 @@ class n_algo_trade:
         return decision, decision_qt
 
     def action(self, decision, decision_qt, date_time):
+        self.avg_income_price_h = self.avg_income_price
         dt = np.datetime64(date_time).tolist().time()
         dd = np.datetime64(date_time).tolist().date()
         is_in_trade_time = datetime.time(*self.trade_time_start) < dt < datetime.time(*self.trade_time_stop)
@@ -474,7 +476,7 @@ class n_algo_trade:
         self.h_actual_realised_pnl = 0
         if is_in_trade_time and np.is_busday(dd):
             self.trading_days[str(dd)] = 0  # day register for deal
-            if self.steps < self.steps_limit or self.steps_limit == 0:
+            if (self.steps < self.steps_limit or self.steps_limit == 0) and decision != "STOP":
                 if decision == "BUY":
                     if self.actual_qt < 0:
                         self.h_stop_type = "sDW"  # átfordulóós stop
@@ -485,7 +487,7 @@ class n_algo_trade:
                     self.h_buy = True
                 elif decision == "SELL":
                     if self.actual_qt > 0:
-                        self.h_stop_type = "sUP" # átfordulós stop
+                        self.h_stop_type = "sUP"  # átfordulós stop
                         # print("SELL ből BUY be fordulok")
                         self.stop()
                     self.sell(decision_qt)
@@ -502,13 +504,16 @@ class n_algo_trade:
                                 self.steps = 0
             else:
                 if self.actual_qt != 0:
-                    self.h_stop_type = "sST"  # step túllépésmiatt stop
+                    if decision == "STOP":
+                        self.h_stop_type = "sDecision"  # step túllépésmiatt stop
+                    else:
+                        self.h_stop_type = "sSteps"  # step túllépésmiatt stop
                     # stop STep
                     self.stop()
                     self.steps = 0
         else:
             if self.actual_qt != 0:
-                self.h_stop_type = "sTi" # kereskedési idő leáárata miatt stop
+                self.h_stop_type = "sTime"  # kereskedési idő leájárata miatt stop
                 # stop Time
                 self.stop()
                 self.steps = 0
@@ -517,7 +522,7 @@ class n_algo_trade:
     def add_history(self):
         add = {"steps": self.steps,
                "actual_qt": self.actual_qt,
-               "avg_income_price": self.avg_income_price,
+               "avg_income_price": self.avg_income_price_h,
                "income_value": self.income_value,
                "actual_price": self.actual_price,
                "next_low_price": self.price_dict['next_low'],

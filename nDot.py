@@ -2355,7 +2355,7 @@ class n_date_frame2:
 				for g in range(0, len(low_s) - time_frame - 1):
 				# for g in range(0, 1000):
 					s2()
-					if 16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date()):
+					if 16 <= date_s[g].hour <= 19 and np.is_busday(date_s[g].date()):
 						low_np = low_s[g: g + time_frame]
 						high_np = high_s[g: g + time_frame]
 						pr = prob_profit(low_np, high_np)
@@ -2383,9 +2383,9 @@ class n_date_frame2:
 				# nddf[symbol]['y_P10_SHIFT'] = nddf[symbol]['y_P10'] != nddf[symbol]['y_P10'].shift(1)
 				
 				nddf[symbol].set_index('Date', inplace=True)
-				mask = nddf[symbol].between_time('20:00', '16:00').index
+				mask = nddf[symbol].between_time('19:00', '16:00').index
 				nddf[symbol].loc[mask, 'y_P10'] = 4
-				nddf[symbol].loc[nddf[symbol].tail(30000).index, 'y_P10'] = 4
+				nddf[symbol].loc[nddf[symbol].tail(90000).index, 'y_P10'] = 4
 
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
@@ -2753,9 +2753,22 @@ def stream_job():
 	print("run outer job")
 
 	i_new_row_count = ndf.get_allrow_count()
+	indicators_by_symbols = ai.get_all_indicators_by_symbols()  # ez csak azokat adja vissza ami a projekt futtatásához kell
+
 	for smb in ndf.get_all_symbol():
-		if ndf.refresh(smb, visible=False) > 0:
-			pass
+		if ndf.refresh(smb, log_visible=False) > 0:  # frissítem az adatokat
+			if smb in indicators_by_symbols:
+				for indicator in indicators_by_symbols[smb]:
+					ndf.refresh_tech(smb, indicator, log_vissible=False)
+	
+	# for smb in ndf.get_all_symbol():
+	
+	# ndf.get_dataset_by_index(symbol=symbol,
+	# 						 index=ix + x_from,
+	# 						 time_window_size=time_window_size,
+	# 						 original_fields=original_fields,
+	# 						 contras=contras,
+	# 						 contra_copies=contra_copies)
 	
 	i_new_row_count = ndf.get_allrow_count() - i_new_row_count
 	if i_new_row_count > 0:  # csak akkor frissítünk ha van új sor
@@ -2927,10 +2940,10 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							 "trailer_stop": .1,
 							 "trailer_min_profit": 12,
 							 "value_limit_profit_reinvest": False,
-							 "steps_limit": 45,
+							 "steps_limit": 10,
 							 "strategy": 22,
 							 "trade_time_start": (16, 00),
-							 "trade_time_stop": (20, 00),
+							 "trade_time_stop": (19, 30),
 							 "next_price_random": False
 							 })
 	
@@ -2943,10 +2956,10 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							  "trailer_stop": .1,
 							  "trailer_min_profit": 12,
 							  "value_limit_profit_reinvest": False,
-							  "steps_limit": 45,
+							  "steps_limit": 10,
 							  "strategy": 22,
 							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (20, 00),
+							  "trade_time_stop": (19, 30),
 							  "next_price_random": True
 							  })
 	
@@ -2962,7 +2975,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							  "steps_limit": 45,
 							  "strategy": 22,
 							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (20, 00),
+							  "trade_time_stop": (19, 30),
 							  "next_price_random": True
 							  })
 	
@@ -2978,7 +2991,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							  "steps_limit": 45,
 							  "strategy": 23,
 							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (20, 00),
+							  "trade_time_stop": (19, 30),
 							  "next_price_random": True
 							  })
 	
