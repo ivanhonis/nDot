@@ -86,7 +86,9 @@ class n_trade:
             i_return = pd.DataFrame(None)
         else:
             i_return = pd.DataFrame(i_return)
-        i_return = i_return.set_index("symbol")
+
+        # Ez kellen
+        # i_return = i_return.set_index("symbol")
         # print(i_return)
         return i_return
 
