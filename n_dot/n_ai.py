@@ -21,9 +21,9 @@ class n_ai:
         # print("itt")
         self.ai_models = {}
         self.ai_settings = {}
-        self.ndot_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\"
-        self.projects_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\"
-        self.gdrive_path = "C:\\Users\\honis.ivan\\Google Drive\\nDot_Colabs\\"
+        self.ndot_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\"
+        self.projects_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\projects\\"
+        self.gdrive_path = "C:\\Users\\ivanh\\Google Drive\\nDot_Colabs\\"
         self.model_dict = {
             "MinMaxScaler": "-",
             "MinMaxScaler_last_update": 0,

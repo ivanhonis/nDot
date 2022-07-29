@@ -1,0 +1,271 @@
+<!--
+Copyright notice 
+This website - incude all part (.js .css .html .php .db)-  and its content is copyright of © Soc.pad Ltd. - Hungary 2021. corp.reg:13-09-157675
+All rights reserved.
+Any redistribution or reproduction of part or modify all of the contents in any form is PROHIBITED other than the following:
+You may download to a local hard disk extracts for your personal and non-commercial use only
+You may not, except with our express written permission, distribute or commercially exploit the content. 
+Nor may you transmit it or store it in any other website or other form of electronic retrieval system.
+
+License notice
+Background effect: 	http://buildinternet.com/project/supersized/index.html
+Music player: 		http://www.jplayer.org/
+Images from: 		https://unsplash.com/ Creative Commons-licensed
+Music from:			http://ccmixter.org/files/Pitx/17154
+-->
+
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>nDot.io</title>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+<script type="text/javascript" src="supersized/js/supersized.3.1.3.js"></script>
+<link rel="stylesheet" href="css/supersized.css" type="text/css" media="screen" />
+<link rel="shortcut icon" href="img/ndot_ico.png">
+<script type="text/javascript" src="jQuery.jPlayer.2.2.0/jquery.jplayer.min.js"></script>
+<script type="text/javascript">
+
+	jQuery(function($){
+			$.supersized({
+
+				//Functionality
+				slideshow:			1,//Slideshow on/off
+				autoplay:			1,//Slideshow starts playing automatically
+				start_slide:		1,//Start slide (0 is random)
+				random: 			0,//Randomize slide order (Ignores start slide)
+				slide_interval:		5500,//Length between transitions
+				transition:			1,//0-None, 1-Fade, 2-Slide Top, 3-Slide Right, 4-Slide Bottom, 5-Slide Left, 6-Carousel Right, 7-Carousel Left
+				transition_speed:	3000,//Speed of transition
+				new_window:			0,//Image links open in new window/tab
+				pause_hover:		0,//Pause slideshow on hover
+				keyboard_nav:		0,//Keyboard navigation on/off
+				performance:		3,//0-Normal, 1-Hybrid speed/quality, 2-Optimizes image quality, 3-Optimizes transition speed // (Only works for Firefox/IE, not Webkit)
+				image_protect:		0,//Disables image dragging and right click with Javascript
+			
+				//Size & Position
+				min_width:			0,//Min width allowed (in pixels)
+				min_height:			0,//Min height allowed (in pixels)
+				vertical_center:	1,//Vertically center background
+				horizontal_center:	0,//Horizontally center background
+				fit_always:			0,
+				fit_portrait:		0,//Portrait images will not exceed browser height
+				fit_landscape:		0,//Landscape images will not exceed browser width
+			
+				//Components
+				navigation:			0,//Slideshow controls on/off
+				thumbnail_navigation:0,//Thumbnail navigation
+				slide_counter:		0,//Display slide numbers
+				slide_captions:		0,//Slide caption (Pull from "title" in slides array)
+														   
+				// Components
+				slides 					:  	[			// Slideshow Images
+													{image : 'img_bank/1.jpg'},
+													{image : 'img_bank/2.png'},
+													{image : 'img_bank/3.jpg'},
+													{image : 'img_bank/4.jpg'},
+													{image : 'img_bank/5.jpg'},
+													{image : 'img_bank/6.jpg'},
+													{image : 'img_bank/7.jpg'},
+													{image : 'img_bank/8.jpg'},
+													{image : 'img_bank/9.jpg'},
+													{image : 'img_bank/10.jpg'},
+													{image : 'img_bank/11.jpg'},
+													{image : 'img_bank/12.jpg'},
+													{image : 'img_bank/13.jpg'}
+											]
+				
+			});
+	});
+	
+</script>
+<style>
+html {
+	font-family:Arial, Helvetica, sans-serif;
+	font-size:12px;
+	font-weight:normal;
+	color:#333;
+}
+body {
+	background-color: #000;
+	border:0px;
+	margin:0px;
+}
+
+.disclaimer{
+  visibility: hidden !important;
+}
+
+a:last-child {
+  visibility: hidden !important;
+}
+
+.logo {
+	position: absolute;
+	bottom:5px;
+	left:5px;
+	z-index:40;
+	opacity:.35;
+}
+.raster {
+	position:absolute;
+	top:0px;
+	bottom:0px;
+	left:0px;
+	right:0px;
+	width:100%;
+	height:100%;
+	z-index:50;
+	background:radial-gradient(ellipse at center, rgba(128,128,136,0.35) 0, rgba(0,0,0,1) 100%);
+}
+.card_container {
+	position: absolute;
+	left:20%;
+	margin:-200px 0 0 -200px;
+	top:50%;
+	width:400px;
+	z-index:60000;
+}
+
+.note {
+	position: absolute;
+	left:60%;
+	margin:-200px 0 0 -200px;
+	top:50%;
+	width:500px;
+	z-index:60000;
+	font-size:23px;
+	font-weight:bold;
+	color:#fff;
+	}
+
+
+.head {
+	font-size:35px;
+	font-weight:bold;
+	color:#FFF;
+	width:100%;
+	margin:-50px 0px 0px 0px;
+	text-shadow:0px 0px 4px rgba(0,0,0,.8), 0px 0px 1px rgba(128,128,180,1);
+}
+.card {
+	margin:30px 0 0 0;
+	background:#e7e8e9;
+	box-shadow: 0px 0px 0px 3px rgba(0,0,0,.4);
+	border-radius:3px;
+	z-index:600;
+	padding:20px;
+
+}
+
+
+
+.card a{
+	color: #333333;
+	font-size:15px;
+	text-shadow:0px 1px 0px white;
+	margin-bottom:5px;
+	padding:25px 0 25px 0;
+
+}
+
+.card .title {
+	border-bottom:2px groove #fff;
+	padding:0 0 25px 0;
+	font-size:15px;
+	text-shadow:0px 1px 0px white;
+	margin-bottom:25px;
+}
+.card .socila {
+	margin-bottom:5px;
+	padding:10px 0 20px 10px;
+	text-align:center;
+}
+.card .socila a {
+	display: inline-block;
+	text-decoration:none;
+	text-shadow:0px 1px 0px white;
+	color:#333;
+}
+.card .socila a:hover {
+	text-decoration: underline;
+}
+.card .socila img {
+	margin: 3px 10px 5px 0px;
+	vertical-align:middle;
+	width:24px;
+	height:24px;
+}
+#mail_block {
+	font-size:13px;
+	font-weight:bold;
+	color: #900;
+	height:25px;
+}
+.card_container input {
+	font-size:15px;
+	padding:3px;
+	border-radius:3px;
+	border:1px solid #ccc;
+	padding:5px;
+	outline:none;
+}
+.wbutton {
+	color: #333;
+	background: #fff;
+	background: -moz-linear-gradient(top, #fff 0, #dbdbdb 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0, #fff), color-stop(100%, #dbdbdb));
+	background: -webkit-linear-gradient(top, #fff 0, #dbdbdb 100%);
+	background: -o-linear-gradient(top, #fff 0, #dbdbdb 100%);
+	background: -ms-linear-gradient(top, #fff, #dbdbdb);
+	background: linear-gradient(to bottom, #fff 0, #dbdbdb 100%);
+ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#fff, endColorstr=#dbdbdb, GradientType=0);
+	border: 1px solid #ddd;
+	text-shadow: 1px 1px 0 white;
+	font-size: 13px;
+	padding: 3px 20px;
+	line-height: 20px;
+	display: inline-block;
+	cursor: pointer;
+	border-radius: 3px;
+	outline: none;
+	-webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.5), inset 1px 0 0 rgba(255,255,255,0.3);
+	-moz-box-shadow: 0 1px 2px rgba(0,0,0,0.5), inset 1px 0 0 rgba(255,255,255,0.3);
+	box-shadow: 0 1px 2px rgba(0,0,0,0.5), inset 1px 0 0 rgba(255,255,255,0.3);
+	margin:0 0 0 15px;
+	float:right;
+}
+.wbutton:hover {
+	border: 1px solid #bbb !important;
+	-webkit-box-shadow: 0 1px 3px rgba(255,255,255,0.4), inset 0 -1px 4px rgba(255,255,255,0.5);
+	-moz-box-shadow: 0 1px 3px rgba(255,255,255,0.4), inset 0 -1px 4px rgba(255,255,255,0.5);
+	box-shadow: 0 1px 3px rgba(255,255,255,0.4), inset 0 -1px 4px rgba(255,255,255,0.5);
+}
+
+.focus{
+  margin: 15px 0 0 25px;
+  list-style-type: square
+}
+</style>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+<body>
+<div id="jquery_jplayer_1" class="cp-jplayer" style="display:none"></div>
+<div class="raster"></div>
+<div class="note">
+  <br><br><br>
+  <i>„When you have mastered numbers, you will in fact no longer be reading numbers, any more than you read words when reading books You will be reading meanings.”</i>
+  <br><br><br><br>
+  <b>William Edward Burghardt Du Bois</b>
+</div>
+<div class="card_container">
+  <div class="head">nDot<font color="#ff9100">.io</font></div>
+
+
+
+  <div class="card">
+
+cccccccc
+  </div>
+</div>
+</body>
+</html>

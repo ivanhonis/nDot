@@ -56,6 +56,7 @@ from n_dot.n_data_frame_meta import n_date_frame_meta
 from n_dot.n_tools import n_tools
 from n_dot.n_algo_trade import n_algo_trade
 from n_dot.n_ai import n_ai
+from n_dot.n_binace_trade import n_binace_trade
 
 # # Ai components
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -340,12 +341,14 @@ if LocalRUN:
 				['do2', 'do2', 'do2', 0],
 				['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
 				['wl.add', 'wl_add', 'wl.add <symbol> <year(s)>', 0],
+				['wl.add.alt', 'wl_add_alt', 'wl.add.alt <symbol> <year(s)>', 0],
 				['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
 				# ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
 				['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
 				['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
 				# ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
 				['ndf.add', 'ndf_add', 'ndf.add <symbol> <year(s)>', 1],
+				['ndf.add.alt', 'ndf_add_alt', 'ndf.add.alt <symbol> <year(s)>', 1],
 				['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
 				['ndf.tech.backtest', 'ndf_tech_backtest', 'ndf.tech.backtest <symbol> <run_time_window> <sig_field> <<start_position>>', 2],
 				['ndf.tech.project', 'ndf_tech_project', 'ndf.tech.project <symbol> <project>', 2],
@@ -751,7 +754,82 @@ class n_date_frame2:
 		i_df = nddf[symbol].copy()
 		i_df = i_df.set_index("Date")
 		return i_df.index[0] < i_df.index[-1]
-	
+
+	def add_alt(self, symbol, years=1):
+		years = int(years)
+		i_results_md = [None] * 300
+		i_rcu = 0
+
+		def threat_function(symbol, i_fromunix, i_tounix, i_paralel_req):
+			nonlocal i_results_md, i_rcu
+			# i_rcu += 1
+			# i_sleep_time = int(i_rcu / 1)
+			# # print("i_rcu", i_rcu, i_sleep_time)
+			# time.sleep(i_sleep_time*.5)
+			# # print(time.gmtime().tm_sec)
+			# i_res = nbt.get_klines(i_fromunix, i_tounix)
+			i_results_md[i_paralel_req] = nbt.get_klines(symbol, i_fromunix, i_tounix)
+
+		''' új nddf et hoz létre letölti a részvény árakat'''
+
+		i_now = datetime.now() + timedelta(days=1)
+		i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+		i_datetime_series = pd.date_range(start=i_now, periods=(years * 12) + years + 1, freq='-28d')
+
+		log("ndf-> add_alt (paralell requests): " + symbol + " - " + str(
+			i_datetime_series[len(i_datetime_series) - 1]) + " - " + str(i_datetime_series[0]))
+
+		i_paralel_req = 0
+		threads = list()
+		# for i_i in range(5):
+		for i_i in range(len(i_datetime_series) - 1):
+			i_tounix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=1)))
+			i_fromunix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i + 1] - timedelta(days=1)))
+			x = threading.Thread(target=threat_function, args=(symbol, i_fromunix, i_tounix, i_paralel_req))
+			threads.append(x)
+			i_paralel_req += 1
+
+		for i_t, th in enumerate(threads):
+			th.start()
+			time.sleep(5)
+
+		for th in threads:
+			th.join()
+
+		nddf[symbol] = pd.DataFrame(None)
+		for xi, irm in enumerate(i_results_md):
+			print(xi)
+			print(irm)
+			if irm is not None:
+				nddf[symbol] = nddf[symbol].append(irm, ignore_index=True)
+
+		self.set_dt_order(symbol)
+
+		if nddf[symbol].shape[0] > 0:
+			self.set_dt_order(symbol)
+			log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+		log("Number of rows: " + str(nddf[symbol].shape[0]))
+		nddb.write(symbol)
+
+	# def add(self, symbol):
+	#     ''' új nddf et hoz létre letölti a részvény árakat'''
+	#     log("ndf-> add " + symbol)
+	#     i_now = datetime.now() + timedelta(days=1)
+	#     i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+	#     i_datetime_series = pd.date_range(start=i_now, periods=1017, freq='-30d')
+	#     nddf[symbol] = pd.DataFrame(None)
+	#     for i_i in range(len(i_datetime_series)-1):
+	#         i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
+	#         i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
+	#         i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True)
+	#         nddf[symbol] = nddf[symbol].append(i_res, ignore_index=True)
+	#     if nddf[symbol].shape[0] > 0:
+	#         self.set_dt_order(symbol)
+	#         log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+	#
+	#     log("Number of rows: " + str(nddf[symbol].shape[0]))
+	#     nddb.write(symbol)
+
 	def add(self, symbol, years=1):
 		years = int(years)
 		i_results_md = [None] * 300
@@ -1270,6 +1348,7 @@ class n_date_frame2:
 					nd_dset.set_description(description)
 					
 					y_names = {'0 to 100': "0 srong short ... 50 nothing ...100 strong long"}
+					## itt nem négy kategóriát(cimkét tanítok hanem 100 cimkét) jel erősségét fogom tnítani
 					nd_dset.add_y_names(y_names)
 					#  beteszem a 'good' signálokat -----------------------------------------
 					first_cut = 1000
@@ -2406,7 +2485,7 @@ class n_date_frame2:
 						int_arange = int_arange / 100
 						return int_arange
 					
-					base_array = n_arange(low_np[0], high_np[0], .01)
+					base_array = n_arange(low_np[0], high_np[0], .00001)
 					b_lh_dist = len(base_array)
 					bases = np.array([])
 					nexts = np.array([])
@@ -2433,7 +2512,8 @@ class n_date_frame2:
 					prob_profit = int(wsum_profit / sum_case)
 					return prob_profit
 				
-				time_frame = 10
+				time_frame = 10 ## hán perces idő intervallumot figyel előre
+				full_time_traded_istrument = True
 				date_s = nddf[symbol]["Date"]
 				low_s = np.array(nddf[symbol]["Low"])
 				high_s = np.array(nddf[symbol]["High"])
@@ -2441,9 +2521,9 @@ class n_date_frame2:
 				s2(True, len(low_s) - time_frame - 1)
 				
 				r_array = np.zeros(len(low_s))
-				for g in range(0, len(low_s) - time_frame - 1):
+				for g in range(0, len(low_s) - time_frame - 1):  ## végigmegyek a low vektoron minus time frame
 					s2()
-					if 16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date()):
+					if (16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date())) or full_time_traded_istrument: # nézem akereskedési időt és a munkanapot
 						low_np = low_s[g: g + time_frame]
 						high_np = high_s[g: g + time_frame]
 						pr = prob_profit(low_np, high_np)
@@ -2452,13 +2532,18 @@ class n_date_frame2:
 				nddf[symbol]["SIG_P10INT"] = r_array
 				nddf[symbol]['SIG_P10INT'] = nddf[symbol]['SIG_P10INT'].astype(int)
 				nddf[symbol]["y_P10INT"] = nddf[symbol]["SIG_P10INT"]
+
+				## SIG_P10INT és a y_P10INT is nullával van feltöltve
 				
 				nddf[symbol]["y_P10INT"].values[(50 < nddf[symbol]["SIG_P10INT"]) | (nddf[symbol]["SIG_P10INT"] < -50)] = -1050
 				nddf[symbol]["y_P10INT"] = nddf[symbol]["y_P10INT"] + 50
+
+				## minden ami -50 és +50 en kívül van -1000 kap
+				## a többi 50 növekszik
 				
 				nddf[symbol].set_index('Date', inplace=True)
-				mask = nddf[symbol].between_time('20:00', '16:00').index
-				nddf[symbol].loc[mask, 'y_P10INT'] = -1000
+				# mask = nddf[symbol].between_time('20:00', '16:00').index
+				# nddf[symbol].loc[mask, 'y_P10INT'] = -1000
 				
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
@@ -2669,7 +2754,8 @@ class watch_list:
 	# self.refresh_sentiment()
 	
 	def read(self):
-		return pd.read_csv('wl.csv', sep=';')
+		i_df = pd.read_csv('wl.csv', sep=';')
+		return i_df
 	
 	def write(self):
 		self.wl_df.to_csv('wl.csv', sep=';', index=False)
@@ -2717,7 +2803,24 @@ class watch_list:
 		gui.refresh_ui()
 		ndf.add(symbol, years)
 		return
-	
+
+	def add_alt(self, symbol, years=3):
+		if symbol in nbt.get_alt_symbols():
+			self.remove(symbol)
+			new_row = {'symbol': symbol}
+			self.wl_df = self.wl_df.append(new_row, ignore_index=True)
+			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'ai_project1'] = ""
+			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'name'] = "-"
+			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'profil'] = "-"
+			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'snt_bearish'] = 0
+			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'snt_bullish'] = 0
+			self.write()
+			gui.refresh_ui()
+			ndf.add_alt(symbol, years)
+		else:
+			log(symbol + " - alt symbol is missing")
+		return
+
 	def remove(self, symbol):
 		self.wl_df.drop(self.wl_df.loc[self.wl_df['symbol'] == symbol].index, inplace=True)
 		self.write()
@@ -3100,6 +3203,8 @@ def ai_build():
 def ndf_add(symbol="", years=1):
 	ndf.add(symbol, years)
 
+def ndf_add_alt(symbol="", years=1):
+	ndf.add_alt(symbol, years)
 
 def ndf_tech(symbol, tech_indicator):
 	ndf.add_tech(symbol, tech_indicator)
@@ -3331,8 +3436,16 @@ def md_check(symbol=""):
 
 
 def md_symbols(market):
-	market_symbols = pd.DataFrame(md.stock_symbols(market))
-	print(market_symbols)
+	if market == "ALT":
+		for smb in nbt.get_alt_symbols():
+			print(smb)
+
+	else:
+		market_symbols = pd.DataFrame(md.stock_symbols(market))
+		print(market_symbols)
+
+
+
 
 
 # wl programs -------------------------------------------------------------------------------------------------------
@@ -3341,6 +3454,8 @@ def md_symbols(market):
 def wl_add(symbol="", years=3):
 	wl.add(symbol, years)
 
+def wl_add_alt(symbol="", years=3):
+	wl.add_alt(symbol, years)
 
 def wl_remove(symbol=""):
 	wl.remove(symbol)
@@ -3487,13 +3602,15 @@ if __name__ == "__main__":
 		ntrade = n_trade(gui=gui)
 		nchart = n_chart(ntrade)
 		gui.refresh_ui()
-		gui.showMaximized()
+		gui.show()
 	
 	ndf = n_date_frame2()
 	ndf_meta = n_date_frame_meta(log)
 	n_tools = n_tools(gui=gui)
 	md = n_market_data(log, s, n_tools, ndf, stream_job)
-	
+	nbt = n_binace_trade(log=log, s=s, tools=n_tools)
+
+
 	if not LocalRUN:
 		i_start = datetime.now()
 		print("")

@@ -14,7 +14,7 @@ class n_chart:
 
     def __init__(self, trade):
         self.trade = trade
-        self.width = 1330
+        self.width = 1800
         self.toolbar_location = "left"
         self.tools = "xpan,xwheel_zoom,reset"
         self.y_axis_location = "right"
@@ -36,7 +36,7 @@ class n_chart:
 
     def fit(self, i_df, name, indecators=""):
         i_df = i_df.reset_index(drop=True)
-        i_df, nemhasznal = self.trade.time_filter(i_df, "15:30", "22:00")
+        # i_df, nemhasznal = self.trade.time_filter(i_df, "15:30", "22:00")
         # i_df = nddfx_intime.reset_index()
         # print(i_df)
         i_df['Date_str'] = i_df['Date'].astype(str)
@@ -577,7 +577,7 @@ class n_chart:
         # p.renderers.extend([vline2])
         # p.renderers.extend([vline3])
 
-        inc = df['SIG_P10'] > 0
+        inc = df['y_P10'] > 0
         inc = tuple(inc)
         dec = df['SIG_P10'] < 0
         dec = tuple(dec)

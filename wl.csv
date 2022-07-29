@@ -1,4 +1,5 @@
 symbol;name;profil;snt_bearish;snt_bullish;ai_project1
-APA;Apache Corp;Web: ;0.0;1.0;APA_SMA5813
-SPY;SPY;SPY;0.4599;0.5401;-
-MSFT;Microsoft Corp;Web: https://www.microsoft.com/en-us;0.1429;0.8571;
+ETHBTC;-;-;0.0;0.0;
+BTCBUSD;-;-;0.0;0.0;
+BNBBUSD;-;-;0.0;0.0;
+FTMBUSD;-;-;0.0;0.0;
