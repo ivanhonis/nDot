@@ -172,14 +172,16 @@ Images from: 		https://unsplash.com/ Creative Commons-licensed
 
             @media only screen and (max-width:800px) {
               /* For tablets: */
-              .left {
+              .left, .right {
                 width: 100%;
                 height: auto;
               }
-              .right {
-                width: 100%;
-                height: auto;
+
+              .right_inner {
+                width: 86%;
+                margin-left: 7%;
               }
+
             }
             @media only screen and (max-width:500px) {
               /* For mobile phones: */
@@ -187,6 +189,12 @@ Images from: 		https://unsplash.com/ Creative Commons-licensed
                 width: 100%;
                 height: auto;
               }
+
+              .right_inner {
+                width: 86%;
+                margin-left: 7%;
+                }
+
             }
 
             .disclaimer{

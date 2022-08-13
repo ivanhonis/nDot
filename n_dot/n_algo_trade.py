@@ -1,4 +1,6 @@
 import random
+import time
+
 import pandas as pd
 import numpy as np
 import datetime
@@ -108,12 +110,13 @@ class n_algo_trade:
         return self.value_limit_actual - abs(self.actual_qt) * self.avg_income_price
 
     def buy(self, buy_qt):
+        # print("buy" , buy_qt)
         trade_price = self.next_rnd_price("buy")
-        self.income_value += int(buy_qt * trade_price)
+        self.income_value += round(buy_qt * trade_price, 8)
         self.actual_qt += buy_qt
         self.avg_income_price = self.income_value / self.actual_qt
         self.avg_income_price_h = self.avg_income_price
-        self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
+        self.trailer_profit = round((trade_price - self.avg_income_price) * self.actual_qt, 8)
         self.deal_count += 1
 
         # if not self.next_price_random:
@@ -138,11 +141,11 @@ class n_algo_trade:
             
     def sell(self, sell_qt):
         trade_price = self.next_rnd_price("sell")
-        self.income_value -= int(sell_qt * trade_price)
+        self.income_value -= round(sell_qt * trade_price, 8)
         self.actual_qt -= sell_qt
         self.avg_income_price = self.income_value / self.actual_qt
         self.avg_income_price_h = self.avg_income_price
-        self.trailer_profit = int((trade_price - self.avg_income_price) * self.actual_qt)
+        self.trailer_profit = round((trade_price - self.avg_income_price) * self.actual_qt, 8)
         self.deal_count += 1
         return True
 
@@ -194,7 +197,12 @@ class n_algo_trade:
         return round(self.realised_profit / len(self.trading_days.keys()), 2)
 
     def get_profit_per_closed_deal(self):
-        return round(self.realised_profit / self.closed_deal_count, 2)
+        try:
+            i_ret = round(self.realised_profit / self.closed_deal_count, 2)
+        except:
+            return 0
+        else:
+            return i_ret
 
     def get_closed_deal_per_day(self):
         return round(self.closed_deal_count / len(self.trading_days.keys()), 2)
@@ -242,7 +250,7 @@ class n_algo_trade:
         return i_return
 
     def get_stock_qt(self):
-        return int(self.stock_size / self.actual_price)
+        return round(self.stock_size / self.actual_price, 8)
 
     def print_position(self):
         print(f"qt: {self.actual_qt}  " +
@@ -297,7 +305,9 @@ class n_algo_trade:
         self.actual_price = self.price_dict['actual_ohlc4']
         self.actual_date_time = date_time
         decision1, qt1 = self.decision(sig, y_predict, y_predict_strength)
+        # print(decision1, qt1)
         decision2, qt2 = self.limit(decision1, qt1)
+        # print("Limit", decision2, qt2)
         self.action(decision2, qt2, date_time)
 
     def decision(self, sig, y_predict, y_predict_strength):
@@ -402,6 +412,18 @@ class n_algo_trade:
                 decision_qt = 0
             return decision, decision_qt
 
+        elif self.strategy == 66:  # signal drived
+            if y_predict == 1:
+                decision = "BUY"
+                decision_qt = self.get_stock_qt()
+            elif y_predict == 2:
+                decision = "NONE"
+                decision_qt = 0
+            else:
+                decision = "NONE"
+                decision_qt = 0
+            return decision, decision_qt
+
 
         # elif self.strategy == 22:  # ai decision override
         #     self.act_profit = int((self.actual_price - self.avg_income_price) * self.actual_qt)
@@ -470,11 +492,12 @@ class n_algo_trade:
         dt = np.datetime64(date_time).tolist().time()
         dd = np.datetime64(date_time).tolist().date()
         is_in_trade_time = datetime.time(*self.trade_time_start) < dt < datetime.time(*self.trade_time_stop)
+        # print(is_in_trade_time)
 
         self.h_buy = False
         self.h_sell = False
         self.h_actual_realised_pnl = 0
-        if is_in_trade_time and np.is_busday(dd):
+        if is_in_trade_time and np.is_busday(dd) or True:
             self.trading_days[str(dd)] = 0  # day register for deal
             if (self.steps < self.steps_limit or self.steps_limit == 0) and decision != "STOP":
                 if decision == "BUY":
@@ -544,11 +567,14 @@ class n_algo_trade:
                "y_predict": self.y_predict,
                "sig_way": self.sig_way
                }
-        
-        self.history = self.history.append(add, ignore_index=True)
+
+        x = pd.DataFrame.from_dict(add, orient='index').T
+        self.history = pd.concat([self.history, x])
         self.history['buy'] = self.history['buy'].astype('bool')
         self.history['sell'] = self.history['sell'].astype('bool')
         self.history['stop'] = self.history['stop'].astype('bool')
+        # print(self.history)
+        # time.sleep(2)
         #vissza állítom
         self.h_buy = False
         self.h_sell = False
@@ -556,11 +582,12 @@ class n_algo_trade:
 
     def show_history(self, last_n=10000000):
         output_file("bokeh_html/" + self.name + "_algo_history.html")
-        hdf = self.history.tail(last_n).copy()
+        hdf = self.history.copy()
+        hdf = hdf.reset_index(drop=True)
         # hdf['index'] = hdf['actual_date_time']
         # hdf.set_index("actual_date_time", inplace=True)
 
-        def algo_price_chart():
+        def algo_price_chart(hdf):
             hdf["actual_price_y_perc"] = hdf["actual_price"] * 1.001  # feliratokhoz
             hdf["actual_price_stop"] = hdf["actual_price"] * 1.002  # feliratokhoz
             hdf["actual_price_steps"] = hdf["actual_price"] * .998  # feliratokhoz
@@ -638,7 +665,7 @@ class n_algo_trade:
             var x_start_int = Math.floor(x_start);
             var x_end_int = Math.floor(x_end);
             x_start_int = Math.max(x_start_int, 1);
-            
+
             var cv_price_slice = cv_price.slice(x_start_int,x_end_int);
             var cv_max = Math.max(...cv_price_slice);
             var cv_min = Math.min(...cv_price_slice);
@@ -660,7 +687,7 @@ class n_algo_trade:
             # p.x_range.range_padding = 60
             # p.xaxis.ticker.desired_num_ticks = 60
             p.xaxis.major_label_orientation = 3.14 / 8
-            
+
             return p
 
         def algo_limit_chat():
@@ -732,7 +759,7 @@ class n_algo_trade:
             return p
 
         # show ---------------------------------------------------------------
-        self.chart_elements.append(algo_price_chart())
+        self.chart_elements.append(algo_price_chart(hdf))
         self.chart_elements.append(algo_qt_chart())
         self.chart_elements.append(algo_profit_chart())
         self.chart_elements.append(actual_profit())

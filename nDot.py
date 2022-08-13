@@ -56,7 +56,7 @@ from n_dot.n_data_frame_meta import n_date_frame_meta
 from n_dot.n_tools import n_tools
 from n_dot.n_algo_trade import n_algo_trade
 from n_dot.n_ai import n_ai
-from n_dot.n_binace_trade import n_binace_trade
+from n_dot.n_binance_trade import n_binance_trade
 
 # # Ai components
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -223,8 +223,8 @@ if LocalRUN:
 					f_id = "fr" + str(i_no + 1)
 					i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setText(i_symbol)
 					i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setToolTip(row['profil'])
-					i_wl_frame_list[f_id].findChild(QProgressBar, "WL_bear" + i_noid[i_no]).setValue(
-						int(row['snt_bearish'] * 100))
+					# i_wl_frame_list[f_id].findChild(QProgressBar, "WL_bear" + i_noid[i_no]).setValue(
+					# 	int(row['snt_bearish'] * 100))
 					# i_info = self.get_monitor_info_by_symbol(i_symbol)
 					# i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
 					# i_pl = self.get_pl_by_symbol(i_symbol)
@@ -341,23 +341,22 @@ if LocalRUN:
 				['do2', 'do2', 'do2', 0],
 				['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
 				['wl.add', 'wl_add', 'wl.add <symbol> <year(s)>', 0],
-				['wl.add.alt', 'wl_add_alt', 'wl.add.alt <symbol> <year(s)>', 0],
+				['wl.add.crypto', 'wl_add_crypto', 'wl.add.crypto <symbol> <year(s)>', 0],
 				['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
 				# ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
 				['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
 				['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
 				# ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
 				['ndf.add', 'ndf_add', 'ndf.add <symbol> <year(s)>', 1],
-				['ndf.add.alt', 'ndf_add_alt', 'ndf.add.alt <symbol> <year(s)>', 1],
-				['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator>', 2],
+				['ndf.add.crypto', 'ndf_add_crypto', 'ndf.add.crypto <symbol> <year(s)>', 1],
+				['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator> [params otional]', 2],
 				['ndf.tech.backtest', 'ndf_tech_backtest', 'ndf.tech.backtest <symbol> <run_time_window> <sig_field> <<start_position>>', 2],
 				['ndf.tech.project', 'ndf_tech_project', 'ndf.tech.project <symbol> <project>', 2],
 				['ndf.tech.remove', 'ndf_tech_remove', 'ndf.tech.remove <symbol> <technical indicator>', 2],
 				['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
 				['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
 				['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
-				['ndf.dataset', 'ndf_dataset',
-				 'ndf.dataset <symbol> <project> <<NOFORCE / FORCE>> <<FULL / VECTOR / RND_CHOICE>>', 1],
+				['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project> <<NOFORCE / FORCE>> <<FULL / VECTOR / RND_CHOICE>>', 1],
 				['ndf.dataset.int', 'ndf_dataset_int','ndf.dataset.int <symbol> <project> (only NOFORCE)', 1],
 				['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
 				['ndf.remove.column', 'ndf_remove_column', 'ndf.remove.column <symbol> <column_name> <<SAVE>>', 1],
@@ -441,8 +440,8 @@ if LocalRUN:
 		
 		def print_command(self):
 			log("Commands:")
-			for i_row in tuple(self.commands["hint"]):
-				log(" - " + i_row)
+			for i_row in tuple(self.commands["command"]):
+				log(" - " + str(i_row))
 		
 		def command_line_changed(self):
 			command_text = self.Command_Line.text()
@@ -599,7 +598,7 @@ if LocalRUN:
 			i_return = f"""<html><head/><body>"""
 			for prj in ai_projects:
 				i_return = i_return + f"""
-            <div style="margin-top: 5px;">{prj}<br/>LONG 63,25%</div>"""
+            <div style="margin-top: 5px;">{prj}<br/>Silent</div>"""
 			i_return = i_return + "</body></html>"
 			# # print(i_return,"\n\n")
 			return i_return
@@ -755,61 +754,45 @@ class n_date_frame2:
 		i_df = i_df.set_index("Date")
 		return i_df.index[0] < i_df.index[-1]
 
-	def add_alt(self, symbol, years=1):
+	def add_crypto(self, symbol, years=1):
 		years = int(years)
-		i_results_md = [None] * 300
-		i_rcu = 0
+		if symbol in nbt.crypto:
+			nddf[symbol] = pd.DataFrame(None)
+			i_now = datetime.now() - timedelta(minutes=1001)
+			i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+			period = (years * 365 * 24 * 60) / 1000
+			i_datetime_series = pd.date_range(start=i_now, periods=period, freq='-1000min')
+			s2(True, len(i_datetime_series) - 1)
+			for i_i in range(len(i_datetime_series) - 1):
+				s2()
+				from_dto = i_datetime_series[i_i]
+				from_dt = int(datetime.timestamp(from_dto) * 1000)
+				to_dto = i_datetime_series[i_i + 1]
+				to_dt = int(datetime.timestamp(to_dto) * 1000)
+				log(" Get klines from Binance: " + str(from_dto) + " - " + str(to_dto))
+				result = nbt.get_klines(symbol=symbol, from_dt=from_dt, to_dt=to_dt).copy()
+				# print(result)
+				# print('  első', datetime.datetime.fromtimestamp(int(result[0][0]) / 1000))
+				# print('  utolsó', datetime.datetime.fromtimestamp(int(result[-1][0]) / 1000))
+				# for x, r in enumerate(res):
+				#     print(x, 'utolsó', datetime.datetime.fromtimestamp(int(r[0]) / 1000))
+				#     time.sleep(0.25)
+				# time.sleep(2)
+				# print('első', datetime.datetime.fromtimestamp(int(res[0][0]) / 1000))
 
-		def threat_function(symbol, i_fromunix, i_tounix, i_paralel_req):
-			nonlocal i_results_md, i_rcu
-			# i_rcu += 1
-			# i_sleep_time = int(i_rcu / 1)
-			# # print("i_rcu", i_rcu, i_sleep_time)
-			# time.sleep(i_sleep_time*.5)
-			# # print(time.gmtime().tm_sec)
-			# i_res = nbt.get_klines(i_fromunix, i_tounix)
-			i_results_md[i_paralel_req] = nbt.get_klines(symbol, i_fromunix, i_tounix)
+				# nddf[symbol] = nddf[symbol].append(result, ignore_index=True)
+				nddf[symbol] = pd.concat([nddf[symbol], result], ignore_index=True)
 
-		''' új nddf et hoz létre letölti a részvény árakat'''
-
-		i_now = datetime.now() + timedelta(days=1)
-		i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-		i_datetime_series = pd.date_range(start=i_now, periods=(years * 12) + years + 1, freq='-28d')
-
-		log("ndf-> add_alt (paralell requests): " + symbol + " - " + str(
-			i_datetime_series[len(i_datetime_series) - 1]) + " - " + str(i_datetime_series[0]))
-
-		i_paralel_req = 0
-		threads = list()
-		# for i_i in range(5):
-		for i_i in range(len(i_datetime_series) - 1):
-			i_tounix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=1)))
-			i_fromunix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i + 1] - timedelta(days=1)))
-			x = threading.Thread(target=threat_function, args=(symbol, i_fromunix, i_tounix, i_paralel_req))
-			threads.append(x)
-			i_paralel_req += 1
-
-		for i_t, th in enumerate(threads):
-			th.start()
-			time.sleep(5)
-
-		for th in threads:
-			th.join()
-
-		nddf[symbol] = pd.DataFrame(None)
-		for xi, irm in enumerate(i_results_md):
-			print(xi)
-			print(irm)
-			if irm is not None:
-				nddf[symbol] = nddf[symbol].append(irm, ignore_index=True)
-
-		self.set_dt_order(symbol)
-
-		if nddf[symbol].shape[0] > 0:
+			nddf[symbol] = ndf.i_df_dt_order(nddf[symbol])
 			self.set_dt_order(symbol)
-			log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
-		log("Number of rows: " + str(nddf[symbol].shape[0]))
-		nddb.write(symbol)
+
+			if nddf[symbol].shape[0] > 0:
+				self.set_dt_order(symbol)
+				log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+			log("Number of rows: " + str(nddf[symbol].shape[0]))
+			nddb.write(symbol)
+		else:
+			log("Symbol not found in Binance listed pairs.")
 
 	# def add(self, symbol):
 	#     ''' új nddf et hoz létre letölti a részvény árakat'''
@@ -835,17 +818,18 @@ class n_date_frame2:
 		i_results_md = [None] * 300
 		i_rcu = 0
 		
-		def threat_function(symbol, i_fromunix, i_tounix, i_paralel_req):
-			nonlocal i_results_md, i_rcu
+		# def threat_function(symbol, i_fromunix, i_tounix, i_paralel_req):
+		# 	nonlocal i_results_md, i_rcu
 			# i_rcu += 1
 			# i_sleep_time = int(i_rcu / 1)
 			# # print("i_rcu", i_rcu, i_sleep_time)
 			# time.sleep(i_sleep_time*.5)
 			# # print(time.gmtime().tm_sec)
-			i_results_md[i_paralel_req] = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, True)
+			# res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, True)
+			# print(res)
+			# i_results_md[i_paralel_req] = res
 		
 		''' új nddf et hoz létre letölti a részvény árakat'''
-		
 		i_now = datetime.now() + timedelta(days=1)
 		i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
 		i_datetime_series = pd.date_range(start=i_now, periods=(years * 12) + years + 1, freq='-28d')
@@ -853,27 +837,33 @@ class n_date_frame2:
 		log("ndf-> add (paralell requests): " + symbol + " - " + str(
 			i_datetime_series[len(i_datetime_series) - 1]) + " - " + str(i_datetime_series[0]))
 		
-		i_paralel_req = 0
-		threads = list()
+		# i_paralel_req = 0
+		# threads = list()
+		nddf[symbol] = pd.DataFrame(None)
 		for i_i in range(len(i_datetime_series) - 1):
 			i_tounix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=1)))
 			i_fromunix = n_tools.dbdt_to_unixdt(str(i_datetime_series[i_i + 1] - timedelta(days=1)))
-			# i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True)
-			x = threading.Thread(target=threat_function, args=(symbol, i_fromunix, i_tounix, i_paralel_req))
-			threads.append(x)
-			i_paralel_req += 1
+			i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, True)
+			nddf[symbol] = pd.concat([nddf[symbol], i_res], ignore_index=True)
+			# print(nddf[symbol].shape[0])
+			time.sleep(.25)
+			# nddf[symbol] = nddf[symbol].append(i_res, ignore_index=True)
+			# x = threading.Thread(target=threat_function, args=(symbol, i_fromunix, i_tounix, i_paralel_req))
+			# threads.append(x)
+			# i_paralel_req += 1
 		
-		for i_t, th in enumerate(threads):
-			th.start()
-		
-		for th in threads:
-			th.join()
-		
-		nddf[symbol] = pd.DataFrame(None)
-		for xi, irm in enumerate(i_results_md):
-			if irm is not None:
-				nddf[symbol] = nddf[symbol].append(irm, ignore_index=True)
-		# print(irm)
+		# for i_t, th in enumerate(threads):
+		# 	time.sleep(.5)
+		# 	th.start()
+		#
+		# for th in threads:
+		# 	th.join()
+		#
+		# nddf[symbol] = pd.DataFrame(None)
+		# for xi, irm in enumerate(i_results_md):
+		# 	if irm is not None:
+		# 		nddf[symbol] = nddf[symbol].append(irm, ignore_index=True)
+		# # print(irm)
 		
 		self.set_dt_order(symbol)
 		
@@ -980,7 +970,40 @@ class n_date_frame2:
 		else:
 			i_found = False
 		return i_found
-	
+
+	def sig_to_y(self, symbol, ori_field, new_field, overlay_steps):
+		if ori_field in nddf[symbol].columns:
+			log("Start overlay manager." + symbol + " " + ori_field + " " + new_field + " " + str(overlay_steps))
+			i_remove = []
+			nddf[symbol].set_index("Date")
+			for i_dif in range(1, overlay_steps + 1):
+				c_name = "TEMP_CUY" + str(i_dif)
+				i_remove.append(c_name)
+				nddf[symbol][c_name] = nddf[symbol][ori_field].shift(i_dif)
+
+			i_pos_first = nddf[symbol].columns.get_loc("TEMP_CUY1")
+			i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
+
+			nddf[symbol]["TEMP_CUY_MAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+			print(ori_field)
+			# nddf[symbol][new_field] = nddf[symbol][ori_field] & nddf[symbol]["TEMP_CUY_MAX"]
+			# nddf[symbol][new_field] = [nddf[symbol][ori_field] if x == 'Z' else 'green' for x in df['Set']]
+			nddf[symbol][new_field] = 0
+			nddf[symbol].loc[nddf[symbol]["TEMP_CUY_MAX"] == 0, new_field] = nddf[symbol][ori_field]
+			# nddf[symbol][new_field] = [nddf[symbol][ori_field] if x == 0 else 0 for x in nddf[symbol]["TEMP_CUY_MAX"]]
+			# print(nddf[symbol]["Date"][299805:299809])
+			# print(nddf[symbol]['TEMP_CUY_MAX'][299805:299809])
+			# print(nddf[symbol][new_field][299805:299809])
+			# print(nddf[symbol][ori_field][299805:299809])
+			i_remove.append('TEMP_CUY_MAX')
+			self.remove_columns(symbol, i_remove)
+			log("  None zero: " + ori_field + "  " + str(np.count_nonzero(nddf[symbol][ori_field] != 0)))
+			log("  None zero: " + new_field + "  " + str(np.count_nonzero(nddf[symbol][new_field] != 0)))
+			# ndf.set_dt_order(symbol)
+			# nddb.write(symbol)
+		else:
+			log("create_unique_y -> orig field is missing from ndf: " + ori_field )
+
 	def tech_remove(self, symbol, tech_indicator):
 		log("ndf-> remove_tech " + symbol + " - " + str(tech_indicator))
 		i_search = self.indicators.loc[self.indicators['indicator'] == tech_indicator]
@@ -1054,7 +1077,10 @@ class n_date_frame2:
 					# print(con_symbol,con_field)
 					
 					orig_date = nddf[symbol].loc[index, "Date"]
-					i_int_to_contra = contra_copies[con_symbol].index.get_loc(orig_date, method='ffill')
+					try:
+						i_int_to_contra = contra_copies[con_symbol].index.get_loc(orig_date, method='ffill')
+					except:
+						return np.array([])
 					
 					i_int_from_contra = i_int_to_contra - time_window_size + 1
 					i_new = np.array(nddf[con_symbol].loc[i_int_from_contra:i_int_to_contra, con_field])
@@ -1069,8 +1095,10 @@ class n_date_frame2:
 			array_len = time_window_size * (len(original_fields) + len(contras))
 			
 			contra_copies = self.get_contra_copies(contras)
-			
+			asked = 0
+			recieved = 0
 			for nx, i_il in enumerate(indexes):
+				asked += 1
 				i_data_array = self.get_dataset_by_index(symbol=symbol,
 														 index=i_il + back_shift,
 														 # :) predict in the present, but trade in the future
@@ -1083,9 +1111,11 @@ class n_date_frame2:
 														 )
 				
 				if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+					recieved += 1
 					nd_dset.add_X(i_data_array)
 					nd_dset.add_y(y)
 				s2()
+			log("  Get dataset from ndf: (asked, recieved) by y" + str(y) + ": " + str(asked)+" , "+str(recieved))
 			del contra_copies
 		
 		config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
@@ -1282,8 +1312,10 @@ class n_date_frame2:
 			array_len = time_window_size * (len(original_fields) + len(contras))
 			
 			contra_copies = self.get_contra_copies(contras)
-			
+			asked = 0
+			recieved = 0
 			for nx, i_il in enumerate(indexes):
+				asked += 1
 				i_data_array = self.get_dataset_by_index(symbol=symbol,
 														 index=i_il + back_shift,
 														 # :) predict in the present, but trade in the future
@@ -1296,10 +1328,19 @@ class n_date_frame2:
 														 )
 				
 				if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+					recieved += 1
 					nd_dset.add_X(i_data_array)
 					nd_dset.add_y(y)
+
 				# s2()
+			log("  Get dataset from ndf: (asked, recieved) by y" + str(y) + ": " + str(asked)+" , "+str(recieved))
 			del contra_copies
+
+		i_save = nddf[symbol].copy()
+		log("  Set locked part of the ndf:")
+		log("  Orig size:" + str(nddf[symbol].shape))
+		nddf[symbol] = nddf[symbol][0:-200000].copy()
+		log("  New size:" + str(nddf[symbol].shape))
 		
 		config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
 		file = pathlib.Path(config_file_path)
@@ -1330,8 +1371,9 @@ class n_date_frame2:
 					if y_field in nddf[symbol].columns:
 						log(y_field + " already exist.")
 					else:
-						log(y_field + " y not found, Intervall has no own quaifyer!!!!!!!")
-				
+						log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
+						self.sig_to_y(symbol, sig_field, y_field, time_window_size)
+
 					s2(True, 240)
 					
 					log("Creating dataset.")
@@ -1341,24 +1383,31 @@ class n_date_frame2:
 					
 					s2()
 					
-					nd_dset.set_source("nDot.py->n_data_frame2->create_dataset")
+					nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int")
 					nd_dset.set_name("nDot_DATASET_" + project_name)
 					nd_dset.set_project_name(project_name)
 					
 					nd_dset.set_description(description)
 					
-					y_names = {'0 to 100': "0 srong short ... 50 nothing ...100 strong long"}
-					## itt nem négy kategóriát(cimkét tanítok hanem 100 cimkét) jel erősségét fogom tnítani
+					y_names = {'0=under limit; 1=good long; 2=good short'}
+					# itt nem négy kategóriát(cimkét tanítok hanem 100 cimkét) jel erősségét fogom tnítani
 					nd_dset.add_y_names(y_names)
 					#  beteszem a 'good' signálokat -----------------------------------------
 					first_cut = 1000
 					i_indexes = {}
 					
-					for ix in range(101):
+					for ix in range(3):
 						s2()
 						i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
-						i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
-					
+						print(ix, len(i_indexes[ix]))
+						# i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
+
+					len1 = len(i_indexes[1])
+					len2 = len(i_indexes[2])
+					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
+					i_indexes[0] = i_indexes[0][0: max_elemet]
+					for ix in range(3):
+						log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
 					# i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 0].index)
 					# i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + first_cut)]
 					# i_index_good_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 1].index)
@@ -1385,7 +1434,7 @@ class n_date_frame2:
 					# i_index_bad_short = i_index_bad_short[0:max_signals]
 					
 					nd_dset.set_window_size(time_window_size)
-					for ix in range(101):
+					for ix in range(3):
 						s2()
 						# print(ix)
 						dataset_constructor(symbol=symbol,
@@ -1484,6 +1533,8 @@ class n_date_frame2:
 		
 		else:
 			log("config file is missing:" + str(config_file_path))
+
+		nddf[symbol] = i_save
 	
 	def get_first_signal(self, symbol, long_field, short_field, long_field_first, short_field_first):
 		nddf[symbol][long_field_first] = ~(nddf[symbol][long_field] == nddf[symbol][long_field].shift(1)) & \
@@ -2016,7 +2067,7 @@ class n_date_frame2:
 		if i_rows - nddf[symbol].shape[0] != 0:
 			log("ndf-> tech_refresh error, row count not equal after refresh")
 		
-	def add_tech(self, symbol, tech_indicator="SMA60", log_visible=True):
+	def add_tech(self, symbol, tech_indicator="SMA60", params=[], log_visible=True):
 		
 		log("ndf-> add_tech " + symbol + " - " + str(tech_indicator), visible=log_visible)
 		
@@ -2364,9 +2415,9 @@ class n_date_frame2:
 					# 				results[profit] += 1
 					# # print(results)
 					# # print(sorted(results.items(), key=lambda x: x[1]))
-					
+
 					time_window_size = len(low_np)
-					
+
 					def n_arange(low, high, steps):
 						
 						steps_int = int(steps * 100)
@@ -2376,7 +2427,7 @@ class n_date_frame2:
 						int_arange = np.array(list(range(low_int, high_int, steps_int)))
 						int_arange = int_arange / 100
 						return int_arange
-					
+
 					base_array = n_arange(low_np[0], high_np[0], .01)
 					b_lh_dist = len(base_array)
 					bases = np.array([])
@@ -2470,21 +2521,120 @@ class n_date_frame2:
 				nddb.write(symbol)
 			
 			elif tech_indicator == "P10INT":
-				
+				params = str(params[1:-1]).split(',')
+				if len(params) != 3:
+					params = [.5, 50, 10]
+
+				self.remove_columns(symbol, ['SIG_P10INT', 'y_P10INT'])
+
+				def prob_profit(low_np, high_np, tick_size, profit_limit, prob_limit):
+					# print("5")
+					time_frame = low_np.shape[0]
+					all_start = np.array([])
+					all_exit = np.array([])
+					# s2(True, len(low_s) - time_frame - 1)
+					all_caes = 0
+					for tf in range(time_frame - 1):
+						if low_np[0] == high_np[0]:
+							base_array_with_steps = np.array([low_np[0]])
+						else:
+							base_array_with_steps = np.arange(low_np[0], high_np[0], tick_size)
+							if base_array_with_steps[-1] != high_np[0]:
+								base_array_with_steps = np.append(base_array_with_steps, high_np[0])
+						for bs in base_array_with_steps:  # ts = time slices
+							if low_np[tf + 1] == high_np[tf + 1]:
+								next_array_with_steps = np.array([low_np[tf + 1]])
+							else:
+								# print(low_np[tf + 1], high_np[tf + 1])
+								next_array_with_steps = np.arange(low_np[tf + 1], high_np[tf + 1], tick_size)
+								if next_array_with_steps[-1] != high_np[tf + 1]:
+									next_array_with_steps = np.append(next_array_with_steps, high_np[tf + 1])
+							len_naws = next_array_with_steps.shape[0]
+							# print(len_naws)
+							same_size_base = np.full(len_naws, bs)
+							all_start = np.append(all_start, same_size_base)
+							all_exit = np.append(all_exit, next_array_with_steps)
+							all_caes += same_size_base.shape[0]
+
+					# print(all_exit.shape)
+					if_long = (all_exit / all_start) - 1
+					if_short = (all_start / all_exit) - 1
+
+					prob_long_over_limit = np.count_nonzero(if_long > profit_limit) / all_caes
+					prob_short_over_limit = np.count_nonzero(if_short > profit_limit) / all_caes
+
+					if prob_long_over_limit > prob_limit:
+						i_ret = 1
+					elif prob_short_over_limit > prob_limit:
+						i_ret = 2
+					else:
+						i_ret = 0
+
+					return i_ret
+
+				profit_limit = float(params[0]) / 100
+				prob_limit = float(params[1]) / 100
+				time_frame = int(params[2])  ## hán perces idő intervallumot figyel előre
+				log("  Settings: profit limit: " + str(profit_limit * 100) + "%,   Prob. limit: " + str(
+					prob_limit * 100) + "%   Time frame: " + str(time_frame))
+				full_time_traded_istrument = True  # kriptókhoz
+				if symbol in nbt.crypto:
+					tick_size = float(nbt.pai[symbol]['tick_size'])
+					if nddf[symbol]["ohlc4"][0] > 10000:  # BTCUSDT .01 a tick size de 2-5 van a low and a high között túl sok lenne a esetek száma
+						tick_size = float(10)
+					else:
+						tick_size = float(nbt.pai[symbol]['tick_size'])
+				else:
+					tick_size = float(0.1)  # ezt majd le kell kérni a részvény adataiból
+				log("  Tick size: " + str(tick_size))
+				date_s = nddf[symbol]["Date"]
+				low_s = np.array(nddf[symbol]["Low"])
+				high_s = np.array(nddf[symbol]["High"])
+
+				s2(True, len(low_s) - time_frame - 1)
+				# print("2")
+				r_array = np.zeros(len(low_s))  #
+				for g in range(0, len(low_s) - time_frame - 1):  ## végigmegyek a low vektoron minus time frame
+					# print("3")
+					s2()
+					if (16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date())) or full_time_traded_istrument: # nézem akereskedési időt és a munkanapot
+						low_np = low_s[g: g + time_frame]
+						high_np = high_s[g: g + time_frame]
+						# print("4")
+						pr = prob_profit(low_np, high_np, tick_size, profit_limit, prob_limit)
+						r_array[g] = pr
+
+				log("Result: ")
+				log("  0 = Under limit: " + str(np.count_nonzero(r_array == 0)))
+				log("  1 = Long over limit: " + str(np.count_nonzero(r_array == 1)))
+				log("  2 = Shor over limit: " + str(np.count_nonzero(r_array == 2)))
+
+				nddf[symbol]["SIG_P10INT"] = r_array
+				nddf[symbol]['SIG_P10INT'] = nddf[symbol]['SIG_P10INT'].astype(int)
+				nddf[symbol]["y_P10INT"] = nddf[symbol]["SIG_P10INT"]
+				nddf[symbol].set_index('Date', inplace=True)
+				# mask = nddf[symbol].between_time('20:00', '16:00').index
+				# nddf[symbol].loc[mask, 'y_P10INT'] = -1000
+
+				ndf.set_dt_order(symbol)
+				nddb.write(symbol)
+
+			elif tech_indicator == "P10INT_ORIG":
+
 				def prob_profit(low_np, high_np):
-					
+
 					stock_size = 10000
 					time_window_size = len(low_np)
-					
+
 					def n_arange(low, high, steps):
 						steps_int = int(steps * 100)
 						low_int = int(low * 100)
 						high_int = int(high * 100) + steps_int
-						
+
 						int_arange = np.array(list(range(low_int, high_int, steps_int)))
 						int_arange = int_arange / 100
 						return int_arange
-					
+
 					base_array = n_arange(low_np[0], high_np[0], .00001)
 					b_lh_dist = len(base_array)
 					bases = np.array([])
@@ -2496,34 +2646,35 @@ class n_date_frame2:
 						bases = np.append([bases], [brep], axis=1)[0]
 						lh_range = np.tile(next_arange, b_lh_dist)
 						nexts = np.append([nexts], [lh_range], axis=1)[0]
-					
+
 					qt = stock_size / bases
 					qt = qt.astype(int)
-					
+
 					profit = (nexts - bases) * qt
 					profit = profit.astype(int)
 					unique_profit = np.unique(profit, return_counts=True)
 					r_keys = np.array(unique_profit[0])
 					r_values = np.array(unique_profit[1])
 					m_key_value = r_keys * r_values
-					
+
 					wsum_profit = m_key_value.sum()
 					sum_case = sum(r_values)
 					prob_profit = int(wsum_profit / sum_case)
 					return prob_profit
-				
-				time_frame = 10 ## hán perces idő intervallumot figyel előre
+
+				time_frame = 10  ## hán perces idő intervallumot figyel előre
 				full_time_traded_istrument = True
 				date_s = nddf[symbol]["Date"]
 				low_s = np.array(nddf[symbol]["Low"])
 				high_s = np.array(nddf[symbol]["High"])
-				
+
 				s2(True, len(low_s) - time_frame - 1)
-				
+
 				r_array = np.zeros(len(low_s))
 				for g in range(0, len(low_s) - time_frame - 1):  ## végigmegyek a low vektoron minus time frame
 					s2()
-					if (16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date())) or full_time_traded_istrument: # nézem akereskedési időt és a munkanapot
+					if (16 <= date_s[g].hour <= 20 and np.is_busday(
+							date_s[g].date())) or full_time_traded_istrument:  # nézem akereskedési időt és a munkanapot
 						low_np = low_s[g: g + time_frame]
 						high_np = high_s[g: g + time_frame]
 						pr = prob_profit(low_np, high_np)
@@ -2534,20 +2685,23 @@ class n_date_frame2:
 				nddf[symbol]["y_P10INT"] = nddf[symbol]["SIG_P10INT"]
 
 				## SIG_P10INT és a y_P10INT is nullával van feltöltve
-				
-				nddf[symbol]["y_P10INT"].values[(50 < nddf[symbol]["SIG_P10INT"]) | (nddf[symbol]["SIG_P10INT"] < -50)] = -1050
+
+				nddf[symbol]["y_P10INT"].values[
+					(50 < nddf[symbol]["SIG_P10INT"]) | (nddf[symbol]["SIG_P10INT"] < -50)] = -1050
 				nddf[symbol]["y_P10INT"] = nddf[symbol]["y_P10INT"] + 50
 
 				## minden ami -50 és +50 en kívül van -1000 kap
 				## a többi 50 növekszik
-				
+
 				nddf[symbol].set_index('Date', inplace=True)
 				# mask = nddf[symbol].between_time('20:00', '16:00').index
 				# nddf[symbol].loc[mask, 'y_P10INT'] = -1000
-				
+
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
-			
+
+
+
 			elif tech_indicator == "GAM2":
 				log("GAM2")
 				
@@ -2795,17 +2949,18 @@ class watch_list:
 	def add(self, symbol, years=3):
 		self.remove(symbol)
 		new_row = {'symbol': symbol}
+		print(new_row)
 		self.wl_df = self.wl_df.append(new_row, ignore_index=True)
 		self.refresh_profile(symbol)
-		self.refresh_sentiment(symbol)
+		# self.refresh_sentiment(symbol)
 		self.wl_df.loc[self.wl_df['symbol'] == symbol, 'ai_project1'] = ""
 		self.write()
 		gui.refresh_ui()
 		ndf.add(symbol, years)
 		return
 
-	def add_alt(self, symbol, years=3):
-		if symbol in nbt.get_alt_symbols():
+	def add_crypto(self, symbol, years=3):
+		if symbol in nbt.crypto:
 			self.remove(symbol)
 			new_row = {'symbol': symbol}
 			self.wl_df = self.wl_df.append(new_row, ignore_index=True)
@@ -2816,9 +2971,9 @@ class watch_list:
 			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'snt_bullish'] = 0
 			self.write()
 			gui.refresh_ui()
-			ndf.add_alt(symbol, years)
+			ndf.add_crypto(symbol, years)
 		else:
-			log(symbol + " - alt symbol is missing")
+			log(symbol + " - non listed symbol on Binance.")
 		return
 
 	def remove(self, symbol):
@@ -2842,15 +2997,13 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-	nddf["APA"] = nddf["APA"][0:-3]
-	ndf.set_dt_order("APA")
-	nddb.write("APA")
+	del nddf['BTCUSDT_FREE']
+	nddb.remove('BTCUSDT_FREE')
+	ndf_meta.remove_meta('BTCUSDT_FREE')
 
 
 def do2(symbol="", p2="", p3=""):
-	print(ai.get_all_indicators_by_symbols())
-	ndf.refresh_tech("APA", "P10", log_vissible=False)
-
+	print(tuple(nddf["BTCUSDT"].columns))
 
 def stream_job():
 	print("run outer job")
@@ -3035,75 +3188,45 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	stock_size = 10000
 	
 	algo_ai_override = n_algo_trade()
-	algo_ai_override.config({"name": symbol + " Ai override decisions drived",
+	algo_ai_override.config({"name": symbol + "Ai decisions drived",
 							 "value_limit": value_limit,
 							 "stock_size": stock_size,
 							 "stop_loss_limit": -10,
 							 "profit_take_limit": -1,  # -1 nincs bekapcsolva
 							 "trailer_stop": .1,
-							 "trailer_min_profit": 12,
-							 "value_limit_profit_reinvest": False,
+							 "trailer_min_profit": 5,
+							 "value_limit_profit_reinvest": True,
 							 "steps_limit": 10,
-							 "strategy": 22,
-							 "trade_time_start": (16, 00),
-							 "trade_time_stop": (19, 30),
-							 "next_price_random": False
+							 "strategy": 66,
+							 "trade_time_start": (0, 1),
+							 "trade_time_stop": (23, 59),
+							 "next_price_random": True
 							 })
 	
-	algo_ai_override2 = n_algo_trade()
-	algo_ai_override2.config({"name": symbol + " Ai drive + rnd next",
+	algo_ai_rnd = n_algo_trade()
+	algo_ai_rnd.config({"name": symbol + "Rnd",
 							  "value_limit": value_limit,
 							  "stock_size": stock_size,
 							  "stop_loss_limit": -10,
 							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
 							  "trailer_stop": .1,
-							  "trailer_min_profit": 12,
-							  "value_limit_profit_reinvest": False,
-							  "steps_limit": 10,
-							  "strategy": 22,
-							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (19, 30),
-							  "next_price_random": True
-							  })
-	
-	algo_ai_override3 = n_algo_trade()
-	algo_ai_override3.config({"name": symbol + " Ai RND",
-							  "value_limit": value_limit,
-							  "stock_size": stock_size,
-							  "stop_loss_limit": -10,
-							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							  "trailer_stop": .1,
-							  "trailer_min_profit": 12,
+							  "trailer_min_profit": 5,
 							  "value_limit_profit_reinvest": True,
-							  "steps_limit": 45,
-							  "strategy": 22,
-							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (19, 30),
+							  "steps_limit": 10,
+							  "strategy": 66,
+							  "trade_time_start": (0, 1),
+							  "trade_time_stop": (23, 59),
 							  "next_price_random": True
 							  })
 	
-	algo_ai_override4 = n_algo_trade()
-	algo_ai_override4.config({"name": symbol + " Ai drive + rnd next",
-							  "value_limit": value_limit,
-							  "stock_size": stock_size,
-							  "stop_loss_limit": -10,
-							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							  "trailer_stop": .1,
-							  "trailer_min_profit": 12,
-							  "value_limit_profit_reinvest": False,
-							  "steps_limit": 45,
-							  "strategy": 23,
-							  "trade_time_start": (16, 00),
-							  "trade_time_stop": (19, 30),
-							  "next_price_random": True
-							  })
-	
+
 	s2(True, (x_to - x_from) * 2)
 	
 	contra_copies = ndf.get_contra_copies(contras)
 	# print(contra_copies)
 	
 	pre_load = nddf[symbol].loc[x_from:x_to + 1, ['ohlc4', sig_field, 'Date', 'Low', 'High']]
+	# print(pre_load)
 	pre_ohlc4 = tuple(pre_load['ohlc4'])
 	pre_sig = tuple(pre_load[sig_field])
 	# pre_sig_all = tuple(pre_load['SIG_ALL_MT'])
@@ -3133,13 +3256,10 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 			"next_ohlc4": pre_ohlc4[ix + 1]
 		}
 		algo_ai_override.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
-		algo_ai_override2.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
-		algo_ai_override3.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
-		algo_ai_override4.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
 
-		# rnd_sig = random.randint(0, 4)
-		# rnd_perc = random.uniform(.67, .99)
-		# algo_ai_override4.transaction(pre_sig[ix], rnd_sig, rnd_perc, price_dict, pre_date[ix])
+		rnd_sig = random.randint(0, 2)
+		rnd_perc = random.uniform(.67, .99)
+		algo_ai_rnd.transaction(pre_sig[ix], rnd_sig, rnd_perc, price_dict, pre_date[ix])
 
 		# pre_x = 4
 		# if y_predict_sig[ix] == 0:
@@ -3151,45 +3271,26 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	
 	del contra_copies
 	
-	log(f"Ai decision OVERRIDE algo trade.")
-	log(f"  value limit: {algo_ai_override.value_limit} stock_size: {algo_ai_override.stock_size_orig}")
-	log(f"  profit/day: {algo_ai_override.get_profit_per_day()} profit/closed deal: {algo_ai_override.get_profit_per_closed_deal()}")
-	log(f"  closed_deal/day: {algo_ai_override.get_closed_deal_per_day()} transaction/day: {algo_ai_override.get_transaction_per_day()}")
-	
-	log(f"Ai decision OVERRIDE 2 algo trade.")
-	log(f"  value limit: {algo_ai_override2.value_limit} stock_size: {algo_ai_override2.stock_size_orig}")
-	log(f"  profit/day: {algo_ai_override2.get_profit_per_day()} profit/closed deal: {algo_ai_override2.get_profit_per_closed_deal()}")
-	log(f"  closed_deal/day: {algo_ai_override2.get_closed_deal_per_day()} transaction/day: {algo_ai_override2.get_transaction_per_day()}")
-	
-	log(f"Ai decision OVERRIDE 3 algo trade.")
-	log(f"  value limit: {algo_ai_override3.value_limit} stock_size: {algo_ai_override3.stock_size_orig}")
-	log(f"  profit/day: {algo_ai_override3.get_profit_per_day()} profit/closed deal: {algo_ai_override3.get_profit_per_closed_deal()}")
-	log(f"  closed_deal/day: {algo_ai_override3.get_closed_deal_per_day()} transaction/day: {algo_ai_override3.get_transaction_per_day()}")
-	
-	log(f"Ai decision OVERRIDE 4 algo trade.")
-	log(f"  value limit: {algo_ai_override4.value_limit} stock_size: {algo_ai_override4.stock_size_orig}")
-	log(f"  profit/day: {algo_ai_override4.get_profit_per_day()} profit/closed deal: {algo_ai_override4.get_profit_per_closed_deal()}")
-	log(f"  closed_deal/day: {algo_ai_override4.get_closed_deal_per_day()} transaction/day: {algo_ai_override4.get_transaction_per_day()}")
-	
+	# log(f"Ai decisions drived.")
+	# log(f"  value limit: {algo_ai_override.value_limit} stock_size: {algo_ai_override.stock_size_orig}")
+	# log(f"  profit/day: {algo_ai_override.get_profit_per_day()} profit/closed deal: {algo_ai_override.get_profit_per_closed_deal()}")
+	# log(f"  closed_deal/day: {algo_ai_override.get_closed_deal_per_day()} transaction/day: {algo_ai_override.get_transaction_per_day()}")
+
+	log(f"Ai decisions drived.")
+	log(f"  value limit: {algo_ai_rnd.value_limit} stock_size: {algo_ai_rnd.stock_size_orig}")
+	log(f"  profit/day: {algo_ai_rnd.get_profit_per_day()} profit/closed deal: {algo_ai_rnd.get_profit_per_closed_deal()}")
+	log(f"  closed_deal/day: {algo_ai_rnd.get_closed_deal_per_day()} transaction/day: {algo_ai_rnd.get_transaction_per_day()}")
+
 	log(f"""  Average prediction runtime: {round(ai.ai_models[project]["predict_average_runtime"], 3)}""")
 	
 	algo_ai_override.show_history()
-	algo_ai_override2.show_history()
-	algo_ai_override3.show_history()
-	algo_ai_override4.show_history()
-	
+	algo_ai_rnd.show_history()
+
 	algo_ai_override.history.to_excel('algo_ai_override.xlsx', engine='xlsxwriter')
-	algo_ai_override2.history.to_excel('algo_ai_override2.xlsx', engine='xlsxwriter')
-	algo_ai_override3.history.to_excel('algo_ai_override3.xlsx', engine='xlsxwriter')
-	algo_ai_override4.history.to_excel('algo_ai_override4.xlsx', engine='xlsxwriter')
-	
-	# del algo_rnd
-	# del algo_indicator
-	# del algo_ai_indicator_decision
+	algo_ai_rnd.history.to_excel('algo_ai_rnd.xlsx', engine='xlsxwriter')
+
 	del algo_ai_override
-	del algo_ai_override2
-	del algo_ai_override3
-	del algo_ai_override4
+	del algo_ai_rnd
 
 
 def ai_build():
@@ -3203,11 +3304,11 @@ def ai_build():
 def ndf_add(symbol="", years=1):
 	ndf.add(symbol, years)
 
-def ndf_add_alt(symbol="", years=1):
-	ndf.add_alt(symbol, years)
+def ndf_add_crypto(symbol="", years=1):
+	ndf.add_crypto(symbol, years)
 
-def ndf_tech(symbol, tech_indicator):
-	ndf.add_tech(symbol, tech_indicator)
+def ndf_tech(symbol, tech_indicator, params=[]):
+	ndf.add_tech(symbol, tech_indicator, params)
 
 
 def ndf_tech_backtest(symbol, run_time_window, sig_field, start_position=0):
@@ -3331,7 +3432,7 @@ def ndf_dataset(symbol="", config_file="", force="NOFORCE", overlay_manager="rnd
 	s("")
 
 
-def ndf_dataset_int(symbol="", config_file="", force="NOFORCE", overlay_manager="rnd_choice"):
+def ndf_dataset_int(symbol="", config_file="", force="FORCE", overlay_manager="rnd_choice"):
 	if force.lower() == "force":
 		force = True
 	else:
@@ -3391,7 +3492,7 @@ def ndf_show_last(symbol=""):
 				self.parent = parent
 				Frame.__init__(self)
 				self.main = self.master
-				self.main.geometry('1200x600+100+100')
+				self.main.geometry('1800x900+50+50')
 				self.main.title(symbol)
 				f = Frame(self.main)
 				f.pack(fill=BOTH, expand=1)
@@ -3401,17 +3502,17 @@ def ndf_show_last(symbol=""):
 				# self.table = pt = Table(f, dataframe=nddf[symbol].iloc[::-1],
 				#                         showtoolbar=True, showstatusbar=True)
 				options = {'align': 'w',
-						   'cellbackgr': '#F4F4F3',
+						   'cellbackgr': '#dddddd',
 						   'cellwidth': 70,
 						   'colheadercolor': '#535b71',
-						   'floatprecision': 6,
+						   'floatprecision': 8,
 						   'font': 'Arial',
-						   'fontsize': 9,
+						   'fontsize': 10,
 						   'fontstyle': '',
 						   'grid_color': '#AAAAAA',
 						   'linewidth': 1,
-						   'rowheight': 18,
-						   'rowselectedcolor': '#E4DED4',
+						   'rowheight': 20,
+						   'rowselectedcolor': '#ff9100',
 						   'textcolor': 'black'}
 				config.apply_options(options, self.table)
 				
@@ -3437,7 +3538,7 @@ def md_check(symbol=""):
 
 def md_symbols(market):
 	if market == "ALT":
-		for smb in nbt.get_alt_symbols():
+		for smb in nbt.get_all_symbols():
 			print(smb)
 
 	else:
@@ -3454,8 +3555,8 @@ def md_symbols(market):
 def wl_add(symbol="", years=3):
 	wl.add(symbol, years)
 
-def wl_add_alt(symbol="", years=3):
-	wl.add_alt(symbol, years)
+def wl_add_crypto(symbol="", years=3):
+	wl.add_crypto(symbol, years)
 
 def wl_remove(symbol=""):
 	wl.remove(symbol)
@@ -3503,7 +3604,7 @@ def wl_btn_chart(btn_no):
 	symbol = wl.wl_df.loc[btn_no - 1]['symbol']
 	log("start: nchart " + symbol, True, False)
 	i_indecators = ndf.get_added_indicators(symbol)
-	i_df = nddf[symbol].tail(20000).copy()
+	i_df = nddf[symbol].tail(60000).copy()
 	nchart.fit(i_df, symbol, i_indecators)
 	nchart.show()
 
@@ -3608,7 +3709,7 @@ if __name__ == "__main__":
 	ndf_meta = n_date_frame_meta(log)
 	n_tools = n_tools(gui=gui)
 	md = n_market_data(log, s, n_tools, ndf, stream_job)
-	nbt = n_binace_trade(log=log, s=s, tools=n_tools)
+	nbt = n_binance_trade(log=log, s=s, tools=n_tools)
 
 
 	if not LocalRUN:

@@ -14,7 +14,7 @@ class n_chart:
 
     def __init__(self, trade):
         self.trade = trade
-        self.width = 1800
+        self.width = 1200
         self.toolbar_location = "left"
         self.tools = "xpan,xwheel_zoom,reset"
         self.y_axis_location = "right"
@@ -46,6 +46,8 @@ class n_chart:
         if len(indecators) > 0:
             if 'P10' in indecators:
                 self.elements.append(self.chart_p10(i_df, "P10"))
+            if 'P10INT' in indecators:
+                self.elements.append(self.chart_p10int(i_df, "P10INT"))
             if 'VWAP' in indecators:
                 self.elements.append(self.chart_vwap(i_df, "VWAP"))
             if 'MT' in indecators:
@@ -168,7 +170,7 @@ class n_chart:
         p.x_range = Range1d(*desired_range)
         i_max = df['High'][df_start:df_end].max()
         i_min = df['Low'][df_start:df_end].min()
-        i_pad = (i_max - i_min) * .2
+        i_pad = (i_max - i_min) * .3
         desired_range2 = (i_min - i_pad, i_max + i_pad)
         p.y_range = Range1d(*desired_range2)
         p.legend.visible = False
@@ -216,8 +218,8 @@ class n_chart:
         var cv_max = Math.max(...cv_price_slice);
         var cv_min = Math.min(...cv_price_slice);
         window._autoscale_timeout = setTimeout(function() {
-            p.y_range.start = cv_min * .996;
-            p.y_range.end = cv_max * 1.003;
+            p.y_range.start = cv_min * .993;
+            p.y_range.end = cv_max * 1.005;
         });
         """)
 
@@ -612,6 +614,103 @@ class n_chart:
             # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
             # p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.gray2, size=15, source=stock,
             #                     view=view_sig)
+
+        p.legend.visible = False
+
+        # start default settings  ----------------------------------------------------------------------------------
+        p.legend.location = "top_left"
+        p.legend.border_line_alpha = 0
+        p.legend.background_fill_alpha = 0
+        p.legend.click_policy = "mute"
+        p.min_border_left = self.min_border_left
+        p.min_border_right = self.min_border_right
+        p.min_border_top = self.min_border_top
+        p.min_border_bottom = self.min_border_bottom
+        p.outline_line_width = 1
+        p.outline_line_alpha = 1
+        p.outline_line_color = self.gray2
+        # end default settings ------------------------------------------------------------------------------------
+
+        i_max = 100
+        i_min = -100
+        desired_range2 = (i_min, i_max)
+        p.y_range = Range1d(*desired_range2)
+        return p
+
+    def chart_p10int(self, df, name):
+        df['ohlc4_up'] = -20
+        df['ohlc4_down'] = 20
+        stock = ColumnDataSource(df)
+
+        p = figure(sizing_mode='fixed',
+                   plot_width=self.width,
+                   plot_height=200,
+                   toolbar_location=self.toolbar_location,
+                   y_axis_location=self.y_axis_location,
+                   tools=self.tools,
+                   title=name)
+
+        # print ohlc4 price
+        # p.circle('index', 'ohlc4', color=self.blue, size=5, legend_label="ohlc", source=stock)
+        # p.line('index', 'ohlc4', color=self.blue, source=stock)
+
+        # p.line('index', 'ADX_8', color=self.black, legend_label="ADX_8", source=stock, line_width=2)
+        # p.line('index', 'DMP_8', color=self.green, legend_label="DI+", source=stock)
+        # p.line('index', 'DMN_8', color=self.red, legend_label="DI-", source=stock)
+        # # Vertical line
+        # vline1 = Span(location=20, dimension='width', line_color=self.black, line_width=1)
+        # vline2 = Span(location=0, dimension='width', line_color=self.black, line_width=2)
+        # vline3 = Span(location=-20, dimension='width', line_color=self.black, line_width=1)
+        # p.renderers.extend([vline1])
+        # p.renderers.extend([vline2])
+        # p.renderers.extend([vline3])
+
+
+        inc = df['Open'] >= df['Close']
+        # inc = tuple(inc)
+        dec = df['Open'] < df['Close']
+        # dec = tuple(dec)
+
+        view_inc = CDSView(source=stock, filters=[BooleanFilter(inc)])
+        view_dec = CDSView(source=stock, filters=[BooleanFilter(dec)])
+
+        p.line('index', 'ohlc4', color=self.black, source=stock)
+
+        # p.segment(x0='index', x1='index', y0='Low', y1='High', color=self.red, source=stock, view=view_inc)
+        # p.segment(x0='index', x1='index', y0='Low', y1='High', color=self.green, source=stock, view=view_dec)
+        #
+        # p.vbar(x='index', width=0.7, top='Open', bottom='Close', fill_color=self.red, line_color=self.red,
+        #        source=stock, view=view_inc, name="price", fill_alpha=.5)
+        # p.vbar(x='index', width=0.7, top='Open', bottom='Close', fill_color=self.green, line_color=self.green,
+        #        source=stock, view=view_dec, name="price", legend_label=name, fill_alpha=.5)
+
+        if "y_P10INT" in df.columns:
+
+            inc = df['y_P10INT'] == 1
+            inc = tuple(inc)
+            dec = df['y_P10INT'] == 2
+            dec = tuple(dec)
+
+            view_long = CDSView(source=stock, filters=[BooleanFilter(inc)])
+            view_short = CDSView(source=stock, filters=[BooleanFilter(dec)])
+
+            p.triangle('index', 'ohlc4', line_width=0, fill_color=self.green,
+                       size=15, source=stock, legend_label="long y", view=view_long)
+            p.inverted_triangle('index', 'ohlc4', line_width=0, fill_color=self.red,
+                       size=15, source=stock, legend_label="short y", view=view_short)
+
+            inc = df['SIG_P10INT'] == 1
+            inc = tuple(inc)
+            dec = df['SIG_P10INT'] == 2
+            dec = tuple(dec)
+
+            view_long_sig = CDSView(source=stock, filters=[BooleanFilter(inc)])
+            view_short_sig = CDSView(source=stock, filters=[BooleanFilter(dec)])
+
+            p.circle('index', 'ohlc4', line_width=0, fill_color=self.green,
+                       size=8, source=stock, legend_label="long sig", view=view_long_sig)
+            p.circle('index', 'ohlc4', line_width=0, fill_color=self.red,
+                       size=8, source=stock, legend_label="short sig", view=view_short_sig)
 
         p.legend.visible = False
 

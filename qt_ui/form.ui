@@ -25,15 +25,21 @@
   <property name="font">
    <font>
     <pointsize>9</pointsize>
-    <bold>true</bold>
+    <bold>false</bold>
     <kerning>false</kerning>
    </font>
   </property>
   <property name="windowTitle">
    <string>nDot</string>
   </property>
+  <property name="windowOpacity">
+   <double>1.000000000000000</double>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
   <property name="styleSheet">
-   <string notr="true">background:rgb(216, 213, 202)</string>
+   <string notr="true">background:rgb(200, 200, 190)</string>
   </property>
   <widget class="QProgressBar" name="Progress_Bar">
    <property name="geometry">
@@ -74,7 +80,7 @@ background: #ff9100;
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
+     <pointsize>8</pointsize>
      <bold>false</bold>
      <kerning>true</kerning>
     </font>
@@ -173,7 +179,7 @@ border-left: 1px solid #888888;
    </property>
    <property name="styleSheet">
     <string notr="true">QPushButton {
-    background-color: #000000;
+    background-color: #333333;
 	color: #ffffff;
 	border-top-left-radius: 28px;
 	border-top-right-radius:28px;
@@ -251,15 +257,15 @@ background-color: none;</string>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>11</x>
-     <y>21</y>
+     <x>17</x>
+     <y>22</y>
      <width>108</width>
      <height>40</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>30</pointsize>
+     <pointsize>22</pointsize>
      <bold>true</bold>
      <kerning>true</kerning>
     </font>
@@ -306,8 +312,8 @@ background-color: none;</string>
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
-     <bold>true</bold>
+     <pointsize>18</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -330,8 +336,8 @@ background:none;</string>
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
-     <bold>true</bold>
+     <pointsize>18</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -354,8 +360,8 @@ background:none;</string>
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
-     <bold>true</bold>
+     <pointsize>18</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -620,7 +626,8 @@ border-top-left-radius: 15px;
 border-top-right-radius:0px;
 border-bottom-right-radius: 0px;
 border-bottom-left-radius: 15px;
-border:2px solid #ffffff;
+border:1px solid #535353;
+border-top: 0;
 align: left;</string>
    </property>
    <property name="text">
@@ -1045,15 +1052,15 @@ border-bottom-left-radius: 0px;
    <property name="geometry">
     <rect>
      <x>5</x>
-     <y>93</y>
-     <width>121</width>
-     <height>16</height>
+     <y>90</y>
+     <width>159</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1088,15 +1095,15 @@ background: none;</string>
    <property name="geometry">
     <rect>
      <x>5</x>
-     <y>343</y>
-     <width>121</width>
-     <height>16</height>
+     <y>338</y>
+     <width>132</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1250,15 +1257,15 @@ background-color: none;</string>
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>94</y>
-     <width>121</width>
-     <height>16</height>
+     <y>90</y>
+     <width>159</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1274,15 +1281,15 @@ background: none;</string>
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>344</y>
-     <width>121</width>
-     <height>16</height>
+     <y>338</y>
+     <width>132</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1305,8 +1312,8 @@ background: none;</string>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1670,14 +1677,14 @@ padding-bottom:5px;
     <rect>
      <x>970</x>
      <y>7</y>
-     <width>158</width>
+     <width>151</width>
      <height>20</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1774,8 +1781,8 @@ QCheckBox::indicator:checked {
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1790,15 +1797,15 @@ QCheckBox::indicator:checked {
    <property name="geometry">
     <rect>
      <x>6</x>
-     <y>555</y>
-     <width>137</width>
-     <height>16</height>
+     <y>550</y>
+     <width>153</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1814,15 +1821,15 @@ background: none;</string>
    <property name="geometry">
     <rect>
      <x>5</x>
-     <y>554</y>
-     <width>137</width>
-     <height>16</height>
+     <y>550</y>
+     <width>153</width>
+     <height>21</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>10</pointsize>
-     <bold>true</bold>
+     <pointsize>9</pointsize>
+     <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
@@ -1943,8 +1950,8 @@ padding-bottom:5px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2022,7 +2029,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -2036,7 +2043,9 @@ font: 10pt &quot;Arial&quot;;
     <property name="styleSheet">
      <string notr="true">border-left: 3px solid white;
 background: #ffffff;
-color: #232323;</string>
+color: #232323;
+line-height: 1px;
+</string>
     </property>
     <property name="lineWidth">
      <number>1</number>
@@ -2098,8 +2107,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2126,8 +2135,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2154,8 +2163,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2261,8 +2270,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2294,8 +2303,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2354,8 +2363,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2433,7 +2442,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -2509,8 +2518,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2537,8 +2546,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2565,8 +2574,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2672,8 +2681,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2705,8 +2714,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2754,8 +2763,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2833,7 +2842,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -2909,8 +2918,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2937,8 +2946,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -2965,8 +2974,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3072,8 +3081,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3105,8 +3114,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3154,8 +3163,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3233,7 +3242,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -3309,8 +3318,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3337,8 +3346,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3365,8 +3374,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3472,8 +3481,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3505,8 +3514,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3554,8 +3563,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3633,7 +3642,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -3709,8 +3718,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3737,8 +3746,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3765,8 +3774,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3872,8 +3881,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3905,8 +3914,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -3954,8 +3963,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4033,7 +4042,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -4109,8 +4118,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4137,8 +4146,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4165,8 +4174,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4272,8 +4281,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4305,8 +4314,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4354,8 +4363,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4433,7 +4442,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -4509,8 +4518,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4537,8 +4546,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4565,8 +4574,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4672,8 +4681,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4705,8 +4714,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4754,8 +4763,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4833,7 +4842,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -4909,8 +4918,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4937,8 +4946,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -4965,8 +4974,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5072,8 +5081,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5105,8 +5114,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5154,8 +5163,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5233,7 +5242,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -5309,8 +5318,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5337,8 +5346,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5365,8 +5374,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5472,8 +5481,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5505,8 +5514,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5554,8 +5563,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5633,7 +5642,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -5709,8 +5718,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5737,8 +5746,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5765,8 +5774,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5872,8 +5881,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5905,8 +5914,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -5954,8 +5963,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6033,7 +6042,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -6109,8 +6118,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6137,8 +6146,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6165,8 +6174,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6272,8 +6281,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6305,8 +6314,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6354,8 +6363,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6433,7 +6442,7 @@ font: 10pt &quot;Arial&quot;;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -6509,8 +6518,8 @@ background: #ff3333;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6537,8 +6546,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6565,8 +6574,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6672,8 +6681,8 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6705,8 +6714,8 @@ border-bottom-left-radius: 0px;</string>
     </property>
     <property name="font">
      <font>
-      <pointsize>8</pointsize>
-      <bold>true</bold>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
      </font>
     </property>
     <property name="styleSheet">
@@ -6721,6 +6730,30 @@ border-bottom-left-radius: 0px;</string>
      <string>Hist.</string>
     </property>
    </widget>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>15</x>
+     <y>21</y>
+     <width>108</width>
+     <height>40</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>22</pointsize>
+     <bold>true</bold>
+     <kerning>true</kerning>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:#333333;
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>nDot</string>
+   </property>
   </widget>
   <zorder>LT_scrollArea_2</zorder>
   <zorder>LT_scrollArea</zorder>
@@ -6790,6 +6823,7 @@ border-bottom-left-radius: 0px;</string>
   <zorder>line_9</zorder>
   <zorder>line_15</zorder>
   <zorder>Progress_Bar</zorder>
+  <zorder>label_3</zorder>
  </widget>
  <resources/>
  <connections/>
