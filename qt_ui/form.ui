@@ -172,19 +172,28 @@ border-left: 1px solid #888888;
    </property>
    <property name="font">
     <font>
-     <pointsize>9</pointsize>
+     <pointsize>-1</pointsize>
      <bold>true</bold>
      <kerning>true</kerning>
     </font>
    </property>
    <property name="styleSheet">
     <string notr="true">QPushButton {
-    background-color: #333333;
 	color: #ffffff;
 	border-top-left-radius: 28px;
 	border-top-right-radius:28px;
 	border-bottom-right-radius: 28px;
 	border-bottom-left-radius: 28px;
+	border-top:1px solid #eeeeee;
+	border-left:1px solid #eeeeee;
+	border-bottom:1px solid #000000;
+	border-right:1px solid #000000;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:13px;
+	font-weight:bold;
+	background: qradialgradient(cx:0.5, cy:0.5, radius: 2.5,
+              fx:0.5, fy:0.5, stop:0 #000000, stop:1 #eeeeee);
 }
 QPushButton:pressed {
     background-color: #ffffff;

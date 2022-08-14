@@ -156,7 +156,7 @@ class n_ai:
                                            time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
                                            number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
                                            )
-        y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped)
+        y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped, verbose=0)
         y_predict_sig = np.argmax(y_predict, axis=1)
         y_predict_perc = np.take_along_axis(y_predict, np.expand_dims(y_predict_sig, axis=-1), axis=-1).squeeze(axis=-1)
         return y_predict, y_predict_sig, y_predict_perc

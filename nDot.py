@@ -641,11 +641,54 @@ if LocalRUN:
 							 + "</font>" \
 							 + "<br>"
 			i_log_text = i_log_text + "</body></html>"
-			self.Logs_Trade.setText(i_log_text)
+			self.Logs_Ai.setText(i_log_text)
 			i_vbar = self.LT_scrollArea.verticalScrollBar()
 			i_vbar.setValue(i_vbar.maximum())
 			QApplication.processEvents()
-		
+
+		def ailog(self, add_text, line=False, indent=True, color="normal"):
+			i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
+			i_for_cut = i_for_cut.splitlines()
+			i_cut_html = self.Logs_Ai.text()
+			for i_c in i_for_cut:
+				i_cut_html = i_cut_html.replace(i_c, "")
+
+			i_colors = {'long': "#078F12",
+						'short': "#ff3333",
+						'stop': "#ff9100",
+						'normal': "#333333"}
+			i_web_color = i_colors[color]
+
+			if indent:
+				i_ind = "│  "
+			else:
+				i_ind = ""
+			i_log_text = "<html><head/><body>" + i_cut_html
+			if line:
+				i_log_text = i_log_text \
+							 + "<font color='#000000'>" \
+							 + "─" * 65 \
+							 + "</font>" \
+							 + "<br>"
+
+			lines = add_text.splitlines()
+
+			for one_line in lines:
+				i_log_text = i_log_text \
+							 + "<font color='#000000'>" \
+							 + time.strftime("%m-%d %H:%M:%S") + " > " \
+							 + i_ind \
+							 + "</font>" \
+							 + "<font color='" + i_web_color + "'>" \
+							 + one_line \
+							 + "</font>" \
+							 + "<br>"
+			i_log_text = i_log_text + "</body></html>"
+			self.Logs_Ai.setText(i_log_text)
+			i_vbar = self.LT_scrollArea_3.verticalScrollBar()
+			i_vbar.setValue(i_vbar.maximum())
+			QApplication.processEvents()
+
 		# GUI - Tools ---------------------------------------------
 		
 		def confirm(self, title, message):
@@ -1058,7 +1101,9 @@ class n_date_frame2:
 		if i_int_from > 0:
 			if len(original_fields) > 0:
 				for i_of in original_fields:
-					i_add = np.array(nddf[symbol].loc[i_int_from:i_int_to, i_of])
+					# i_add = np.array(nddf[symbol].loc[i_int_from:i_int_to, i_of])
+					# print(i_add)
+					i_add = np.array(nddf[symbol][i_of][i_int_from:i_int_to + 1])
 					i_data_array = np.append(i_data_array, i_add)
 			
 			if len(contras) > 0:
@@ -1076,14 +1121,22 @@ class n_date_frame2:
 					con_field = con_sep[1]
 					# print(con_symbol,con_field)
 					
-					orig_date = nddf[symbol].loc[index, "Date"]
+					# orig_date = nddf[symbol].loc[index, "Date"]
+					# print(orig_date)
+					orig_date = nddf[symbol]["Date"][index:index+1].values[0]
+					# sys.exit()
 					try:
 						i_int_to_contra = contra_copies[con_symbol].index.get_loc(orig_date, method='ffill')
+						# print(i_int_to_contra)
+						# sys.exit(0)
 					except:
 						return np.array([])
 					
 					i_int_from_contra = i_int_to_contra - time_window_size + 1
-					i_new = np.array(nddf[con_symbol].loc[i_int_from_contra:i_int_to_contra, con_field])
+					# i_new = np.array(nddf[con_symbol].loc[i_int_from_contra:i_int_to_contra, con_field])
+					# print(i_new)
+					i_new = np.array(nddf[con_symbol][con_field][i_int_from_contra:i_int_to_contra + 1])
+					# print(i_new)
 					i_data_array = np.append(i_data_array, i_new)
 		# print(i_data_array.shape)
 		return i_data_array
@@ -1308,13 +1361,13 @@ class n_date_frame2:
 	def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
 		
 		def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, back_shift=0):
-			
 			array_len = time_window_size * (len(original_fields) + len(contras))
 			
 			contra_copies = self.get_contra_copies(contras)
 			asked = 0
 			recieved = 0
 			for nx, i_il in enumerate(indexes):
+				s2()
 				asked += 1
 				i_data_array = self.get_dataset_by_index(symbol=symbol,
 														 index=i_il + back_shift,
@@ -1374,15 +1427,13 @@ class n_date_frame2:
 						log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
 						self.sig_to_y(symbol, sig_field, y_field, time_window_size)
 
-					s2(True, 240)
+
 					
 					log("Creating dataset.")
 					# image fej megcsinálása, minden image nél ugyan az
 					nd_dset = n_dataset(log)
 					nd_dset.set_symbol(symbol)
-					
-					s2()
-					
+
 					nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int")
 					nd_dset.set_name("nDot_DATASET_" + project_name)
 					nd_dset.set_project_name(project_name)
@@ -1395,17 +1446,16 @@ class n_date_frame2:
 					#  beteszem a 'good' signálokat -----------------------------------------
 					first_cut = 1000
 					i_indexes = {}
-					
+
 					for ix in range(3):
-						s2()
 						i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
-						print(ix, len(i_indexes[ix]))
 						# i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
 
 					len1 = len(i_indexes[1])
 					len2 = len(i_indexes[2])
 					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
 					i_indexes[0] = i_indexes[0][0: max_elemet]
+					s2(True, len1 + len2 + max_elemet)
 					for ix in range(3):
 						log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
 					# i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 0].index)
@@ -1435,7 +1485,6 @@ class n_date_frame2:
 					
 					nd_dset.set_window_size(time_window_size)
 					for ix in range(3):
-						s2()
 						# print(ix)
 						dataset_constructor(symbol=symbol,
 											indexes=i_indexes[ix],
@@ -2591,16 +2640,17 @@ class n_date_frame2:
 				low_s = np.array(nddf[symbol]["Low"])
 				high_s = np.array(nddf[symbol]["High"])
 
-				s2(True, len(low_s) - time_frame - 1)
+				log_run_len = len(low_s) - time_frame - 1
+
+				s2(True, log_run_len)
 				# print("2")
 				r_array = np.zeros(len(low_s))  #
 				for g in range(0, len(low_s) - time_frame - 1):  ## végigmegyek a low vektoron minus time frame
 					# print("3")
-					s2()
+					s2(text="".join([str(log_run_len), "/", str(g)]))
 					if (16 <= date_s[g].hour <= 20 and np.is_busday(date_s[g].date())) or full_time_traded_istrument: # nézem akereskedési időt és a munkanapot
 						low_np = low_s[g: g + time_frame]
 						high_np = high_s[g: g + time_frame]
-						# print("4")
 						pr = prob_profit(low_np, high_np, tick_size, profit_limit, prob_limit)
 						r_array[g] = pr
 
@@ -2949,7 +2999,7 @@ class watch_list:
 	def add(self, symbol, years=3):
 		self.remove(symbol)
 		new_row = {'symbol': symbol}
-		print(new_row)
+		# print(new_row)
 		self.wl_df = self.wl_df.append(new_row, ignore_index=True)
 		self.refresh_profile(symbol)
 		# self.refresh_sentiment(symbol)
@@ -3043,7 +3093,7 @@ s2_value = 0
 s2_max = 0
 
 
-def s2(null=False, steps=0):
+def s2(null=False, steps=0, text=""):
 	global s2_value, s2_max
 	if LogTo == "Gui":
 		QApplication.processEvents()
@@ -3054,7 +3104,7 @@ def s2(null=False, steps=0):
 			gui.Progress_Bar.setValue(int(s2_value))
 		else:
 			if s2_value <= s2_max:
-				gui.Status.setText(" ".join(["Status:", str(int(s2_value / s2_max * 100)), "%"]))
+				gui.Status.setText(" ".join(["Status:", str(round(s2_value / s2_max * 100, 3))[:5], "%", text]))
 				gui.Progress_Bar.setValue(int(s2_value / s2_max * 100))
 				s2_value += 1
 			else:
@@ -3185,18 +3235,18 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	log(f"Selected test time window: {from_date} - {to_date}")
 	
 	value_limit = 40000
-	stock_size = 10000
+	stock_size = 40000
 	
 	algo_ai_override = n_algo_trade()
 	algo_ai_override.config({"name": symbol + "Ai decisions drived",
 							 "value_limit": value_limit,
 							 "stock_size": stock_size,
-							 "stop_loss_limit": -10,
+							 "stop_loss_limit": -80,
 							 "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							 "trailer_stop": .1,
+							 "trailer_stop": .8,
 							 "trailer_min_profit": 5,
 							 "value_limit_profit_reinvest": True,
-							 "steps_limit": 10,
+							 "steps_limit": 120,
 							 "strategy": 66,
 							 "trade_time_start": (0, 1),
 							 "trade_time_stop": (23, 59),
@@ -3207,12 +3257,12 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	algo_ai_rnd.config({"name": symbol + "Rnd",
 							  "value_limit": value_limit,
 							  "stock_size": stock_size,
-							  "stop_loss_limit": -10,
+							  "stop_loss_limit": -80,
 							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							  "trailer_stop": .1,
+							  "trailer_stop": .8,
 							  "trailer_min_profit": 5,
 							  "value_limit_profit_reinvest": True,
-							  "steps_limit": 10,
+							  "steps_limit": 120,
 							  "strategy": 66,
 							  "trade_time_start": (0, 1),
 							  "trade_time_stop": (23, 59),
@@ -3235,7 +3285,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	pre_high = tuple(pre_load['High'])
 	
 	x_set = []
-	for ix in range(0, x_to - x_from + 3):
+	for ix in range(0, x_to - x_from):
 		x_set.append(ndf.get_dataset_by_index(symbol=symbol,
 											  index=ix + x_from,
 											  time_window_size=time_window_size,
@@ -3243,9 +3293,14 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 											  contras=contras,
 											  contra_copies=contra_copies))
 		s2()
-	
+
+	gui.ailog(f"Predict y: {symbol} {project} X_set size: {len(x_set)}")
 	y_predict, y_predict_sig, y_predict_perc = ai.predict_multi(symbol, project, x_set)
-	
+	# for i in range(len(y_predict)):
+	# 	print(y_predict[i], y_predict_sig[i], y_predict_perc[i])
+	# 	time.sleep(0)
+
+	last_y = 0
 	for ix in range(0, x_to - x_from):
 		price_dict = {
 			"actual_low": pre_low[ix],
@@ -3255,10 +3310,16 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 			"next_high": pre_high[ix + 1],
 			"next_ohlc4": pre_ohlc4[ix + 1]
 		}
-		algo_ai_override.transaction(pre_sig[ix], y_predict_sig[ix], y_predict_perc[ix], price_dict, pre_date[ix])
+
+		if y_predict_sig[ix] == last_y:  # kilövöm azokat amikor egymás után ugyan azt nyomja
+			mod_ypedict_sig = 0
+		else:
+			mod_ypedict_sig = y_predict_sig[ix]
+		last_y = mod_ypedict_sig
+		algo_ai_override.transaction(pre_sig[ix], mod_ypedict_sig, y_predict_perc[ix], price_dict, pre_date[ix])
 
 		rnd_sig = random.randint(0, 2)
-		rnd_perc = random.uniform(.67, .99)
+		rnd_perc = random.uniform(.85, 1)
 		algo_ai_rnd.transaction(pre_sig[ix], rnd_sig, rnd_perc, price_dict, pre_date[ix])
 
 		# pre_x = 4
@@ -3270,21 +3331,24 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		s2()
 	
 	del contra_copies
-	
-	# log(f"Ai decisions drived.")
-	# log(f"  value limit: {algo_ai_override.value_limit} stock_size: {algo_ai_override.stock_size_orig}")
-	# log(f"  profit/day: {algo_ai_override.get_profit_per_day()} profit/closed deal: {algo_ai_override.get_profit_per_closed_deal()}")
-	# log(f"  closed_deal/day: {algo_ai_override.get_closed_deal_per_day()} transaction/day: {algo_ai_override.get_transaction_per_day()}")
 
+	log("  ")
 	log(f"Ai decisions drived.")
+	log(f"  value limit: {algo_ai_override.value_limit} stock_size: {algo_ai_override.stock_size_orig}")
+	log(f"  profit/day: {algo_ai_override.get_profit_per_day()} profit/closed deal: {algo_ai_override.get_profit_per_closed_deal()}")
+	log(f"  closed_deal/day: {algo_ai_override.get_closed_deal_per_day()} transaction/day: {algo_ai_override.get_transaction_per_day()}")
+	log(f"  turnover: {int(algo_ai_override.get_turnover())} profit: {algo_ai_override.get_profit()} cost (0,055%): {int(algo_ai_override.get_turnover() * (.055 / 100))}")
+	log("  ")
+	log(f"Random drived.")
 	log(f"  value limit: {algo_ai_rnd.value_limit} stock_size: {algo_ai_rnd.stock_size_orig}")
 	log(f"  profit/day: {algo_ai_rnd.get_profit_per_day()} profit/closed deal: {algo_ai_rnd.get_profit_per_closed_deal()}")
 	log(f"  closed_deal/day: {algo_ai_rnd.get_closed_deal_per_day()} transaction/day: {algo_ai_rnd.get_transaction_per_day()}")
+	log(f"  turnover: {int(algo_ai_rnd.get_turnover())} profit: {algo_ai_rnd.get_profit()} cost (0,055%): {int(algo_ai_override.get_turnover() * (.055 / 100))}")
 
 	log(f"""  Average prediction runtime: {round(ai.ai_models[project]["predict_average_runtime"], 3)}""")
-	
-	algo_ai_override.show_history()
+
 	algo_ai_rnd.show_history()
+	algo_ai_override.show_history()
 
 	algo_ai_override.history.to_excel('algo_ai_override.xlsx', engine='xlsxwriter')
 	algo_ai_rnd.history.to_excel('algo_ai_rnd.xlsx', engine='xlsxwriter')
