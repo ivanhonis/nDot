@@ -690,27 +690,39 @@ class n_chart:
             inc = tuple(inc)
             dec = df['y_P10INT'] == 2
             dec = tuple(dec)
+            zer = df['y_P10INT'] == 0
+            zer = tuple(zer)
 
             view_long = CDSView(source=stock, filters=[BooleanFilter(inc)])
             view_short = CDSView(source=stock, filters=[BooleanFilter(dec)])
+            view_zer = CDSView(source=stock, filters=[BooleanFilter(zer)])
 
             p.triangle('index', 'ohlc4', line_width=0, fill_color=self.green,
                        size=15, source=stock, legend_label="long y", view=view_long)
             p.inverted_triangle('index', 'ohlc4', line_width=0, fill_color=self.red,
                        size=15, source=stock, legend_label="short y", view=view_short)
+            p.circle('index', 'ohlc4', line_width=0, fill_color=self.black,
+                     size=4, source=stock, legend_label="neutral sig", view=view_zer)
 
-            inc = df['SIG_P10INT'] == 1
-            inc = tuple(inc)
-            dec = df['SIG_P10INT'] == 2
-            dec = tuple(dec)
+            # inc = df['SIG_P10INT'] == 1
+            # inc = tuple(inc)
+            # dec = df['SIG_P10INT'] == 2
+            # dec = tuple(dec)
+            # zer = df['SIG_P10INT'] == 0
+            # zer = tuple(zer)
 
-            view_long_sig = CDSView(source=stock, filters=[BooleanFilter(inc)])
-            view_short_sig = CDSView(source=stock, filters=[BooleanFilter(dec)])
+            # view_long_sig = CDSView(source=stock, filters=[BooleanFilter(inc)])
+            # view_short_sig = CDSView(source=stock, filters=[BooleanFilter(dec)])
+            # view_zer = CDSView(source=stock, filters=[BooleanFilter(zer)])
+            #
+            # p.circle('index', 'ohlc4', line_width=0, fill_color=self.green,
+            #            size=8, source=stock, legend_label="long sig", view=view_long_sig)
+            # p.circle('index', 'ohlc4', line_width=0, fill_color=self.red,
+            #            size=8, source=stock, legend_label="short sig", view=view_short_sig)
+            #
+            # p.circle('index', 'ohlc4', line_width=0, fill_color=self.black,
+            #            size=4, source=stock, legend_label="neutral sig", view=view_zer)
 
-            p.circle('index', 'ohlc4', line_width=0, fill_color=self.green,
-                       size=8, source=stock, legend_label="long sig", view=view_long_sig)
-            p.circle('index', 'ohlc4', line_width=0, fill_color=self.red,
-                       size=8, source=stock, legend_label="short sig", view=view_short_sig)
 
         p.legend.visible = False
 

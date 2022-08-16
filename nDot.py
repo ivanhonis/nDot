@@ -1028,20 +1028,33 @@ class n_date_frame2:
 			i_ser = list(range(i_pos_first, i_pos_first + overlay_steps))
 
 			nddf[symbol]["TEMP_CUY_MAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
-			print(ori_field)
-			# nddf[symbol][new_field] = nddf[symbol][ori_field] & nddf[symbol]["TEMP_CUY_MAX"]
-			# nddf[symbol][new_field] = [nddf[symbol][ori_field] if x == 'Z' else 'green' for x in df['Set']]
-			nddf[symbol][new_field] = 0
+			self.remove_columns(symbol, i_remove)
+			nddf[symbol][new_field] = 9
 			nddf[symbol].loc[nddf[symbol]["TEMP_CUY_MAX"] == 0, new_field] = nddf[symbol][ori_field]
-			# nddf[symbol][new_field] = [nddf[symbol][ori_field] if x == 0 else 0 for x in nddf[symbol]["TEMP_CUY_MAX"]]
-			# print(nddf[symbol]["Date"][299805:299809])
-			# print(nddf[symbol]['TEMP_CUY_MAX'][299805:299809])
-			# print(nddf[symbol][new_field][299805:299809])
-			# print(nddf[symbol][ori_field][299805:299809])
+			i_remove.append('TEMP_CUY_MAX')
+			# eddig minden 1es és 2ből csak az első van a nem hsználható 1és 2 ből 9es lett
+
+			for i_dif in range(1, overlay_steps + 1 + 1):
+				c_name = "TEMP_LZ" + str(i_dif)
+				i_remove.append(c_name)
+				nddf[symbol][c_name] = nddf[symbol][new_field].shift(- i_dif)
+
+			i_pos_first = nddf[symbol].columns.get_loc("TEMP_LZ1")
+			i_ser = list(range(i_pos_first, i_pos_first + overlay_steps + 1))
+			nddf[symbol]["TEMP_LZ_MAX"] = nddf[symbol].iloc[:, i_ser].max(axis=1)
+
+			nddf[symbol].loc[((nddf[symbol]["TEMP_LZ_MAX"] > 0) & (nddf[symbol][new_field] == 0)), new_field] = 9
+			i_remove.append('TEMP_LZ_MAX')
 			i_remove.append('TEMP_CUY_MAX')
 			self.remove_columns(symbol, i_remove)
-			log("  None zero: " + ori_field + "  " + str(np.count_nonzero(nddf[symbol][ori_field] != 0)))
-			log("  None zero: " + new_field + "  " + str(np.count_nonzero(nddf[symbol][new_field] != 0)))
+			c1 = np.count_nonzero(nddf[symbol][ori_field] == 0)
+			c2 = np.count_nonzero(nddf[symbol][ori_field] == 1)
+			c3 = np.count_nonzero(nddf[symbol][ori_field] == 2)
+			x1 = np.count_nonzero(nddf[symbol][new_field] == 0)
+			x2 = np.count_nonzero(nddf[symbol][new_field] == 1)
+			x3 = np.count_nonzero(nddf[symbol][new_field] == 2)
+			log("  Before overlay manager: " + ori_field + "  " + str(c1 + c2 + c3))
+			log("  After overlay manager: " + new_field + "  " + str(x1 + x2 + x3))
 			# ndf.set_dt_order(symbol)
 			# nddb.write(symbol)
 		else:
@@ -1394,7 +1407,7 @@ class n_date_frame2:
 		log("  Orig size:" + str(nddf[symbol].shape))
 		nddf[symbol] = nddf[symbol][0:-200000].copy()
 		log("  New size:" + str(nddf[symbol].shape))
-		
+
 		config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
 		file = pathlib.Path(config_file_path)
 		if file.exists():
@@ -1418,6 +1431,7 @@ class n_date_frame2:
 				if field_ok_basic and field_ok_original_fields and field_ok_contras:
 					time_window_size = dataset_config["time_window_size"]
 					back_shift = dataset_config["data_window_back_shift"]
+					overlay_steps = dataset_config["overlay_steps"]
 					y_field = "y_" + dataset_config["sig_suffix"]
 					if force:  # ha már van y akkor kitörli és mindenképen megcsinálja
 						ndf.remove_columns(symbol, [y_field])
@@ -1425,7 +1439,7 @@ class n_date_frame2:
 						log(y_field + " already exist.")
 					else:
 						log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
-						self.sig_to_y(symbol, sig_field, y_field, time_window_size)
+						self.sig_to_y(symbol, sig_field, y_field, overlay_steps)
 
 
 					
@@ -1455,6 +1469,7 @@ class n_date_frame2:
 					len2 = len(i_indexes[2])
 					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
 					i_indexes[0] = i_indexes[0][0: max_elemet]
+					i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
 					s2(True, len1 + len2 + max_elemet)
 					for ix in range(3):
 						log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
@@ -3047,10 +3062,7 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-	del nddf['BTCUSDT_FREE']
-	nddb.remove('BTCUSDT_FREE')
-	ndf_meta.remove_meta('BTCUSDT_FREE')
-
+	ndf.sig_to_y("BTCUSDT", "SIG_P10INT", "y_P10INT", 10)
 
 def do2(symbol="", p2="", p3=""):
 	print(tuple(nddf["BTCUSDT"].columns))

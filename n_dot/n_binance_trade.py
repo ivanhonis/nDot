@@ -123,7 +123,8 @@ class n_binance_trade():
                                                                interval=Client.KLINE_INTERVAL_1MINUTE,
                                                                start_str=from_dt,
                                                                limit=1002)
-            self.binance_client.close_connection()
+            # print(klines)
+            # self.binance_client.close_connection()
         except Exception as e:
             print(e)
             # self.log("Binance exception: " + symbol + " - "
