@@ -43,6 +43,7 @@ class n_algo_trade:
         self.deal_count = 0
         self.closed_deal_count = 0
         self.act_profit = 0
+        self.last_ohlc4 = 1000000000000 # nagy kezdőérték
         self.steps = 0
         self.stock_size_orig = 0
         self.price_dict = {}
@@ -61,6 +62,7 @@ class n_algo_trade:
         self.y_predict = 0
         self.h_actual_realised_pnl = 0
         self.turnover = 0
+        self.enter_count = 1
         # silent investor -------------------------------
         self.silent_investor_orig_amount = 0
         self.silent_investor_actual_amount = 0
@@ -128,6 +130,7 @@ class n_algo_trade:
         self.avg_income_price_h = self.avg_income_price
         self.trailer_profit = round((trade_price - self.avg_income_price) * self.actual_qt, 8)
         self.deal_count += 1
+        self.enter_count += 1
 
         # if not self.next_price_random:
         #     trade_price = self.next_rnd_price
@@ -202,6 +205,7 @@ class n_algo_trade:
         self.act_profit = 0
         self.deal_count += 1
         self.closed_deal_count += 1
+        self.enter_count = 1
         if self.open_limit <= 0:
             print(f"Minden elúszott :)  TARTOZÁS: {self.value_limit - abs(self.realised_profit)}")
 
@@ -322,19 +326,43 @@ class n_algo_trade:
         self.y_predict_strength = y_predict_strength
         self.actual_price = self.price_dict['actual_ohlc4']
         self.actual_date_time = date_time
-        decision1, qt1 = self.decision(sig, y_predict, y_predict_strength)
+        decision1, qt1 = self.decision(sig, y_predict, y_predict_strength, date_time)
         # print(decision1, qt1)
         decision2, qt2 = self.limit(decision1, qt1)
         # print("Limit", decision2, qt2)
         self.action(decision2, qt2, date_time)
 
-    def decision(self, sig, y_predict, y_predict_strength):
+    def decision(self, sig, y_predict, y_predict_strength, date_time):
 
         if self.strategy == 66:  # signal drived
-            if y_predict == 1 and y_predict_strength > .999:
+            if y_predict == 1 and y_predict_strength > .975:
+
+                if self.enter_count == 1:
+                    decision = "BUY"
+                    decision_qt = self.get_stock_qt() / 4
+                elif self.enter_count > 1 and self.price_dict['actual_ohlc4'] > self.last_ohlc4:
+                    decision = "BUY"
+                    decision_qt = (self.get_stock_qt() / 4) * self.enter_count
+                    if self.name == "BTCUSDT" + " Ai decisions drived":
+                        print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
+                else:
+                    decision = "None"
+                    decision_qt = 0
+                self.last_ohlc4 = self.price_dict['actual_ohlc4']
+                # print(decision_qt)
+            elif y_predict == 2 and y_predict_strength > .975:
+                decision = "SELL"
+                decision_qt = 0
+            else:
+                decision = "NONE"
+                decision_qt = 0
+            return decision, decision_qt
+
+        if self.strategy == 67:  # signal drived
+            if y_predict == 1 and y_predict_strength > .99:
                 decision = "BUY"
                 decision_qt = self.get_stock_qt()
-            elif y_predict == 2 and y_predict_strength > .999:
+            elif y_predict == 2 and y_predict_strength > .99:
                 decision = "SELL"
                 decision_qt = 0
             else:
@@ -720,12 +748,12 @@ class n_algo_trade:
             label_dic = {}
 
             for i_i, i_date in enumerate(tuple(hdf['actual_date_time'])):
-                label_dic[i_i] = f"{i_date.hour}:{i_date.minute}"
+                label_dic[i_i] = f"{i_date.month}.{i_date.day} {i_date.hour}:{i_date.minute}"
 
             p.xaxis.major_label_overrides = label_dic
             # p.x_range.range_padding = 60
             # p.xaxis.ticker.desired_num_ticks = 60
-            p.xaxis.major_label_orientation = 3.14 / 8
+            # p.xaxis.major_label_orientation = 3.14 / 8
 
             return p
 

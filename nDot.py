@@ -3250,7 +3250,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	stock_size = 40000
 	
 	algo_ai_override = n_algo_trade()
-	algo_ai_override.config({"name": symbol + "Ai decisions drived",
+	algo_ai_override.config({"name": symbol + " Ai decisions drived",
 							 "value_limit": value_limit,
 							 "stock_size": stock_size,
 							 "stop_loss_limit": -80,
@@ -3312,7 +3312,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	# 	print(y_predict[i], y_predict_sig[i], y_predict_perc[i])
 	# 	time.sleep(0)
 
-	last_y = 0
+	last_y = [0]
 	for ix in range(0, x_to - x_from):
 		price_dict = {
 			"actual_low": pre_low[ix],
@@ -3323,11 +3323,15 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 			"next_ohlc4": pre_ohlc4[ix + 1]
 		}
 
-		if y_predict_sig[ix] == last_y:  # kilövöm azokat amikor egymás után ugyan azt nyomja
-			mod_ypedict_sig = 0
-		else:
-			mod_ypedict_sig = y_predict_sig[ix]
-		last_y = mod_ypedict_sig
+		# if y_predict_sig[ix] in last_y:  # kilövöm azokat amikor egymás után ugyan azt nyomja
+		# 	mod_ypedict_sig = 0
+		# else:
+		# 	mod_ypedict_sig = y_predict_sig[ix]
+		# last_y.append(mod_ypedict_sig)
+		# last_y = last_y[-10:]
+
+		mod_ypedict_sig = y_predict_sig[ix]
+
 		algo_ai_override.transaction(pre_sig[ix], mod_ypedict_sig, y_predict_perc[ix], price_dict, pre_date[ix])
 
 		rnd_sig = random.randint(0, 2)

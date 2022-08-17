@@ -116,8 +116,8 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 15px;
 padding-left: 10px;
 color: #888888;
-border-bottom: 1px solid #888888;
-border-left: 1px solid #888888;
+border-bottom: 1px solid #000000;
+border-left: 1px solid #000000;
 </string>
    </property>
    <property name="text">
@@ -148,8 +148,8 @@ border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;
 border-bottom: 1px solid #eeeeee;
 padding-left: 10px;
-border-top: 1px solid #888888;
-border-left: 1px solid #888888;
+border-top: 1px solid #ffffff;
+border-left: 1px solid #000000;
 
 
 </string>
@@ -184,8 +184,8 @@ border-left: 1px solid #888888;
 	border-top-right-radius:28px;
 	border-bottom-right-radius: 28px;
 	border-bottom-left-radius: 28px;
-	border-top:1px solid #eeeeee;
-	border-left:1px solid #eeeeee;
+	border-top:1px solid #ffffff;
+	border-left:1px solid #000000;
 	border-bottom:1px solid #000000;
 	border-right:1px solid #000000;
 	color:#ffffff;
