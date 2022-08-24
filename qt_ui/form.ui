@@ -266,15 +266,16 @@ background-color: none;</string>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>17</x>
-     <y>22</y>
-     <width>108</width>
+     <x>8</x>
+     <y>25</y>
+     <width>111</width>
      <height>40</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>22</pointsize>
+     <family>Arial</family>
+     <pointsize>20</pointsize>
      <bold>true</bold>
      <kerning>true</kerning>
     </font>
@@ -284,7 +285,7 @@ background-color: none;</string>
 background:none;</string>
    </property>
    <property name="text">
-    <string>nDot</string>
+    <string>nDot.io</string>
    </property>
   </widget>
   <widget class="Line" name="line_6">
@@ -6743,15 +6744,15 @@ border-bottom-left-radius: 0px;</string>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>15</x>
-     <y>21</y>
-     <width>108</width>
+     <x>7</x>
+     <y>24</y>
+     <width>111</width>
      <height>40</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>22</pointsize>
+     <pointsize>20</pointsize>
      <bold>true</bold>
      <kerning>true</kerning>
     </font>
@@ -6762,6 +6763,30 @@ background:none;</string>
    </property>
    <property name="text">
     <string>nDot</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_7">
+   <property name="geometry">
+    <rect>
+     <x>82</x>
+     <y>21</y>
+     <width>41</width>
+     <height>40</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>20</pointsize>
+     <bold>true</bold>
+     <kerning>true</kerning>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color:#ff9100;
+background:none;</string>
+   </property>
+   <property name="text">
+    <string>.io</string>
    </property>
   </widget>
   <zorder>LT_scrollArea_2</zorder>
@@ -6833,6 +6858,7 @@ background:none;</string>
   <zorder>line_15</zorder>
   <zorder>Progress_Bar</zorder>
   <zorder>label_3</zorder>
+  <zorder>label_7</zorder>
  </widget>
  <resources/>
  <connections/>

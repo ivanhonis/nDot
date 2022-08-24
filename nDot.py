@@ -385,7 +385,7 @@ if LocalRUN:
 				# Save command ---------------------------------------
 				if self.command_line_history[0] != self.Command_Line.text():
 					self.command_line_history.insert(0, self.Command_Line.text())
-					self.command_line_history = self.command_line_history[:25]
+					self.command_line_history = self.command_line_history[:250]
 					self.command_line_history_position = 0
 					self.save_command_line_history()
 				# Run command -------------------------------------------
@@ -461,8 +461,8 @@ if LocalRUN:
                                                 border-bottom-left-radius: 0px;
                                                 border-bottom: 1px solid #eeeeee;
                                                 padding-left: 10px;
-                                                border-top: 1px solid #888888;
-                                                border-left: 1px solid #888888;
+                                                border-top: 1px solid #ffffff;
+                                                border-left: 1px solid #000000;
                                                 ''')
 				self.Command_Hint.setText(message)
 				QApplication.processEvents()
@@ -474,8 +474,8 @@ if LocalRUN:
                                                 border-bottom-left-radius: 0px;
                                                 border-bottom: 1px solid #eeeeee;
                                                 padding-left: 10px;
-                                                border-top: 1px solid #888888;
-                                                border-left: 1px solid #888888;
+                                                border-top: 1px solid #ffffff;
+                                                border-left: 1px solid #000000;
                                                 ''')
 				
 				self.Command_Hint.setText(message)
@@ -1086,6 +1086,7 @@ class n_date_frame2:
 	
 	def get_contra_copies(self, contras):
 		result = {}
+		result_dt = {}
 		if len(contras) > 0:
 			for i_con in contras:
 				contra_sep_pre = i_con.split('_')
@@ -1103,12 +1104,15 @@ class n_date_frame2:
 				if con_symbol not in result:
 					result[con_symbol] = nddf[con_symbol].copy()
 					result[con_symbol].set_index("Date", inplace=True)
-		return result
+					result_dt[con_symbol] = np.array(result[con_symbol].index)
+		return result, result_dt
 	
-	def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras, contra_copies):
+	def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras, contra_copies, contra_copies_dt):
 		
 		i_int_to = int(index)
 		i_int_from = i_int_to - time_window_size + 1
+		# print(nddf[symbol]["Date"][i_int_to:i_int_to + 1])
+		# sys.exit(0)
 		
 		i_data_array = np.array([])
 		if i_int_from > 0:
@@ -1137,10 +1141,16 @@ class n_date_frame2:
 					# orig_date = nddf[symbol].loc[index, "Date"]
 					# print(orig_date)
 					orig_date = nddf[symbol]["Date"][index:index+1].values[0]
+					# print(orig_date)
 					# sys.exit()
 					try:
-						i_int_to_contra = contra_copies[con_symbol].index.get_loc(orig_date, method='ffill')
-						# print(i_int_to_contra)
+						# i_int_to_contra = contra_copies[con_symbol].index.get_loc(orig_date, method='ffill')
+						i_int_to_contra = np.where(contra_copies_dt[con_symbol] == orig_date)[0][0]
+						# print(i_int_to_contra, i_int_to_contra2, orig_date)
+						# i_int_to_contra2 = contra_copies[con_symbol].get_indexer(orig_date, method='ffill')
+						# print(i_int_to_contra, i_int_to_contra2)
+						# if i_int_to_contra == i_int_to_contra2:
+						# 	print("jó a csere")
 						# sys.exit(0)
 					except:
 						return np.array([])
@@ -1376,7 +1386,8 @@ class n_date_frame2:
 		def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, back_shift=0):
 			array_len = time_window_size * (len(original_fields) + len(contras))
 			
-			contra_copies = self.get_contra_copies(contras)
+			# contra_copies = self.get_contra_copies(contras)
+			contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
 			asked = 0
 			recieved = 0
 			for nx, i_il in enumerate(indexes):
@@ -1388,10 +1399,8 @@ class n_date_frame2:
 														 time_window_size=time_window_size,
 														 original_fields=original_fields,
 														 contras=contras,
-														 contra_copies=contra_copies
-														 # contras_indexes=contras_indexes,
-														 # contra_n=nx
-														 )
+														 contra_copies=contra_copies,
+														 contra_copies_dt=contra_copies_dt)
 				
 				if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
 					recieved += 1
@@ -1464,6 +1473,9 @@ class n_date_frame2:
 					for ix in range(3):
 						i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
 						# i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
+
+					i_indexes[1] = i_indexes[1][0:25000]
+					i_indexes[2] = i_indexes[2][0:25000]
 
 					len1 = len(i_indexes[1])
 					len2 = len(i_indexes[2])
@@ -2587,7 +2599,7 @@ class n_date_frame2:
 			elif tech_indicator == "P10INT":
 				params = str(params[1:-1]).split(',')
 				if len(params) != 3:
-					params = [.5, 50, 10]
+					params = [.9, 60, 15]
 
 				self.remove_columns(symbol, ['SIG_P10INT', 'y_P10INT'])
 
@@ -2639,8 +2651,8 @@ class n_date_frame2:
 				profit_limit = float(params[0]) / 100
 				prob_limit = float(params[1]) / 100
 				time_frame = int(params[2])  ## hán perces idő intervallumot figyel előre
-				log("  Settings: profit limit: " + str(profit_limit * 100) + "%,   Prob. limit: " + str(
-					prob_limit * 100) + "%   Time frame: " + str(time_frame))
+				log("  Settings: profit limit: " + str(profit_limit * 100) + "%,   Prob. limit: " +
+					str(round(prob_limit * 100, 2)) + "%   Time frame: " + str(time_frame))
 				full_time_traded_istrument = True  # kriptókhoz
 				if symbol in nbt.crypto:
 					tick_size = float(nbt.pai[symbol]['tick_size'])
@@ -2668,6 +2680,13 @@ class n_date_frame2:
 						high_np = high_s[g: g + time_frame]
 						pr = prob_profit(low_np, high_np, tick_size, profit_limit, prob_limit)
 						r_array[g] = pr
+
+					if g % 5000 == 0 and g != 0:
+						uar1 = np.unique(np.array(r_array), return_counts=True)[1][1]
+						uar2 = np.unique(np.array(r_array), return_counts=True)[1][2]
+						uar_pred1 = int(len(low_s) / g * uar1)
+						uar_pred2 = int(len(low_s) / g * uar2)
+						log(f"  {g}->   1: now: {uar1} / predict: {uar_pred1}      2: now: {uar2} / predict: {uar_pred2}")
 
 				log("Result: ")
 				log("  0 = Under limit: " + str(np.count_nonzero(r_array == 0)))
@@ -3065,7 +3084,49 @@ def do(symbol="", p2="", p3=""):
 	ndf.sig_to_y("BTCUSDT", "SIG_P10INT", "y_P10INT", 10)
 
 def do2(symbol="", p2="", p3=""):
-	print(tuple(nddf["BTCUSDT"].columns))
+	project = "BTCUSDT_P10INT"
+	symbol = "BTCUSDT"
+	x_from = 100
+	x_to = 1000000
+	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
+	time_window_size = int(dataset_config['time_window_size'])
+	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+	ai.build()
+	good_sig_count = 0
+	bad_sig_count = 0.1
+
+	sig = nddf[symbol].SIG_P10INT.values
+	print(len(sig))
+	sig = np.array(sig)
+	sig_index = np.where(sig == 1)[0]
+	print("sig", len(sig_index))
+
+	sig = nddf[symbol].y_P10INT.values
+	print(len(sig))
+	sig = np.array(sig)
+	sig_index = np.where(sig == 1)[0]
+	print("y", len(sig_index))
+	for i_i in sig_index:
+		print(sig[i_i])
+		if sig[i_i] == 1:
+			x_set = []
+			x_set.append(ndf.get_dataset_by_index(symbol=symbol,
+												  index=i_i,
+												  time_window_size=time_window_size,
+												  original_fields=original_fields,
+												  contras=contras,
+												  contra_copies=contra_copies,
+												  contra_copies_dt=contra_copies_dt))
+			y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, x_set)
+			print(f"{sig[i_i]} - {y_predict_sig}")
+			if y_predict_sig == 1:
+				good_sig_count += 1
+			else:
+				bad_sig_count += 1
+			print(f"{i_i} - good {good_sig_count} bad {bad_sig_count}   {round(good_sig_count/(bad_sig_count + good_sig_count), 3)}")
+
+
+
 
 def stream_job():
 	print("run outer job")
@@ -3103,10 +3164,13 @@ def s(msg_str):
 
 s2_value = 0
 s2_max = 0
+s2_last_dt = datetime.now()
+re_ti_str = ""
 
 
 def s2(null=False, steps=0, text=""):
-	global s2_value, s2_max
+	global s2_value, s2_max, s2_last_dt, re_ti_str
+
 	if LogTo == "Gui":
 		QApplication.processEvents()
 		if null:
@@ -3116,7 +3180,18 @@ def s2(null=False, steps=0, text=""):
 			gui.Progress_Bar.setValue(int(s2_value))
 		else:
 			if s2_value <= s2_max:
-				gui.Status.setText(" ".join(["Status:", str(round(s2_value / s2_max * 100, 3))[:5], "%", text]))
+				prc = '{0:.2f}'.format(s2_value / s2_max * 100)
+				perc_str = f"Status: {prc} % {text}                    "
+				perc_str = perc_str[0:35]
+				if s2_value % 500 == 0:
+					t = (datetime.now() - s2_last_dt) / 500
+					s2_last_dt = datetime.now()
+					re_ti = (s2_max - s2_value) * t
+					imin = int(re_ti.seconds / 60)
+					isec = "00" + str(re_ti.seconds - (imin * 60))
+					isec = isec[-2:]
+					re_ti_str = f"remaining time: {imin}:{isec} min."
+				gui.Status.setText(f"{perc_str}  {re_ti_str}")
 				gui.Progress_Bar.setValue(int(s2_value / s2_max * 100))
 				s2_value += 1
 			else:
@@ -3129,6 +3204,8 @@ def stream_last_refresh(text):
 	gui.Ndf_last_update.setText(text)
 	QApplication.processEvents()
 
+def ai_log():
+	pass
 
 def log(add_text, line=False, indent=True, color="normal", visible=True):
 	if visible:
@@ -3219,8 +3296,22 @@ def ai_remove(symbol="", project=""):
 def ai_download(project_name, rename=""):
 	ai.download(project_name, rename)
 
+def summary(obj):
+	log("  ")
+	log(f"{obj.name}")
+	log(f"  value limit: {obj.value_limit} stock_size: {obj.stock_size_orig}")
+	log(f"  profit/day: {obj.get_profit_per_day()} profit/closed deal: {obj.get_profit_per_closed_deal()}")
+	log(f"  closed_deal/day: {obj.get_closed_deal_per_day()} transaction/day: {obj.get_transaction_per_day()}")
+	log(f"  turnover: {int(obj.get_turnover())} gross profit: {obj.get_profit()}")
+	log(f"  net profit (0.075%): {obj.get_profit() - int(obj.get_turnover() * (.075 / 100))}")
+	log(f"  net profit (0.055%): {obj.get_profit() - int(obj.get_turnover() * (.055 / 100))}")
+	log(f"  net profit (0.025%): {obj.get_profit() - int(obj.get_turnover() * (.025 / 100))}")
+
+
+	pass
 
 def ai_backtest(symbol, run_time_window, project, start_position=0):
+	parallel_backtest = False
 	start_position = int(start_position)
 	log(f"ai_backtest {symbol} {run_time_window} {project}")
 	run_time_window = int(run_time_window)
@@ -3246,17 +3337,23 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	log(f"start_position: {x_from}")
 	log(f"Selected test time window: {from_date} - {to_date}")
 	
-	value_limit = 40000
-	stock_size = 40000
-	
+	value_limit = 10000
+	stock_size = 10000
+	# transaction_fee_p = 0.055 /100  # %
+	# transaction_fee_c = int(stock_size * transaction_fee_p)
+	stop_loss = stock_size * .1 / 100 * -1  # %
+	log(f"stock size: {stock_size} USD")
+	log(f"stop loss: {stop_loss} USD")
+
 	algo_ai_override = n_algo_trade()
-	algo_ai_override.config({"name": symbol + " Ai decisions drived",
+	algo_ai_override.config({"name": symbol + " Ai " + str(x_from) + " - " + str(x_to),
+							 "id": 1,
 							 "value_limit": value_limit,
 							 "stock_size": stock_size,
-							 "stop_loss_limit": -80,
+							 "stop_loss_limit": stop_loss,
 							 "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							 "trailer_stop": .8,
-							 "trailer_min_profit": 5,
+							 "trailer_stop": .15,
+							 "trailer_min_profit": 10,
 							 "value_limit_profit_reinvest": True,
 							 "steps_limit": 120,
 							 "strategy": 66,
@@ -3264,30 +3361,32 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							 "trade_time_stop": (23, 59),
 							 "next_price_random": True
 							 })
-	
-	algo_ai_rnd = n_algo_trade()
-	algo_ai_rnd.config({"name": symbol + "Rnd",
-							  "value_limit": value_limit,
-							  "stock_size": stock_size,
-							  "stop_loss_limit": -80,
-							  "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							  "trailer_stop": .8,
-							  "trailer_min_profit": 5,
-							  "value_limit_profit_reinvest": True,
-							  "steps_limit": 120,
-							  "strategy": 66,
-							  "trade_time_start": (0, 1),
-							  "trade_time_stop": (23, 59),
-							  "next_price_random": True
-							  })
+
+	if parallel_backtest:
+		algo_ai_rnd = n_algo_trade()
+		algo_ai_rnd.config({"name": symbol + " sig random.shuffle "  + str(x_from) + " - " + str(x_to),
+							"id": 2,
+							"value_limit": value_limit,
+							"stock_size": stock_size,
+							"stop_loss_limit": stop_loss,
+							"profit_take_limit": -1,  # -1 nincs bekapcsolva
+							"trailer_stop": .15,
+							"trailer_min_profit": 10,
+							"value_limit_profit_reinvest": True,
+							"steps_limit": 120,
+							"strategy": 66,
+							"trade_time_start": (0, 1),
+							"trade_time_stop": (23, 59),
+							"next_price_random": True
+							})
 	
 
 	s2(True, (x_to - x_from) * 2)
-	
-	contra_copies = ndf.get_contra_copies(contras)
-	# print(contra_copies)
-	
-	pre_load = nddf[symbol].loc[x_from:x_to + 1, ['ohlc4', sig_field, 'Date', 'Low', 'High']]
+
+	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+	# print(contra_copies_dt)
+
+	pre_load = nddf[symbol].loc[x_from:x_to + 1, ['ohlc4', sig_field, 'Date', 'Low', 'High', 'MACDh_12_26_9']]
 	# print(pre_load)
 	pre_ohlc4 = tuple(pre_load['ohlc4'])
 	pre_sig = tuple(pre_load[sig_field])
@@ -3295,21 +3394,38 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	pre_date = tuple(pre_load['Date'])
 	pre_low = tuple(pre_load['Low'])
 	pre_high = tuple(pre_load['High'])
-	
-	x_set = []
-	for ix in range(0, x_to - x_from):
-		x_set.append(ndf.get_dataset_by_index(symbol=symbol,
-											  index=ix + x_from,
-											  time_window_size=time_window_size,
-											  original_fields=original_fields,
-											  contras=contras,
-											  contra_copies=contra_copies))
-		s2()
+	pre_macdh = tuple(pre_load['MACDh_12_26_9'])
+
+	backtest_cache_name = "x_set_" + str(x_from) + "_"+str(x_to)
+
+	try:
+		x_set = np.load(backtest_cache_name + '.npy')
+		s2(True, (x_to - x_from) * 1)
+	except:
+		s2(True, (x_to - x_from) * 2)
+		x_set = []
+		for ix in range(0, x_to - x_from):
+			s2()
+			x_set.append(ndf.get_dataset_by_index(symbol=symbol,
+												  index=ix + x_from,
+												  time_window_size=time_window_size,
+												  original_fields=original_fields,
+												  contras=contras,
+												  contra_copies=contra_copies,
+												  contra_copies_dt=contra_copies_dt))
+		x_set = np.array(x_set)
+		np.save(backtest_cache_name, x_set)
 
 	gui.ailog(f"Predict y: {symbol} {project} X_set size: {len(x_set)}")
-	y_predict, y_predict_sig, y_predict_perc = ai.predict_multi(symbol, project, x_set)
+	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, x_set)
+	del x_set
+	del contra_copies
+	y_predict_sig_rnd = y_predict_sig.copy()
+	y_predict_strength_rnd = y_predict_strength.copy()
+	np.random.shuffle(y_predict_sig_rnd)
+	np.random.shuffle(y_predict_strength_rnd)
 	# for i in range(len(y_predict)):
-	# 	print(y_predict[i], y_predict_sig[i], y_predict_perc[i])
+	# 	print(y_predict[i], y_predict_sig[i], y_predict_strength[i])
 	# 	time.sleep(0)
 
 	last_y = [0]
@@ -3320,7 +3436,8 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 			"actual_ohlc4": pre_ohlc4[ix],
 			"next_low": pre_low[ix + 1],
 			"next_high": pre_high[ix + 1],
-			"next_ohlc4": pre_ohlc4[ix + 1]
+			"next_ohlc4": pre_ohlc4[ix + 1],
+			"actual_macdh": pre_macdh[ix]
 		}
 
 		# if y_predict_sig[ix] in last_y:  # kilövöm azokat amikor egymás után ugyan azt nyomja
@@ -3332,45 +3449,27 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 
 		mod_ypedict_sig = y_predict_sig[ix]
 
-		algo_ai_override.transaction(pre_sig[ix], mod_ypedict_sig, y_predict_perc[ix], price_dict, pre_date[ix])
-
-		rnd_sig = random.randint(0, 2)
-		rnd_perc = random.uniform(.85, 1)
-		algo_ai_rnd.transaction(pre_sig[ix], rnd_sig, rnd_perc, price_dict, pre_date[ix])
-
-		# pre_x = 4
-		# if y_predict_sig[ix] == 0:
-		# 	pre_x = 1
-		# elif y_predict_sig[ix] == 1:
-		# 	pre_x = 0
-		# algo_ai_override4.transaction(pre_sig[ix], pre_x, y_predict_perc[ix], price_dict, pre_date[ix])
+		algo_ai_override.transaction(pre_sig[ix], mod_ypedict_sig, y_predict_strength[ix], price_dict, pre_date[ix])
+		if parallel_backtest:
+			algo_ai_rnd.transaction(pre_sig[ix], y_predict_sig_rnd[ix], y_predict_strength_rnd[ix], price_dict, pre_date[ix])
 		s2()
-	
-	del contra_copies
 
-	log("  ")
-	log(f"Ai decisions drived.")
-	log(f"  value limit: {algo_ai_override.value_limit} stock_size: {algo_ai_override.stock_size_orig}")
-	log(f"  profit/day: {algo_ai_override.get_profit_per_day()} profit/closed deal: {algo_ai_override.get_profit_per_closed_deal()}")
-	log(f"  closed_deal/day: {algo_ai_override.get_closed_deal_per_day()} transaction/day: {algo_ai_override.get_transaction_per_day()}")
-	log(f"  turnover: {int(algo_ai_override.get_turnover())} profit: {algo_ai_override.get_profit()} cost (0,055%): {int(algo_ai_override.get_turnover() * (.055 / 100))}")
-	log("  ")
-	log(f"Random drived.")
-	log(f"  value limit: {algo_ai_rnd.value_limit} stock_size: {algo_ai_rnd.stock_size_orig}")
-	log(f"  profit/day: {algo_ai_rnd.get_profit_per_day()} profit/closed deal: {algo_ai_rnd.get_profit_per_closed_deal()}")
-	log(f"  closed_deal/day: {algo_ai_rnd.get_closed_deal_per_day()} transaction/day: {algo_ai_rnd.get_transaction_per_day()}")
-	log(f"  turnover: {int(algo_ai_rnd.get_turnover())} profit: {algo_ai_rnd.get_profit()} cost (0,055%): {int(algo_ai_override.get_turnover() * (.055 / 100))}")
+	summary(algo_ai_override)
+	if parallel_backtest:
+		summary(algo_ai_rnd)
 
 	log(f"""  Average prediction runtime: {round(ai.ai_models[project]["predict_average_runtime"], 3)}""")
 
-	algo_ai_rnd.show_history()
 	algo_ai_override.show_history()
+	if parallel_backtest:
+		algo_ai_rnd.show_history()
 
-	algo_ai_override.history.to_excel('algo_ai_override.xlsx', engine='xlsxwriter')
-	algo_ai_rnd.history.to_excel('algo_ai_rnd.xlsx', engine='xlsxwriter')
+	# algo_ai_override.history.to_excel('algo_ai_override.xlsx', engine='xlsxwriter')
+	# algo_ai_rnd.history.to_excel('algo_ai_rnd.xlsx', engine='xlsxwriter')
 
 	del algo_ai_override
-	del algo_ai_rnd
+	if parallel_backtest:
+		del algo_ai_rnd
 
 
 def ai_build():

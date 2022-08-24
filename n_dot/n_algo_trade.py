@@ -11,6 +11,7 @@ from bokeh.models.callbacks import CustomJS
 # from bokeh.models import HoverTool, ColumnDataSource, BooleanFilter, CDSView, Range1d, Span
 from bokeh.layouts import column
 # from math import radians
+from statistics import mean
 
 
 class n_algo_trade:
@@ -19,6 +20,7 @@ class n_algo_trade:
 
         # settings -----------------------------
         self.name = "Name"
+        self.id = 0
         self.trailer_stop = .5
         self.profit_take_limit = -1   # -1 nincs bekpcsolva
         self.stock_size = 5000  # in USD
@@ -44,11 +46,12 @@ class n_algo_trade:
         self.closed_deal_count = 0
         self.act_profit = 0
         self.last_ohlc4 = 1000000000000 # nagy kezdőérték
+        self.last_y = [1]
         self.steps = 0
         self.stock_size_orig = 0
         self.price_dict = {}
         # hisory -------------------------
-        self.sig_way_memory = np.zeros(11)
+        # self.sig_way_memory = np.zeros(11)
         self.sig_way = 0
         self.history = pd.DataFrame(None)
         self.chart_elements = list()
@@ -86,21 +89,22 @@ class n_algo_trade:
         self.profit_take_limit = conf_dict["profit_take_limit"]
         self.silent_investor_actual_amount = float(conf_dict["value_limit"])
         self.silent_investor_orig_amount = float(conf_dict["value_limit"])
+        self.id = int(conf_dict["id"])
         
-    def get_sig_way(self, sig):
-
-        m_sig = 0
-        if sig == 4:
-            m_sig = 0
-        elif sig == 0:
-            m_sig = 1
-        elif sig == 1:
-            m_sig = -1
-
-        self.sig_way_memory = np.delete(self.sig_way_memory, 0)
-        self.sig_way_memory = np.append(self.sig_way_memory, m_sig)
-        # print(self.sig_way_memory, " ----------- ", self.sig_way_memory.sum(), self.sig_way_memory.mean())
-        return self.sig_way_memory.mean()
+    # def get_sig_way(self, sig):
+    #
+    #     m_sig = 0
+    #     if sig == 4:
+    #         m_sig = 0
+    #     elif sig == 0:
+    #         m_sig = 1
+    #     elif sig == 1:
+    #         m_sig = -1
+    #
+    #     self.sig_way_memory = np.delete(self.sig_way_memory, 0)
+    #     self.sig_way_memory = np.append(self.sig_way_memory, m_sig)
+    #     # print(self.sig_way_memory, " ----------- ", self.sig_way_memory.sum(), self.sig_way_memory.mean())
+    #     return self.sig_way_memory.mean()
 
 
     @property
@@ -320,45 +324,63 @@ class n_algo_trade:
             return self.price_dict['actual_ohlc4']
 
     def transaction(self, sig, y_predict, y_predict_strength, price_dict, date_time):
-        self.sig_way = self.get_sig_way(y_predict)
+        # self.sig_way = self.get_sig_way(y_predict)
         self.y_predict = y_predict
         self.price_dict = price_dict.copy()
         self.y_predict_strength = y_predict_strength
         self.actual_price = self.price_dict['actual_ohlc4']
         self.actual_date_time = date_time
-        decision1, qt1 = self.decision(sig, y_predict, y_predict_strength, date_time)
+        decision1, qt1 = self.decision(sig=sig, y_predict=y_predict,
+                                       y_predict_strength=y_predict_strength,
+                                       date_time=date_time,
+                                       price_dict=price_dict)
         # print(decision1, qt1)
         decision2, qt2 = self.limit(decision1, qt1)
         # print("Limit", decision2, qt2)
         self.action(decision2, qt2, date_time)
 
-    def decision(self, sig, y_predict, y_predict_strength, date_time):
+    def decision(self, sig, y_predict, y_predict_strength, date_time, price_dict={}):
+        self.last_y.append(int(y_predict))
+        self.last_y = self.last_y[-10:]
+        y_last_mean = mean(self.last_y)
+        self.sig_way = y_last_mean
 
         if self.strategy == 66:  # signal drived
-            if y_predict == 1 and y_predict_strength > .975:
+            if self.steps == 10:  # and self.actual_qt <= 0:
+                decision = "STOP"
+                decision_qt = 0
+                return decision, decision_qt
 
-                if self.enter_count == 1:
+            if y_predict == 1 and 1.2 >= y_last_mean >= .8:  # and price_dict["actual_macdh"] > 0:
+
+                # if self.enter_count > 1 and self.name == "BTCUSDT" + " Ai decisions drived":
+                #     print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
+                #     if self.price_dict['actual_ohlc4'] > self.last_ohlc4:
+                #         time.sleep(5)
+
+                if self.enter_count == 1 and y_predict_strength > .8:
                     decision = "BUY"
-                    decision_qt = self.get_stock_qt() / 4
-                elif self.enter_count > 1 and self.price_dict['actual_ohlc4'] > self.last_ohlc4:
-                    decision = "BUY"
-                    decision_qt = (self.get_stock_qt() / 4) * self.enter_count
-                    if self.name == "BTCUSDT" + " Ai decisions drived":
-                        print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
+                    decision_qt = self.get_stock_qt() ## / 50
+                # elif self.enter_count == 2 and self.trailer_profit > 0 and self.steps < 10:  # and self.price_dict['actual_ohlc4'] > self.last_ohlc4:
+                #     decision = "BUY"
+                #     decision_qt = (self.get_stock_qt() / 50) * 49
+                #     if self.id == 1:
+                #         print("----------------")
+                #         print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
                 else:
                     decision = "None"
                     decision_qt = 0
-                self.last_ohlc4 = self.price_dict['actual_ohlc4']
                 # print(decision_qt)
-            elif y_predict == 2 and y_predict_strength > .975:
+            elif y_predict == 2 and y_predict_strength > .8:
                 decision = "SELL"
                 decision_qt = 0
             else:
                 decision = "NONE"
                 decision_qt = 0
+            self.last_ohlc4 = self.price_dict['actual_ohlc4']
             return decision, decision_qt
 
-        if self.strategy == 67:  # signal drived
+        elif self.strategy == 67:  # signal drived
             if y_predict == 1 and y_predict_strength > .99:
                 decision = "BUY"
                 decision_qt = self.get_stock_qt()
@@ -442,59 +464,6 @@ class n_algo_trade:
             # print(y_predict, decision, decision_qt)
             return decision, decision_qt
 
-        elif self.strategy == 44:  # ai decision + sig_way
-            if y_predict == 0 and self.sig_way > 0:
-                self.stock_size = self.stock_size_orig
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif y_predict == 1 and self.sig_way < 0:
-                self.stock_size = self.stock_size_orig
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
-            else:
-                self.stock_size = 0
-                decision = "NONE"
-                decision_qt = 0
-            return decision, decision_qt
-
-        elif self.strategy == 45:  # ai decision + sig_way
-            if y_predict == 0 and self.sig_way < 0.5:
-                self.stock_size = self.stock_size_orig
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif y_predict == 1 and self.sig_way > 0.5:
-                self.stock_size = self.stock_size_orig
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
-            else:
-                self.stock_size = 0
-                decision = "NONE"
-                decision_qt = 0
-            return decision, decision_qt
-
-
-
-        # elif self.strategy == 22:  # ai decision override
-        #     self.act_profit = int((self.actual_price - self.avg_income_price) * self.actual_qt)
-        #     if self.act_profit < self.trailer_profit or self.act_profit == 0:
-        #         if y_predict == 0:
-        #             self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
-        #             decision = "BUY"
-        #             decision_qt = self.get_stock_qt()
-        #         elif y_predict == 1:
-        #             self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
-        #             decision = "SELL"
-        #             decision_qt = self.get_stock_qt()
-        #         else:
-        #             self.stock_size = 0
-        #             decision = "NONE"
-        #             decision_qt = 0
-        #     else:
-        #         self.stock_size = 0
-        #         decision = "NONE"
-        #         decision_qt = 0
-        #     return decision, decision_qt
-
         elif self.strategy == 3:  # ai limitter
 
             if y_predict == sig:
@@ -532,7 +501,7 @@ class n_algo_trade:
             cutter_qt = int((abs(mod_income_value) + (abs(decision_qt) * self.actual_price) - self.value_limit_actual) / self.actual_price)
             decision_qt = abs(decision_qt) - cutter_qt
 
-        if decision_qt == 0:
+        if decision_qt == 0 and decision != "STOP":
             decision = "NONE"
         return decision, decision_qt
 
@@ -546,7 +515,7 @@ class n_algo_trade:
         self.h_buy = False
         self.h_sell = False
         self.h_actual_realised_pnl = 0
-        if is_in_trade_time and np.is_busday(dd) or True:
+        if is_in_trade_time and np.is_busday(dd) or True: # ezt crypto esetén nem kell vizsgálni mert 24/7 es
             self.trading_days[str(dd)] = 0  # day register for deal
             if (self.steps < self.steps_limit or self.steps_limit == 0) and decision != "STOP":
                 if decision == "BUY":
@@ -685,7 +654,7 @@ class n_algo_trade:
                        plot_width=1330,
                        plot_height=250,
                        y_axis_location="right",
-                       title=self.name + " - price",
+                       title=self.name,
                        )
 
 
@@ -707,17 +676,22 @@ class n_algo_trade:
             p.legend.title = 'Trade history'
             p.circle('index', 'h_stop_price', color="#000000", size=3, source=deals, view=view_sig)
             p.text('index', 'actual_price_stop', text="stop_type_pnl", text_font_size="8pt", text_color="#000000", source=deals, view=view_sig)
-            p.text('index', 'actual_price_steps', text="steps", text_font_size="8pt", text_color="#0000ff", source=deals)
+
+            hdf['steps'] = hdf['steps'] != "0"
+            sig = tuple(hdf['steps'])
+            view_steps = CDSView(source=deals, filters=[BooleanFilter(sig)])
+            p.text('index', 'actual_price_steps', text="steps", text_font_size="8pt", text_color="#0000ff", source=deals, view=view_steps)
             p.text('index', 'actual_price_y_predict', text="y_predict", text_font_size="8pt", text_color="#756A34", source=deals)
-            # p.text('index', 'actual_price_sig_way', text="sig_way", text_font_size="8pt", text_color="#ff0000", source=deals)
 
             sig = tuple(hdf["buy"])
             view_sig = CDSView(source=deals, filters=[BooleanFilter(sig)])
-            p.text('index', 'actual_price_y_perc', text="y_predict_strength", text_font_size="8pt", text_color="#00ff00", source=deals, view=view_sig)
+            p.text('index', 'actual_price_y_perc', text="y_predict_strength", text_font_size="9pt", text_color="#00ff00", source=deals, view=view_sig)
 
             sig = tuple(hdf["sell"])
             view_sig = CDSView(source=deals, filters=[BooleanFilter(sig)])
             p.text('index', 'actual_price_y_perc', text="y_predict_strength", text_font_size="8pt", text_color="#ff0000", source=deals, view=view_sig)
+            # p.text('index', 'actual_price_y_perc', text="y_predict_strength", text_font_size="7pt", text_color="#CBCACB", source=deals)
+            p.text('index', 'actual_price_sig_way', text="sig_way", text_font_size="7pt", text_color="#CDA49E", source=deals)
 
             p.legend.location = "top_left"
             p.legend.label_text_font_size = '8pt'
