@@ -274,14 +274,13 @@ background-color: none;</string>
    </property>
    <property name="font">
     <font>
-     <family>Arial</family>
-     <pointsize>20</pointsize>
+     <pointsize>16</pointsize>
      <bold>true</bold>
      <kerning>true</kerning>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">color:#efefef;
+    <string notr="true">color:#333333;
 background:none;</string>
    </property>
    <property name="text">
@@ -6744,7 +6743,7 @@ border-bottom-left-radius: 0px;</string>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>7</x>
+     <x>8</x>
      <y>24</y>
      <width>111</width>
      <height>40</height>
@@ -6752,13 +6751,13 @@ border-bottom-left-radius: 0px;</string>
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
+     <pointsize>16</pointsize>
      <bold>true</bold>
      <kerning>true</kerning>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">color:#333333;
+    <string notr="true">color:#eeeeee;
 background:none;</string>
    </property>
    <property name="text">
@@ -6768,15 +6767,15 @@ background:none;</string>
   <widget class="QLabel" name="label_7">
    <property name="geometry">
     <rect>
-     <x>82</x>
-     <y>21</y>
+     <x>72</x>
+     <y>24</y>
      <width>41</width>
      <height>40</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>20</pointsize>
+     <pointsize>16</pointsize>
      <bold>true</bold>
      <kerning>true</kerning>
     </font>

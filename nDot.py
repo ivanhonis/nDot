@@ -1,32 +1,19 @@
 # detect is it a local running environment or a cloud running environment
 # import random
 
-print("Status: Checking environment.")
-try:
-	with open('local_run.txt') as f:
-		print("Status: Local run.")
-		LocalRUN = True
-		LogTo = "Gui"
-		f.close()
-except IOError:
-	LocalRUN = False
-	print("Status: Cloud run.")
-	LogTo = "Screen"
+# This Python file uses the following encoding: utf-8
+# GUI -----------------------------------------------
+# from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QScrollArea, QProgressBar, QToolButton, QMessageBox, \
+#     QFrame
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QProgressBar, QToolButton, QMessageBox, QFrame
+# from PyQt5 import QtGui, QtCore, QtWebEngineWidgets, uic
+from PyQt5 import QtGui, QtCore, uic
+# from PyQt5.QtCore import QTime, QDate
 
-if LocalRUN:
-	# This Python file uses the following encoding: utf-8
-	# GUI -----------------------------------------------
-	# from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QScrollArea, QProgressBar, QToolButton, QMessageBox, \
-	#     QFrame
-	from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QProgressBar, QToolButton, QMessageBox, QFrame
-	# from PyQt5 import QtGui, QtCore, QtWebEngineWidgets, uic
-	from PyQt5 import QtGui, QtCore, uic
-	# from PyQt5.QtCore import QTime, QDate
-	
-	from tkinter import *  # ez a show table hoz kell.
-	
-	import psutil  # for test command
-	from functools import partial  # a kattintás hozzá rendeléséhez használom
+from tkinter import *  # ez a show table hoz kell.
+
+import psutil  # for test command
+from functools import partial  # a kattintás hozzá rendeléséhez használom
 
 # other checked ----------------------------------------------------
 import pandas as pd
@@ -46,6 +33,9 @@ import pickle
 # import re  # dataset config beolvasóhoz kell
 import pathlib  # dataset config beolvasóhoz kell
 
+from multiprocessing import shared_memory, Lock, Pool, cpu_count
+lock = Lock()
+
 # User nDot ------------------------------------------------------
 from n_dot.n_trade import n_trade
 from n_dot.n_market_data import n_market_data
@@ -56,6 +46,7 @@ from n_dot.n_data_frame_meta import n_date_frame_meta
 from n_dot.n_tools import n_tools
 from n_dot.n_algo_trade import n_algo_trade
 from n_dot.n_ai import n_ai
+from n_dot.n_tech_mp import n_tech_mp
 from n_dot.n_binance_trade import n_binance_trade
 
 # # Ai components
@@ -66,645 +57,644 @@ from n_dot.n_binance_trade import n_binance_trade
 
 # import websocket
 
-if LocalRUN:
-	class gui(QWidget, object):
-		# start_command = "ndf.images PLAY ICX1"
-		
-		def __init__(self):
-			super(gui, self).__init__()
-			self.load_ui()
-			self.usd_huf = 0
-			# self.show_dialog_return = False
-			self.commands = self.load_commands()
-			# első alkalommal amikor megjelenik a trade frame akkor is újra kalkulálni
-			self.pause_trader_frame_calculation = True
-			# refresh_info párhuzamosítva van hogy ne kelljen várni a frissülésére--
-			# self.refresh_info_thread = ""
-			self.refresh_info_string = ""
+class gui(QWidget, object):
+	# start_command = "ndf.images PLAY ICX1"
+
+	def __init__(self):
+		super(gui, self).__init__()
+		self.load_ui()
+		self.usd_huf = 0
+		# self.show_dialog_return = False
+		self.commands = self.load_commands()
+		# első alkalommal amikor megjelenik a trade frame akkor is újra kalkulálni
+		self.pause_trader_frame_calculation = True
+		# refresh_info párhuzamosítva van hogy ne kelljen várni a frissülésére--
+		# self.refresh_info_thread = ""
+		self.refresh_info_string = ""
+		self.command_line_history = []
+		self.command_line_history_position = 0
+		self.load_command_line_history()
+
+		# ablak beállítások ----------------------------------------------------
+		self.setWindowTitle("   nDot")
+		app_icon = QtGui.QIcon()
+		app_icon.addFile('./images/ndot_icon_x2.png', QtCore.QSize(16, 16))
+		app.setWindowIcon(app_icon)
+
+	def closeEvent(self, event):
+		ntrade.monitor_stop()
+		ntrade.broker_stop()
+		md.stream_stop()
+		nddb.close()
+		print("Status: GUI Closed")
+
+	def keyPressEvent(self, e):
+		if e.key() == QtCore.Qt.Key_Escape:
+			self.close()
+		elif e.key() == QtCore.Qt.Key_Up:
+			self.command_line_history_position -= 1
+			self.command_line_history_position = max(0, self.command_line_history_position)
+			self.Command_Line.setText(self.command_line_history[self.command_line_history_position])
+		elif e.key() == QtCore.Qt.Key_Down:
+			self.command_line_history_position += 1
+			i_last_position = len(self.command_line_history)
+			self.command_line_history_position = min(i_last_position - 1, self.command_line_history_position)
+			self.Command_Line.setText(self.command_line_history[self.command_line_history_position])
+
+	def save_command_line_history(self):
+		with open('command_line_history.pickle', 'wb') as f:
+			pickle.dump(self.command_line_history, f)
+
+	def load_command_line_history(self):
+		try:
+			with open('command_line_history.pickle', 'rb') as f:
+				self.command_line_history = pickle.load(f)
+		except:
 			self.command_line_history = []
-			self.command_line_history_position = 0
-			self.load_command_line_history()
-			
-			# ablak beállítások ----------------------------------------------------
-			self.setWindowTitle("   nDot")
-			app_icon = QtGui.QIcon()
-			app_icon.addFile('./images/ndot_icon_x2.png', QtCore.QSize(16, 16))
-			app.setWindowIcon(app_icon)
-		
-		def closeEvent(self, event):
-			ntrade.monitor_stop()
-			ntrade.broker_stop()
-			md.stream_stop()
-			nddb.close()
-			print("Status: GUI Closed")
-		
-		def keyPressEvent(self, e):
-			if e.key() == QtCore.Qt.Key_Escape:
-				self.close()
-			elif e.key() == QtCore.Qt.Key_Up:
-				self.command_line_history_position -= 1
-				self.command_line_history_position = max(0, self.command_line_history_position)
-				self.Command_Line.setText(self.command_line_history[self.command_line_history_position])
-			elif e.key() == QtCore.Qt.Key_Down:
-				self.command_line_history_position += 1
-				i_last_position = len(self.command_line_history)
-				self.command_line_history_position = min(i_last_position - 1, self.command_line_history_position)
-				self.Command_Line.setText(self.command_line_history[self.command_line_history_position])
-		
-		def save_command_line_history(self):
-			with open('command_line_history.pickle', 'wb') as f:
-				pickle.dump(self.command_line_history, f)
-		
-		def load_command_line_history(self):
-			try:
-				with open('command_line_history.pickle', 'rb') as f:
-					self.command_line_history = pickle.load(f)
-			except:
-				self.command_line_history = []
-		
-		# GUI - Setup --------------------------------------------------------------------------------------
-		
-		def load_ui(self):
-			
-			def get_similar_object_list(prefix, object_group_name):
-				wl_btn_list = {}
-				i_n = prefix + "1"
-				wl_btn_list[i_n] = self.findChild(QToolButton, object_group_name)
-				for i_i in range(2, 13):
-					i_n = prefix + str(i_i)
-					i_src = object_group_name + "_" + str(i_i)
-					wl_btn_list[i_n] = self.findChild(QToolButton, i_src)
-				return wl_btn_list
-			
-			def connect_similar_object_list(object_group, connect_function):
-				for i, i_o in enumerate(object_group):
-					if connect_function == "wl_btn_chart":
-						object_group[i_o].clicked.connect(partial(wl_btn_chart, i + 1))
-					elif connect_function == "wl_btn_show":
-						object_group[i_o].clicked.connect(partial(wl_btn_show, i + 1))
-					elif connect_function == "wl_trade_short":
-						object_group[i_o].clicked.connect(partial(wl_trade_short, i + 1))
-					elif connect_function == "wl_trade_long":
-						object_group[i_o].clicked.connect(partial(wl_trade_long, i + 1))
-					elif connect_function == "tr_stop":
-						object_group[i_o].clicked.connect(partial(tr_stop, i + 1))
-			
-			uic.loadUi("./qt_ui/form.ui", self)
-			# self.Command_Line.setText(self.start_command)
-			
-			# Csoportos hozzárendelések ----------------------------------------------------------
-			
-			wl_btn_chart_list = get_similar_object_list("wlc", "WL_btn_chart")
-			connect_similar_object_list(wl_btn_chart_list, "wl_btn_chart")
-			
-			wl_btn_show_list = get_similar_object_list("wls", "WL_btn_show")
-			connect_similar_object_list(wl_btn_show_list, "wl_btn_show")
-			
-			wl_trade_short_list = get_similar_object_list("wlsl", "WL_trade_short")
-			connect_similar_object_list(wl_trade_short_list, "wl_trade_short")
-			
-			wl_trade_long_list = get_similar_object_list("wlll", "WL_trade_long")
-			connect_similar_object_list(wl_trade_long_list, "wl_trade_long")
-			
-			wl_trade_stop_list = get_similar_object_list("wlst", "WL_trade_stop")
-			connect_similar_object_list(wl_trade_stop_list, "tr_stop")
-			
-			# Command hozzárendelések ---------------------------------------------
-			
-			self.Run_Button.clicked.connect(self.run_button_action)
-			self.Command_Line.returnPressed.connect(self.run_button_action)
-			self.Command_Line.textChanged.connect(self.command_line_changed)
-			
-			# Trade frame hozzárendelések ----------------------------------------
-			self.Tr_cancel.clicked.connect(self.tr_cancel)
-			self.Tr_qty.valueChanged.connect(self.tr_change_data)
-			self.Tr_set_order.clicked.connect(tr_set_order)
-			self.Tr_stop_all.clicked.connect(tr_stop_all)
-			self.Tr_frame.hide()
-			
-			# watch list up area -------------------------------------------------
-			self.Tr_portfolio_monitor.stateChanged.connect(tr_portfolio_monitor)
-			self.Ndf_stream.stateChanged.connect(ndf_stream)
-			self.Tr_info_refresh.clicked.connect(tr_info_refresh)
-		
-		# Date time setter ----------------------------------------
-		# i_now = datetime.now()
-		# self.From_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-		# self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-		# self.From_T.setTime(QTime(i_now.hour, i_now.minute))
-		# self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-		# self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
-		# self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
-		# self.Datetime_mod3.clicked.connect(partial(self.date_modifier, "days", 2))
-		# self.Datetime_mod4.clicked.connect(partial(self.date_modifier, "days", 4))
-		# self.Datetime_mod5.clicked.connect(partial(self.date_modifier, "days", 30))
-		# self.Datetime_now.clicked.connect(self.date_now)
-		
-		def refresh_ui(self, mode="full"):
-			
-			def get_frame_objects_list(prefix, object_group_name):
-				wl_frame_list = {}
-				i_n = prefix + "1"
-				wl_frame_list[i_n] = self.findChild(QFrame, object_group_name)
-				for i_i in range(2, 13):
-					i_n = prefix + str(i_i)
-					i_src = object_group_name + "_" + str(i_i)
-					wl_frame_list[i_n] = self.findChild(QFrame, i_src)
-				return wl_frame_list
-			
-			i_noid = ['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12']
-			if mode == "full":
-				i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
-				for i_obj in i_wl_frame_list:
-					i_wl_frame_list[i_obj].hide()
-				i_no = 0
-				for index, row in wl.wl_df.iterrows():
-					i_symbol = row['symbol']
-					f_id = "fr" + str(i_no + 1)
-					i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setText(i_symbol)
-					i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setToolTip(row['profil'])
-					# i_wl_frame_list[f_id].findChild(QProgressBar, "WL_bear" + i_noid[i_no]).setValue(
-					# 	int(row['snt_bearish'] * 100))
-					# i_info = self.get_monitor_info_by_symbol(i_symbol)
-					# i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
-					# i_pl = self.get_pl_by_symbol(i_symbol)
-					# i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
-					
-					i_wl_frame_list[f_id].show()
-					i_no = i_no + 1
+
+	# GUI - Setup --------------------------------------------------------------------------------------
+
+	def load_ui(self):
+
+		def get_similar_object_list(prefix, object_group_name):
+			wl_btn_list = {}
+			i_n = prefix + "1"
+			wl_btn_list[i_n] = self.findChild(QToolButton, object_group_name)
+			for i_i in range(2, 13):
+				i_n = prefix + str(i_i)
+				i_src = object_group_name + "_" + str(i_i)
+				wl_btn_list[i_n] = self.findChild(QToolButton, i_src)
+			return wl_btn_list
+
+		def connect_similar_object_list(object_group, connect_function):
+			for i, i_o in enumerate(object_group):
+				if connect_function == "wl_btn_chart":
+					object_group[i_o].clicked.connect(partial(wl_btn_chart, i + 1))
+				elif connect_function == "wl_btn_show":
+					object_group[i_o].clicked.connect(partial(wl_btn_show, i + 1))
+				elif connect_function == "wl_trade_short":
+					object_group[i_o].clicked.connect(partial(wl_trade_short, i + 1))
+				elif connect_function == "wl_trade_long":
+					object_group[i_o].clicked.connect(partial(wl_trade_long, i + 1))
+				elif connect_function == "tr_stop":
+					object_group[i_o].clicked.connect(partial(tr_stop, i + 1))
+
+		uic.loadUi("./qt_ui/form.ui", self)
+		# self.Command_Line.setText(self.start_command)
+
+		# Csoportos hozzárendelések ----------------------------------------------------------
+
+		wl_btn_chart_list = get_similar_object_list("wlc", "WL_btn_chart")
+		connect_similar_object_list(wl_btn_chart_list, "wl_btn_chart")
+
+		wl_btn_show_list = get_similar_object_list("wls", "WL_btn_show")
+		connect_similar_object_list(wl_btn_show_list, "wl_btn_show")
+
+		wl_trade_short_list = get_similar_object_list("wlsl", "WL_trade_short")
+		connect_similar_object_list(wl_trade_short_list, "wl_trade_short")
+
+		wl_trade_long_list = get_similar_object_list("wlll", "WL_trade_long")
+		connect_similar_object_list(wl_trade_long_list, "wl_trade_long")
+
+		wl_trade_stop_list = get_similar_object_list("wlst", "WL_trade_stop")
+		connect_similar_object_list(wl_trade_stop_list, "tr_stop")
+
+		# Command hozzárendelések ---------------------------------------------
+
+		self.Run_Button.clicked.connect(self.run_button_action)
+		self.Command_Line.returnPressed.connect(self.run_button_action)
+		self.Command_Line.textChanged.connect(self.command_line_changed)
+
+		# Trade frame hozzárendelések ----------------------------------------
+		self.Tr_cancel.clicked.connect(self.tr_cancel)
+		self.Tr_qty.valueChanged.connect(self.tr_change_data)
+		self.Tr_set_order.clicked.connect(tr_set_order)
+		self.Tr_stop_all.clicked.connect(tr_stop_all)
+		self.Tr_frame.hide()
+
+		# watch list up area -------------------------------------------------
+		self.Tr_portfolio_monitor.stateChanged.connect(tr_portfolio_monitor)
+		self.Ndf_stream.stateChanged.connect(ndf_stream)
+		self.Tr_info_refresh.clicked.connect(tr_info_refresh)
+
+	# Date time setter ----------------------------------------
+	# i_now = datetime.now()
+	# self.From_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
+	# self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
+	# self.From_T.setTime(QTime(i_now.hour, i_now.minute))
+	# self.To_T.setTime(QTime(i_now.hour, i_now.minute))
+	# self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
+	# self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
+	# self.Datetime_mod3.clicked.connect(partial(self.date_modifier, "days", 2))
+	# self.Datetime_mod4.clicked.connect(partial(self.date_modifier, "days", 4))
+	# self.Datetime_mod5.clicked.connect(partial(self.date_modifier, "days", 30))
+	# self.Datetime_now.clicked.connect(self.date_now)
+
+	def refresh_ui(self, mode="full"):
+
+		def get_frame_objects_list(prefix, object_group_name):
+			wl_frame_list = {}
+			i_n = prefix + "1"
+			wl_frame_list[i_n] = self.findChild(QFrame, object_group_name)
+			for i_i in range(2, 13):
+				i_n = prefix + str(i_i)
+				i_src = object_group_name + "_" + str(i_i)
+				wl_frame_list[i_n] = self.findChild(QFrame, i_src)
+			return wl_frame_list
+
+		i_noid = ['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12']
+		if mode == "full":
+			i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
+			for i_obj in i_wl_frame_list:
+				i_wl_frame_list[i_obj].hide()
+			i_no = 0
+			for index, row in wl.wl_df.iterrows():
+				i_symbol = row['symbol']
+				f_id = "fr" + str(i_no + 1)
+				i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setText(i_symbol)
+				i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setToolTip(row['profil'])
+				# i_wl_frame_list[f_id].findChild(QProgressBar, "WL_bear" + i_noid[i_no]).setValue(
+				# 	int(row['snt_bearish'] * 100))
+				# i_info = self.get_monitor_info_by_symbol(i_symbol)
+				# i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
+				# i_pl = self.get_pl_by_symbol(i_symbol)
+				# i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
+
+				i_wl_frame_list[f_id].show()
+				i_no = i_no + 1
+				QApplication.processEvents()
+		if mode == "info" or mode == "full":
+			i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
+			i_no = 0
+			for index, row in wl.wl_df.iterrows():
+				i_symbol = row['symbol']
+				f_id = "fr" + str(i_no + 1)
+
+				# akkor frissítek ha volt változás
+				i_info = self.get_monitor_info_by_symbol(i_symbol)
+				i_info_now = i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).text()
+				if i_info != i_info_now:
+					i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
 					QApplication.processEvents()
-			if mode == "info" or mode == "full":
-				i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
-				i_no = 0
-				for index, row in wl.wl_df.iterrows():
-					i_symbol = row['symbol']
-					f_id = "fr" + str(i_no + 1)
-					
-					# akkor frissítek ha volt változás
-					i_info = self.get_monitor_info_by_symbol(i_symbol)
-					i_info_now = i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).text()
-					if i_info != i_info_now:
-						i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
-						QApplication.processEvents()
-					
-					# akkor frissítek ha volt változás
-					i_pl = self.get_pl_by_symbol(i_symbol)
-					i_pl_now = i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).text()
-					if i_pl != i_pl_now:
-						if i_symbol in tuple(ntrade.cp_df.index):
-							if float(ntrade.cp_df.loc[i_symbol, "unrealized_pl"]) > 0:
-								i_wl_frame_list[f_id].findChild(QToolButton,
-																"WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-									'color: #ffffff; background: #ff9100')
-							else:
-								i_wl_frame_list[f_id].findChild(QToolButton,
-																"WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-									'color: #000000; background: #ff9100; border-bottom-left-radius: 5px;')
+
+				# akkor frissítek ha volt változás
+				i_pl = self.get_pl_by_symbol(i_symbol)
+				i_pl_now = i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).text()
+				if i_pl != i_pl_now:
+					if i_symbol in tuple(ntrade.cp_df.index):
+						if float(ntrade.cp_df.loc[i_symbol, "unrealized_pl"]) > 0:
+							i_wl_frame_list[f_id].findChild(QToolButton,
+															"WL_trade_stop" + i_noid[i_no]).setStyleSheet(
+								'color: #ffffff; background: #ff9100')
 						else:
-							i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-								'color: #ffffff; background: #ff9100; border-bottom-left-radius: 5px;')
-						i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
-						QApplication.processEvents()
-					i_no = i_no + 1
-			if mode == "ai_info" or mode == "full":
-				i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
-				i_no = 0
-				for index, row in wl.wl_df.iterrows():
-					i_symbol = row['symbol']
-					f_id = "fr" + str(i_no + 1)
-					
-					# akkor frissítek ha volt változás
-					i_info = self.get_ai_info_by_symbol(i_symbol)
-					i_info_now = i_wl_frame_list[f_id].findChild(QLabel, "WL_ai_info" + i_noid[i_no]).text()
-					if i_info != i_info_now:
-						i_wl_frame_list[f_id].findChild(QLabel, "WL_ai_info" + i_noid[i_no]).setText(i_info)
-						QApplication.processEvents()
-					i_no = i_no + 1
-		
-		# GUI - Trader Frame ----------------------------------------------------------------------------------------
-		
-		def set_trade_frame(self):
-			self.pause_trader_frame_calculation = True
-			self.Tr_symbol.setText(ntrade.order["symbol"])
-			
-			if ntrade.order["position"] == "SHORT":
-				self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
-											   'border-bottom-left-radius: 15px;' + \
-											   'color: #ff3333;')
-				self.Tr_set_order.setText("SET\nSHORT")
-			else:
-				self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
-											   'border-bottom-left-radius: 15px;' + \
-											   'color: #078F12;')
-				self.Tr_set_order.setText("SET\nLONG")
-			self.Tr_position.setText(ntrade.order["position"])
-			self.Tr_market_price.setText(str(ntrade.order["market_price"]))
-			# self.Tr_trailing_stop.setValue(True)
-			self.Tr_qty.setValue(ntrade.order["qty"])
-			self.pause_trader_frame_calculation = False
-			self.tr_change_data()
-			self.Tr_frame.show()
-			QApplication.processEvents()
-		
-		def tr_cancel(self):
-			self.Tr_frame.hide()
-		
-		def tr_change_data(self):
-			if not self.pause_trader_frame_calculation:
-				if self.usd_huf == 0:
-					self.usd_huf = md.get_usdhuf()
-				ntrade.order["qty"] = int(self.Tr_qty.value())
-				i_value_usd = round(ntrade.order["qty"] * ntrade.order["market_price"], 2)
-				i_value_huf = round(i_value_usd * self.usd_huf, 2)
-				i_value_text = '{0:,.2f}'.format(i_value_usd) + " USD\n" + '{0:,.2f}'.format(i_value_huf) + " HUF"
-				self.Tr_value.setText(i_value_text)
-				QApplication.processEvents()
-		
-		# GUI - DateTime Block  -----------------------------------------------------------
-		
-		# def date_now(self):
-		#     i_now = datetime.now()
-		#     self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-		#     self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-		
-		# def date_modifier(self, interval_type, interval_num):
-		#     i_nowp = datetime.now() - timedelta(**{interval_type: interval_num})
-		#     self.From_D.setDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
-		#     self.From_T.setTime(QTime(i_nowp.hour, i_nowp.minute))
-		
-		# GUI - Commands -----------------------------------------------------------
-		
-		def load_commands(self):
-			i_return = [
-				['help', 'help2', 'help - List of all commands!', 0],
-				['do', 'do', 'do', 0],
-				['do2', 'do2', 'do2', 0],
-				['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
-				['wl.add', 'wl_add', 'wl.add <symbol> <year(s)>', 0],
-				['wl.add.crypto', 'wl_add_crypto', 'wl.add.crypto <symbol> <year(s)>', 0],
-				['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
-				# ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
-				['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
-				['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
-				# ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
-				['ndf.add', 'ndf_add', 'ndf.add <symbol> <year(s)>', 1],
-				['ndf.add.crypto', 'ndf_add_crypto', 'ndf.add.crypto <symbol> <year(s)>', 1],
-				['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator> [params otional]', 2],
-				['ndf.tech.backtest', 'ndf_tech_backtest', 'ndf.tech.backtest <symbol> <run_time_window> <sig_field> <<start_position>>', 2],
-				['ndf.tech.project', 'ndf_tech_project', 'ndf.tech.project <symbol> <project>', 2],
-				['ndf.tech.remove', 'ndf_tech_remove', 'ndf.tech.remove <symbol> <technical indicator>', 2],
-				['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
-				['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
-				['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
-				['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project> <<NOFORCE / FORCE>> <<FULL / VECTOR / RND_CHOICE>>', 1],
-				['ndf.dataset.int', 'ndf_dataset_int','ndf.dataset.int <symbol> <project> (only NOFORCE)', 1],
-				['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
-				['ndf.remove.column', 'ndf_remove_column', 'ndf.remove.column <symbol> <column_name> <<SAVE>>', 1],
-				['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
-				['ndf.refresh.all', 'ndf_refresh_all', 'ndf.refresh.all', 0],
-				['ndf.info', 'ndf_info', 'ndf.info', 0],
-				['ndf.columns', 'ndf_columns', 'ndf.columns', 0],
-				['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
-				# ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
-				['md.check', 'md_check', 'md.check <symbol>', 0],
-				['md.symbols', 'md_symbols', 'md.symbols <market>', 0],
-				['ai.add', 'ai_add', 'ai.add <symbol> <project>', 1],
-				['ai.build', 'ai_build', 'ai.build', 0],
-				['ai.remove', 'ai_remove', 'ai.remove <symbol> <project>', 1],
-				['ai.download', 'ai_download', 'ai.download <project name> <<rename>>', 0],
-				['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project> <<start position>>', 3],
-				['exit', 'exit', 'exit', 0]
-			]
-			i_return = pd.DataFrame(i_return)
-			i_return.columns = ['command', 'program', 'hint', 'params']
-			i_return.set_index('command')
-			return i_return
-		
-		def run_button_action(self):
-			def run_method(i_program, args):
-				# Save command ---------------------------------------
-				if self.command_line_history[0] != self.Command_Line.text():
-					self.command_line_history.insert(0, self.Command_Line.text())
-					self.command_line_history = self.command_line_history[:250]
-					self.command_line_history_position = 0
-					self.save_command_line_history()
-				# Run command -------------------------------------------
-				method = eval(i_program)
-				kwargs = {}
-				args_str = ', '.join(map(str, args))
-				i_start = datetime.now()
-				log("Start: " + command_text_first_word + " <" + args_str + ">", True, False)
-				method(*args, **kwargs)
-				log("Ready.", False, False)
-				log("Runtime:" + str(datetime.now() - i_start), False, False)
-				self.Command_Line.setText("")
-			
-			command_text = self.Command_Line.text()
-			command_partitioned = command_text.split()
-			command_text_first_word = str.lower(command_partitioned[0])
-			
-			i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
-			args = []
-			
-			if i_found:
-				
-				args = command_partitioned[1:]
-				
-				if i_params >= 1:
-					if len(command_partitioned) - 1 >= i_params:
-						if len(wl.wl_df.loc[wl.wl_df['symbol'] == command_partitioned[1]]) > 0:
-							run_method(i_program, args)
-						else:
-							self.mark_command_line("Non listed Symbol!")
+							i_wl_frame_list[f_id].findChild(QToolButton,
+															"WL_trade_stop" + i_noid[i_no]).setStyleSheet(
+								'color: #000000; background: #ff9100; border-bottom-left-radius: 5px;')
 					else:
-						self.mark_command_line("Missing parameter(s)!")
-				else:
-					run_method(i_program, args)
-			else:
-				self.mark_command_line("Command does not exist!")
-				self.print_command()
-		
-		def get_command(self, command):
-			i_search = self.commands.loc[self.commands['command'] == command, 'program']
-			if len(i_search) > 0:
-				i_found = True
-				i_program = self.commands.loc[self.commands['command'] == command, 'program'].iloc[0]
-				i_hint = self.commands.loc[self.commands['command'] == command, 'hint'].iloc[0]
-				i_params = self.commands.loc[self.commands['command'] == command, 'params'].iloc[0]
-			else:
-				i_found = False
-				i_program = ""
-				i_hint = ""
-				i_params = ""
-			return i_found, i_program, i_hint, i_params
-		
-		def print_command(self):
-			log("Commands:")
-			for i_row in tuple(self.commands["command"]):
-				log(" - " + str(i_row))
-		
-		def command_line_changed(self):
-			command_text = self.Command_Line.text()
-			command_text_first_word = str.lower(command_text.partition(' ')[0])
-			i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
-			if i_found:
-				self.mark_command_line(i_hint, False)
-			else:
-				self.mark_command_line("", False)
-		
-		def mark_command_line(self, message, bug=True):
-			if bug:
-				self.Command_Line.setStyleSheet('''background-color: #ffaaaa;
-                                                border-top-left-radius: 15px;
-                                                border-top-right-radius: 0px;
-                                                border-bottom-right-radius: 0px;
-                                                border-bottom-left-radius: 0px;
-                                                border-bottom: 1px solid #eeeeee;
-                                                padding-left: 10px;
-                                                border-top: 1px solid #ffffff;
-                                                border-left: 1px solid #000000;
-                                                ''')
-				self.Command_Hint.setText(message)
-				QApplication.processEvents()
-			else:
-				self.Command_Line.setStyleSheet('''background-color: #ffffff;
-                                                border-top-left-radius: 15px;
-                                                border-top-right-radius: 0px;
-                                                border-bottom-right-radius: 0px;
-                                                border-bottom-left-radius: 0px;
-                                                border-bottom: 1px solid #eeeeee;
-                                                padding-left: 10px;
-                                                border-top: 1px solid #ffffff;
-                                                border-left: 1px solid #000000;
-                                                ''')
-				
-				self.Command_Hint.setText(message)
-				QApplication.processEvents()
-		
-		# GUI - Info text creators ------------------------------------------------
-		
-		def get_pl_by_symbol(self, symbol):
-			if symbol in ntrade.cp_df.index:
-				i_p = float(ntrade.cp_df.loc[symbol, "unrealized_pl"])
-				i_return = f"STOP {i_p}$"
-			else:
-				i_return = "-"
-			return i_return
-		
-		def create_tr_info_string(self):
-			
-			def nbs(no):
-				return "&nbsp;" * no
-			
-			def bnb(blocked):
-				if blocked:
-					i_return = "<b><font color='#ffffff'>Blocked</font></b>"
-				else:
-					i_return = "<b><font color='#999999'>Ready</font></b>"
-				return i_return
-			
-			def yn(yes_no):
-				if yes_no:
-					i_return = "<b><font color='#ffffff'>Yes</font></b>"
-				else:
-					i_return = "<b><font color='#999999'>No</font></b>"
-				return i_return
-			
-			def onf(on_off):
-				if on_off:
-					i_return = "<b><font color='#ffffff'>On</font></b>"
-				else:
-					i_return = "<b><font color='#999999'>Off</font></b>"
-				return i_return
-			
-			def oc(open_close):
-				if open_close:
-					i_return = "<b><font color='#ffffff'>Open</font></b>"
-				else:
-					i_return = "<b><font color='#999999'>Closed</font></b>"
-				return i_return
-			
-			def rq():
-				i_max_key = max(ntrade.request_count.keys())
-				return ntrade.request_count[i_max_key]
-			
-			def get_dt(date_time_str):
-				date_time_str = date_time_str[:19]
-				hours_added = timedelta(hours=6)
-				date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S')
-				date_time_obj = date_time_obj + hours_added
-				return date_time_obj.strftime("%Y.%m.%d %H:%M:%S")
-			
-			def ntofs(numb):
-				i_return = int(float(numb))
-				i_return = f"{i_return:,}"
-				return i_return
-			
-			i_a = ntrade.get_account()
-			i_c = ntrade.get_clock()
-			if i_c.is_open:
-				i_cst = "Close:"
-				i_cs = get_dt(str(i_c.next_close))
-			else:
-				i_cst = "Open:"
-				i_cs = get_dt(str(i_c.next_open))
-			
+						i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setStyleSheet(
+							'color: #ffffff; background: #ff9100; border-bottom-left-radius: 5px;')
+					i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
+					QApplication.processEvents()
+				i_no = i_no + 1
+		if mode == "ai_info" or mode == "full":
+			i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
+			i_no = 0
+			for index, row in wl.wl_df.iterrows():
+				i_symbol = row['symbol']
+				f_id = "fr" + str(i_no + 1)
+
+				# akkor frissítek ha volt változás
+				i_info = self.get_ai_info_by_symbol(i_symbol)
+				i_info_now = i_wl_frame_list[f_id].findChild(QLabel, "WL_ai_info" + i_noid[i_no]).text()
+				if i_info != i_info_now:
+					i_wl_frame_list[f_id].findChild(QLabel, "WL_ai_info" + i_noid[i_no]).setText(i_info)
+					QApplication.processEvents()
+				i_no = i_no + 1
+
+	# GUI - Trader Frame ----------------------------------------------------------------------------------------
+
+	def set_trade_frame(self):
+		self.pause_trader_frame_calculation = True
+		self.Tr_symbol.setText(ntrade.order["symbol"])
+
+		if ntrade.order["position"] == "SHORT":
+			self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
+										   'border-bottom-left-radius: 15px;' + \
+										   'color: #ff3333;')
+			self.Tr_set_order.setText("SET\nSHORT")
+		else:
+			self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
+										   'border-bottom-left-radius: 15px;' + \
+										   'color: #078F12;')
+			self.Tr_set_order.setText("SET\nLONG")
+		self.Tr_position.setText(ntrade.order["position"])
+		self.Tr_market_price.setText(str(ntrade.order["market_price"]))
+		# self.Tr_trailing_stop.setValue(True)
+		self.Tr_qty.setValue(ntrade.order["qty"])
+		self.pause_trader_frame_calculation = False
+		self.tr_change_data()
+		self.Tr_frame.show()
+		QApplication.processEvents()
+
+	def tr_cancel(self):
+		self.Tr_frame.hide()
+
+	def tr_change_data(self):
+		if not self.pause_trader_frame_calculation:
 			if self.usd_huf == 0:
 				self.usd_huf = md.get_usdhuf()
-			
-			s = 10
-			i_return = f"""
-            <html><head/><body>
-            <table border="0" cellspacing="5" cellpadding="0">
-                <tr>
-                    <td>Monitor: </td><td>{onf(ntrade.monitor_is_working)} - {ntrade.monitor_refresh_rate}</td><td>{nbs(s)}</td><td>Equity:</td><td>{ntofs(i_a.equity)} USD</td><td>{nbs(s)}</td><td>Market:</td><td>{oc(i_c.is_open)}</td>
-                </tr>
-                <tr>
-                    <td>Broker:</td><td>{onf(ntrade.broker_is_working)}  - {ntrade.broker_refresh_rate}</td><td>{nbs(s)}</td><td>USD/HUF:</td><td>{self.usd_huf} HUF</td><td>{nbs(s)}</td><td>{i_cst}</td><td>{i_cs}</td>
-                </tr>
-                <tr>
-                    <td>Reguests:</td><td>{rq()}/{ntrade.request_count_max}</td><td>{nbs(s)}</td><td>Cash / power:</td><td>{ntofs(i_a.cash)} / {ntofs(i_a.buying_power)} USD</td><td>{nbs(s)}</td><td>Status:</td><td>{bnb(i_a.trading_blocked)} - {i_a.status}</td>
-                </tr>
-                <tr>
-                    <td></td><td></td><td>{nbs(s)}</td><td>Block size:</td><td>{int(ntrade.config["trade_block_size"])} USD</td><td>{nbs(s)}</td><td></td><td></td>
-                </tr>
-            </table>
-            </body></html>
-            """
-			return i_return
-		
-		def get_monitor_info_by_symbol(self, symbol):
-			# print("get_monitor_info_by_symbol\n", symbol)
-			# print("get_monitor_info_by_symbol\n", trade.tp_df)
-			if symbol in ntrade.tp_df.index:
-				i_qt = int(ntrade.tp_df.loc[symbol, "target_position"])
-			else:
-				i_qt = 0
-			# print("get_monitor_info_by_symbol\n", trade.cp_df)
-			if symbol in ntrade.cp_df.index:
-				i_qc = int(ntrade.cp_df.loc[symbol, "qty"])
-				i_p = float(ntrade.cp_df.loc[symbol, "current_price"])
-				i_v = float(ntrade.cp_df.loc[symbol, "market_value"])
-			else:
-				i_qc = 0
-				i_p = 0
-				i_v = 0
-			i_return = f"q: {i_qt} / {i_qc}\np: {i_p}$\nv: {i_v}$"
-			# print(i_return,"\n\n")
-			return i_return
-		
-		def get_ai_info_by_symbol(self, symbol):
-			ai_projects = ai.get_projects_by_symbol(symbol)
-			i_return = f"""<html><head/><body>"""
-			for prj in ai_projects:
-				i_return = i_return + f"""
-            <div style="margin-top: 5px;">{prj}<br/>Silent</div>"""
-			i_return = i_return + "</body></html>"
-			# # print(i_return,"\n\n")
-			return i_return
-		
-		def tlog(self, add_text, line=False, indent=True, color="normal"):
-			i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
-			i_for_cut = i_for_cut.splitlines()
-			i_cut_html = self.Logs_Trade.text()
-			for i_c in i_for_cut:
-				i_cut_html = i_cut_html.replace(i_c, "")
-			
-			i_colors = {'long': "#078F12",
-						'short': "#ff3333",
-						'stop': "#ff9100",
-						'normal': "#333333"}
-			i_web_color = i_colors[color]
-			
-			if indent:
-				i_ind = "│  "
-			else:
-				i_ind = ""
-			i_log_text = "<html><head/><body>" + i_cut_html
-			if line:
-				i_log_text = i_log_text \
-							 + "<font color='#000000'>" \
-							 + "─" * 65 \
-							 + "</font>" \
-							 + "<br>"
-			
-			lines = add_text.splitlines()
-			
-			for one_line in lines:
-				i_log_text = i_log_text \
-							 + "<font color='#000000'>" \
-							 + time.strftime("%m-%d %H:%M:%S") + " > " \
-							 + i_ind \
-							 + "</font>" \
-							 + "<font color='" + i_web_color + "'>" \
-							 + one_line \
-							 + "</font>" \
-							 + "<br>"
-			i_log_text = i_log_text + "</body></html>"
-			self.Logs_Ai.setText(i_log_text)
-			i_vbar = self.LT_scrollArea.verticalScrollBar()
-			i_vbar.setValue(i_vbar.maximum())
+			ntrade.order["qty"] = int(self.Tr_qty.value())
+			i_value_usd = round(ntrade.order["qty"] * ntrade.order["market_price"], 2)
+			i_value_huf = round(i_value_usd * self.usd_huf, 2)
+			i_value_text = '{0:,.2f}'.format(i_value_usd) + " USD\n" + '{0:,.2f}'.format(i_value_huf) + " HUF"
+			self.Tr_value.setText(i_value_text)
 			QApplication.processEvents()
 
-		def ailog(self, add_text, line=False, indent=True, color="normal"):
-			i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
-			i_for_cut = i_for_cut.splitlines()
-			i_cut_html = self.Logs_Ai.text()
-			for i_c in i_for_cut:
-				i_cut_html = i_cut_html.replace(i_c, "")
+	# GUI - DateTime Block  -----------------------------------------------------------
 
-			i_colors = {'long': "#078F12",
-						'short': "#ff3333",
-						'stop': "#ff9100",
-						'normal': "#333333"}
-			i_web_color = i_colors[color]
+	# def date_now(self):
+	#     i_now = datetime.now()
+	#     self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
+	#     self.To_T.setTime(QTime(i_now.hour, i_now.minute))
 
-			if indent:
-				i_ind = "│  "
+	# def date_modifier(self, interval_type, interval_num):
+	#     i_nowp = datetime.now() - timedelta(**{interval_type: interval_num})
+	#     self.From_D.setDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
+	#     self.From_T.setTime(QTime(i_nowp.hour, i_nowp.minute))
+
+	# GUI - Commands -----------------------------------------------------------
+
+	def load_commands(self):
+		i_return = [
+			['help', 'help2', 'help - List of all commands!', 0],
+			['do', 'do', 'do', 0],
+			['do2', 'do2', 'do2', 0],
+			['test', 'test', 'test <p1 / optional> <p2 / optional> <p3 / optional>', 0],
+			['wl.add', 'wl_add', 'wl.add <symbol> <year(s)>', 0],
+			['wl.add.crypto', 'wl_add_crypto', 'wl.add.crypto <symbol> <year(s)>', 0],
+			['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
+			# ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
+			['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
+			['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
+			# ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
+			['ndf.add', 'ndf_add', 'ndf.add <symbol> <year(s)>', 1],
+			['ndf.add.crypto', 'ndf_add_crypto', 'ndf.add.crypto <symbol> <year(s)>', 1],
+			['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator> [params otional]', 2],
+			['ndf.tech.backtest', 'ndf_tech_backtest', 'ndf.tech.backtest <symbol> <run_time_window> <sig_field> <<start_position>>', 2],
+			['ndf.tech.project', 'ndf_tech_project', 'ndf.tech.project <symbol> <project>', 2],
+			['ndf.tech.remove', 'ndf_tech_remove', 'ndf.tech.remove <symbol> <technical indicator>', 2],
+			['ndf.tech.refresh', 'ndf_tech_refresh', 'ndf.tech.refresh <symbol>', 1],
+			['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
+			['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
+			['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project> <<NOFORCE / FORCE>> <<FULL / VECTOR / RND_CHOICE>>', 1],
+			['ndf.dataset.int', 'ndf_dataset_int','ndf.dataset.int <symbol> <project> (only NOFORCE)', 1],
+			['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
+			['ndf.remove.column', 'ndf_remove_column', 'ndf.remove.column <symbol> <column_name> <<SAVE>>', 1],
+			['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
+			['ndf.refresh.all', 'ndf_refresh_all', 'ndf.refresh.all', 0],
+			['ndf.info', 'ndf_info', 'ndf.info', 0],
+			['ndf.columns', 'ndf_columns', 'ndf.columns', 0],
+			['ndf.show.last', 'ndf_show_last', 'ndf.show.last <symbol> <numbers / optional>', 1],
+			# ['ndf.check', 'ndf_check', 'ndf.check <symbol>', 1],
+			['md.check', 'md_check', 'md.check <symbol>', 0],
+			['md.symbols', 'md_symbols', 'md.symbols <market>', 0],
+			['ai.add', 'ai_add', 'ai.add <symbol> <project>', 1],
+			['ai.build', 'ai_build', 'ai.build', 0],
+			['ai.remove', 'ai_remove', 'ai.remove <symbol> <project>', 1],
+			['ai.download', 'ai_download', 'ai.download <project name> <<rename>>', 0],
+			['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project> <<start position>>', 3],
+			['exit', 'exit', 'exit', 0]
+		]
+		i_return = pd.DataFrame(i_return)
+		i_return.columns = ['command', 'program', 'hint', 'params']
+		i_return.set_index('command')
+		return i_return
+
+	def run_button_action(self):
+		def run_method(i_program, args):
+			# Save command ---------------------------------------
+			if self.command_line_history[0] != self.Command_Line.text():
+				self.command_line_history.insert(0, self.Command_Line.text())
+				self.command_line_history = self.command_line_history[:250]
+				self.command_line_history_position = 0
+				self.save_command_line_history()
+			# Run command -------------------------------------------
+			method = eval(i_program)
+			kwargs = {}
+			args_str = ', '.join(map(str, args))
+			i_start = datetime.now()
+			log("Start: " + command_text_first_word + " <" + args_str + ">", True, False)
+			method(*args, **kwargs)
+			log("Ready.", False, False)
+			log("Runtime:" + str(datetime.now() - i_start), False, False)
+			self.Command_Line.setText("")
+
+		command_text = self.Command_Line.text()
+		command_partitioned = command_text.split()
+		command_text_first_word = str.lower(command_partitioned[0])
+
+		i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
+		args = []
+
+		if i_found:
+
+			args = command_partitioned[1:]
+
+			if i_params >= 1:
+				if len(command_partitioned) - 1 >= i_params:
+					if len(wl.wl_df.loc[wl.wl_df['symbol'] == command_partitioned[1]]) > 0:
+						run_method(i_program, args)
+					else:
+						self.mark_command_line("Non listed Symbol!")
+				else:
+					self.mark_command_line("Missing parameter(s)!")
 			else:
-				i_ind = ""
-			i_log_text = "<html><head/><body>" + i_cut_html
-			if line:
-				i_log_text = i_log_text \
-							 + "<font color='#000000'>" \
-							 + "─" * 65 \
-							 + "</font>" \
-							 + "<br>"
+				run_method(i_program, args)
+		else:
+			self.mark_command_line("Command does not exist!")
+			self.print_command()
 
-			lines = add_text.splitlines()
+	def get_command(self, command):
+		i_search = self.commands.loc[self.commands['command'] == command, 'program']
+		if len(i_search) > 0:
+			i_found = True
+			i_program = self.commands.loc[self.commands['command'] == command, 'program'].iloc[0]
+			i_hint = self.commands.loc[self.commands['command'] == command, 'hint'].iloc[0]
+			i_params = self.commands.loc[self.commands['command'] == command, 'params'].iloc[0]
+		else:
+			i_found = False
+			i_program = ""
+			i_hint = ""
+			i_params = ""
+		return i_found, i_program, i_hint, i_params
 
-			for one_line in lines:
-				i_log_text = i_log_text \
-							 + "<font color='#000000'>" \
-							 + time.strftime("%m-%d %H:%M:%S") + " > " \
-							 + i_ind \
-							 + "</font>" \
-							 + "<font color='" + i_web_color + "'>" \
-							 + one_line \
-							 + "</font>" \
-							 + "<br>"
-			i_log_text = i_log_text + "</body></html>"
-			self.Logs_Ai.setText(i_log_text)
-			i_vbar = self.LT_scrollArea_3.verticalScrollBar()
-			i_vbar.setValue(i_vbar.maximum())
+	def print_command(self):
+		log("Commands:")
+		for i_row in tuple(self.commands["command"]):
+			log(" - " + str(i_row))
+
+	def command_line_changed(self):
+		command_text = self.Command_Line.text()
+		command_text_first_word = str.lower(command_text.partition(' ')[0])
+		i_found, i_program, i_hint, i_params = self.get_command(command_text_first_word)
+		if i_found:
+			self.mark_command_line(i_hint, False)
+		else:
+			self.mark_command_line("", False)
+
+	def mark_command_line(self, message, bug=True):
+		if bug:
+			self.Command_Line.setStyleSheet('''background-color: #ffaaaa;
+											border-top-left-radius: 15px;
+											border-top-right-radius: 0px;
+											border-bottom-right-radius: 0px;
+											border-bottom-left-radius: 0px;
+											border-bottom: 1px solid #eeeeee;
+											padding-left: 10px;
+											border-top: 1px solid #ffffff;
+											border-left: 1px solid #000000;
+											''')
+			self.Command_Hint.setText(message)
+			QApplication.processEvents()
+		else:
+			self.Command_Line.setStyleSheet('''background-color: #ffffff;
+											border-top-left-radius: 15px;
+											border-top-right-radius: 0px;
+											border-bottom-right-radius: 0px;
+											border-bottom-left-radius: 0px;
+											border-bottom: 1px solid #eeeeee;
+											padding-left: 10px;
+											border-top: 1px solid #ffffff;
+											border-left: 1px solid #000000;
+											''')
+
+			self.Command_Hint.setText(message)
 			QApplication.processEvents()
 
-		# GUI - Tools ---------------------------------------------
-		
-		def confirm(self, title, message):
-			msg = QMessageBox()
-			msg.setIcon(QMessageBox.Warning)
-			msg.setText("\n\t\t" + message + "\t\t\t\t\n")
-			# msg.setInformativeText("This is additional information")
-			msg.setWindowTitle(title)
-			# msg.setDetailedText("The details are as follows:")
-			msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-			bttn = msg.exec_()
-			if bttn == QMessageBox.Yes:
-				i_return = True
+	# GUI - Info text creators ------------------------------------------------
+
+	def get_pl_by_symbol(self, symbol):
+		if symbol in ntrade.cp_df.index:
+			i_p = float(ntrade.cp_df.loc[symbol, "unrealized_pl"])
+			i_return = f"STOP {i_p}$"
+		else:
+			i_return = "-"
+		return i_return
+
+	def create_tr_info_string(self):
+
+		def nbs(no):
+			return "&nbsp;" * no
+
+		def bnb(blocked):
+			if blocked:
+				i_return = "<b><font color='#ffffff'>Blocked</font></b>"
 			else:
-				i_return = False
+				i_return = "<b><font color='#999999'>Ready</font></b>"
 			return i_return
+
+		def yn(yes_no):
+			if yes_no:
+				i_return = "<b><font color='#ffffff'>Yes</font></b>"
+			else:
+				i_return = "<b><font color='#999999'>No</font></b>"
+			return i_return
+
+		def onf(on_off):
+			if on_off:
+				i_return = "<b><font color='#ffffff'>On</font></b>"
+			else:
+				i_return = "<b><font color='#999999'>Off</font></b>"
+			return i_return
+
+		def oc(open_close):
+			if open_close:
+				i_return = "<b><font color='#ffffff'>Open</font></b>"
+			else:
+				i_return = "<b><font color='#999999'>Closed</font></b>"
+			return i_return
+
+		def rq():
+			i_max_key = max(ntrade.request_count.keys())
+			return ntrade.request_count[i_max_key]
+
+		def get_dt(date_time_str):
+			date_time_str = date_time_str[:19]
+			hours_added = timedelta(hours=6)
+			date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S')
+			date_time_obj = date_time_obj + hours_added
+			return date_time_obj.strftime("%Y.%m.%d %H:%M:%S")
+
+		def ntofs(numb):
+			i_return = int(float(numb))
+			i_return = f"{i_return:,}"
+			return i_return
+
+		i_a = ntrade.get_account()
+		i_c = ntrade.get_clock()
+		if i_c.is_open:
+			i_cst = "Close:"
+			i_cs = get_dt(str(i_c.next_close))
+		else:
+			i_cst = "Open:"
+			i_cs = get_dt(str(i_c.next_open))
+
+		if self.usd_huf == 0:
+			self.usd_huf = md.get_usdhuf()
+
+		s = 10
+		i_return = f"""
+		<html><head/><body>
+		<table border="0" cellspacing="5" cellpadding="0">
+			<tr>
+				<td>Monitor: </td><td>{onf(ntrade.monitor_is_working)} - {ntrade.monitor_refresh_rate}</td><td>{nbs(s)}</td><td>Equity:</td><td>{ntofs(i_a.equity)} USD</td><td>{nbs(s)}</td><td>Market:</td><td>{oc(i_c.is_open)}</td>
+			</tr>
+			<tr>
+				<td>Broker:</td><td>{onf(ntrade.broker_is_working)}  - {ntrade.broker_refresh_rate}</td><td>{nbs(s)}</td><td>USD/HUF:</td><td>{self.usd_huf} HUF</td><td>{nbs(s)}</td><td>{i_cst}</td><td>{i_cs}</td>
+			</tr>
+			<tr>
+				<td>Reguests:</td><td>{rq()}/{ntrade.request_count_max}</td><td>{nbs(s)}</td><td>Cash / power:</td><td>{ntofs(i_a.cash)} / {ntofs(i_a.buying_power)} USD</td><td>{nbs(s)}</td><td>Status:</td><td>{bnb(i_a.trading_blocked)} - {i_a.status}</td>
+			</tr>
+			<tr>
+				<td></td><td></td><td>{nbs(s)}</td><td>Block size:</td><td>{int(ntrade.config["trade_block_size"])} USD</td><td>{nbs(s)}</td><td></td><td></td>
+			</tr>
+		</table>
+		</body></html>
+		"""
+		return i_return
+
+	def get_monitor_info_by_symbol(self, symbol):
+		# print("get_monitor_info_by_symbol\n", symbol)
+		# print("get_monitor_info_by_symbol\n", trade.tp_df)
+		if symbol in ntrade.tp_df.index:
+			i_qt = int(ntrade.tp_df.loc[symbol, "target_position"])
+		else:
+			i_qt = 0
+		# print("get_monitor_info_by_symbol\n", trade.cp_df)
+		if symbol in ntrade.cp_df.index:
+			i_qc = int(ntrade.cp_df.loc[symbol, "qty"])
+			i_p = float(ntrade.cp_df.loc[symbol, "current_price"])
+			i_v = float(ntrade.cp_df.loc[symbol, "market_value"])
+		else:
+			i_qc = 0
+			i_p = 0
+			i_v = 0
+		i_return = f"q: {i_qt} / {i_qc}\np: {i_p}$\nv: {i_v}$"
+		# print(i_return,"\n\n")
+		return i_return
+
+	def get_ai_info_by_symbol(self, symbol):
+		ai_projects = ai.get_projects_by_symbol(symbol)
+		i_return = f"""<html><head/><body>"""
+		for prj in ai_projects:
+			i_return = i_return + f"""
+		<div style="margin-top: 5px;">{prj}<br/>Silent</div>"""
+		i_return = i_return + "</body></html>"
+		# # print(i_return,"\n\n")
+		return i_return
+
+	def tlog(self, add_text, line=False, indent=True, color="normal"):
+		i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
+		i_for_cut = i_for_cut.splitlines()
+		i_cut_html = self.Logs_Trade.text()
+		for i_c in i_for_cut:
+			i_cut_html = i_cut_html.replace(i_c, "")
+
+		i_colors = {'long': "#078F12",
+					'short': "#ff3333",
+					'stop': "#ff9100",
+					'normal': "#333333"}
+		i_web_color = i_colors[color]
+
+		if indent:
+			i_ind = "│  "
+		else:
+			i_ind = ""
+		i_log_text = "<html><head/><body>" + i_cut_html
+		if line:
+			i_log_text = i_log_text \
+						 + "<font color='#000000'>" \
+						 + "─" * 65 \
+						 + "</font>" \
+						 + "<br>"
+
+		lines = add_text.splitlines()
+
+		for one_line in lines:
+			i_log_text = i_log_text \
+						 + "<font color='#000000'>" \
+						 + time.strftime("%m-%d %H:%M:%S") + " > " \
+						 + i_ind \
+						 + "</font>" \
+						 + "<font color='" + i_web_color + "'>" \
+						 + one_line \
+						 + "</font>" \
+						 + "<br>"
+		i_log_text = i_log_text + "</body></html>"
+		self.Logs_Ai.setText(i_log_text)
+		i_vbar = self.LT_scrollArea.verticalScrollBar()
+		i_vbar.setValue(i_vbar.maximum())
+		QApplication.processEvents()
+
+	def ailog(self, add_text, line=False, indent=True, color="normal"):
+		i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
+		i_for_cut = i_for_cut.splitlines()
+		i_cut_html = self.Logs_Ai.text()
+		for i_c in i_for_cut:
+			i_cut_html = i_cut_html.replace(i_c, "")
+
+		i_colors = {'long': "#078F12",
+					'short': "#ff3333",
+					'stop': "#ff9100",
+					'normal': "#333333"}
+		i_web_color = i_colors[color]
+
+		if indent:
+			i_ind = "│  "
+		else:
+			i_ind = ""
+		i_log_text = "<html><head/><body>" + i_cut_html
+		if line:
+			i_log_text = i_log_text \
+						 + "<font color='#000000'>" \
+						 + "─" * 65 \
+						 + "</font>" \
+						 + "<br>"
+
+		lines = add_text.splitlines()
+
+		for one_line in lines:
+			i_log_text = i_log_text \
+						 + "<font color='#000000'>" \
+						 + time.strftime("%m-%d %H:%M:%S") + " > " \
+						 + i_ind \
+						 + "</font>" \
+						 + "<font color='" + i_web_color + "'>" \
+						 + one_line \
+						 + "</font>" \
+						 + "<br>"
+		i_log_text = i_log_text + "</body></html>"
+		self.Logs_Ai.setText(i_log_text)
+		i_vbar = self.LT_scrollArea_3.verticalScrollBar()
+		i_vbar.setValue(i_vbar.maximum())
+		QApplication.processEvents()
+
+	# GUI - Tools ---------------------------------------------
+
+	def confirm(self, title, message):
+		msg = QMessageBox()
+		msg.setIcon(QMessageBox.Warning)
+		msg.setText("\n\t\t" + message + "\t\t\t\t\n")
+		# msg.setInformativeText("This is additional information")
+		msg.setWindowTitle(title)
+		# msg.setDetailedText("The details are as follows:")
+		msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+		bttn = msg.exec_()
+		if bttn == QMessageBox.Yes:
+			i_return = True
+		else:
+			i_return = False
+		return i_return
 
 
 class n_date_frame2:
@@ -2597,6 +2587,88 @@ class n_date_frame2:
 				nddb.write(symbol)
 			
 			elif tech_indicator == "P10INT":
+
+				def get_slice_index(xlen, parts, slice_no):
+					slices = np.array_split(list(np.arange(0, xlen)), parts)
+					start = slices[slice_no][0]
+					end = slices[slice_no][-1:][0]
+					end += 1
+					end = min(end, xlen)
+					return start, end
+
+				params = str(params[1:-1]).split(',')
+				if len(params) != 3:
+					params = [.9, 60, 15]
+
+				# self.remove_columns(symbol, ['SIG_P10INT', 'y_P10INT'])
+
+				profit_limit = float(params[0]) / 100
+				prob_limit = float(params[1]) / 100
+				time_frame = int(params[2])  ## hán perces idő intervallumot figyel előre
+				log("  Settings: profit limit: " + str(profit_limit * 100) + "%,   Prob. limit: " +
+					str(round(prob_limit * 100, 2)) + "%   Time frame: " + str(time_frame))
+				full_time_traded_istrument = True  # kriptókhoz
+				if symbol in nbt.crypto:
+					tick_size = float(nbt.pai[symbol]['tick_size'])
+					if nddf[symbol]["ohlc4"][
+						0] > 10000:  # BTCUSDT .01 a tick size de 2-5 van a low and a high között túl sok lenne a esetek száma
+						tick_size = float(10)
+					else:
+						tick_size = float(nbt.pai[symbol]['tick_size'])
+				else:
+					tick_size = float(0.1)  # ezt majd le kell kérni a részvény adataiból
+				log("  Tick size: " + str(tick_size))
+
+				used_cores = cpu_count()
+				mp_params = []
+
+				for x in range(used_cores):
+					x_from = get_slice_index(nddf[symbol].shape[0], used_cores, x)[0]
+					x_to = get_slice_index(nddf[symbol].shape[0], used_cores, x)[1]
+					# print(x_from, x_to)
+
+					date_s = nddf[symbol]["Date"][x_from:x_to]
+					low_s = np.array(nddf[symbol]["Low"])[x_from:x_to]
+					high_s = np.array(nddf[symbol]["High"])[x_from:x_to]
+
+					params = {'symbol': symbol,
+							  'profit_limit': profit_limit,
+							  'prob_limit': prob_limit,
+							  'time_frame': time_frame,
+							  'tick_size': tick_size,
+							  'date_s_slice': date_s,
+							  'low_s_slice': low_s,
+							  'high_s_slice': high_s}
+
+					mp_params.append([used_cores, x + 1, params])
+					time.sleep(1)
+
+				xpool = Pool(used_cores)
+				res = xpool.map(mp_tech, mp_params)
+				res_arra = []
+				for ic in range(used_cores):
+					file_name = 'P10INT_MP_RESULT' + str(ic)
+					res_arra.append(np.load(file_name))
+				afr = np.concatenate(res_arra)
+				print(afr)
+
+				log("Result: ")
+				log("  0 = Under limit: " + str(np.count_nonzero(afr == 0)))
+				log("  1 = Long over limit: " + str(np.count_nonzero(afr == 1)))
+				log("  2 = Shor over limit: " + str(np.count_nonzero(afr == 2)))
+				log("  9 = GAP: " + str(np.count_nonzero(afr == 9)))
+				#
+				# nddf[symbol]["SIG_P10INT"] = r_array
+				# nddf[symbol]['SIG_P10INT'] = nddf[symbol]['SIG_P10INT'].astype(int)
+				# nddf[symbol]["y_P10INT"] = nddf[symbol]["SIG_P10INT"]
+				# nddf[symbol].set_index('Date', inplace=True)
+				# # mask = nddf[symbol].between_time('20:00', '16:00').index
+				# # nddf[symbol].loc[mask, 'y_P10INT'] = -1000
+				#
+				# ndf.set_dt_order(symbol)
+				# nddb.write(symbol)
+
+			elif tech_indicator == "P10INT_1C":
 				params = str(params[1:-1]).split(',')
 				if len(params) != 3:
 					params = [.9, 60, 15]
@@ -2702,6 +2774,8 @@ class n_date_frame2:
 
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
+
+
 
 			elif tech_indicator == "P10INT_ORIG":
 
@@ -3084,48 +3158,7 @@ def do(symbol="", p2="", p3=""):
 	ndf.sig_to_y("BTCUSDT", "SIG_P10INT", "y_P10INT", 10)
 
 def do2(symbol="", p2="", p3=""):
-	project = "BTCUSDT_P10INT"
-	symbol = "BTCUSDT"
-	x_from = 100
-	x_to = 1000000
-	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
-	time_window_size = int(dataset_config['time_window_size'])
-	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
-	ai.build()
-	good_sig_count = 0
-	bad_sig_count = 0.1
-
-	sig = nddf[symbol].SIG_P10INT.values
-	print(len(sig))
-	sig = np.array(sig)
-	sig_index = np.where(sig == 1)[0]
-	print("sig", len(sig_index))
-
-	sig = nddf[symbol].y_P10INT.values
-	print(len(sig))
-	sig = np.array(sig)
-	sig_index = np.where(sig == 1)[0]
-	print("y", len(sig_index))
-	for i_i in sig_index:
-		print(sig[i_i])
-		if sig[i_i] == 1:
-			x_set = []
-			x_set.append(ndf.get_dataset_by_index(symbol=symbol,
-												  index=i_i,
-												  time_window_size=time_window_size,
-												  original_fields=original_fields,
-												  contras=contras,
-												  contra_copies=contra_copies,
-												  contra_copies_dt=contra_copies_dt))
-			y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, x_set)
-			print(f"{sig[i_i]} - {y_predict_sig}")
-			if y_predict_sig == 1:
-				good_sig_count += 1
-			else:
-				bad_sig_count += 1
-			print(f"{i_i} - good {good_sig_count} bad {bad_sig_count}   {round(good_sig_count/(bad_sig_count + good_sig_count), 3)}")
-
-
+	pass
 
 
 def stream_job():
@@ -3155,11 +3188,11 @@ def stream_job():
 
 
 def s(msg_str):
-	if LogTo == "Gui":
-		QApplication.processEvents()
-		gui.Status.setText("Status: " + msg_str)
-		gui.Progress_Bar.setValue(0)
-		QApplication.processEvents()
+	# if LogTo == "Gui":
+	QApplication.processEvents()
+	gui.Status.setText("Status: " + msg_str)
+	gui.Progress_Bar.setValue(0)
+	QApplication.processEvents()
 
 
 s2_value = 0
@@ -3171,33 +3204,33 @@ re_ti_str = ""
 def s2(null=False, steps=0, text=""):
 	global s2_value, s2_max, s2_last_dt, re_ti_str
 
-	if LogTo == "Gui":
-		QApplication.processEvents()
-		if null:
-			s2_value = 0
-			s2_max = steps
-			gui.Status.setText(" ".join(["Status:", str(int(s2_value)), "%"]))
-			gui.Progress_Bar.setValue(int(s2_value))
+	# if LogTo == "Gui":
+	QApplication.processEvents()
+	if null:
+		s2_value = 0
+		s2_max = steps
+		gui.Status.setText(" ".join(["Status:", str(int(s2_value)), "%"]))
+		gui.Progress_Bar.setValue(int(s2_value))
+	else:
+		if s2_value <= s2_max:
+			prc = '{0:.2f}'.format(s2_value / s2_max * 100)
+			perc_str = f"Status: {prc} % {text}                    "
+			perc_str = perc_str[0:35]
+			if s2_value % 500 == 0:
+				t = (datetime.now() - s2_last_dt) / 500
+				s2_last_dt = datetime.now()
+				re_ti = (s2_max - s2_value) * t
+				imin = int(re_ti.seconds / 60)
+				isec = "00" + str(re_ti.seconds - (imin * 60))
+				isec = isec[-2:]
+				re_ti_str = f"remaining time: {imin}:{isec} min."
+			gui.Status.setText(f"{perc_str}  {re_ti_str}")
+			gui.Progress_Bar.setValue(int(s2_value / s2_max * 100))
+			s2_value += 1
 		else:
-			if s2_value <= s2_max:
-				prc = '{0:.2f}'.format(s2_value / s2_max * 100)
-				perc_str = f"Status: {prc} % {text}                    "
-				perc_str = perc_str[0:35]
-				if s2_value % 500 == 0:
-					t = (datetime.now() - s2_last_dt) / 500
-					s2_last_dt = datetime.now()
-					re_ti = (s2_max - s2_value) * t
-					imin = int(re_ti.seconds / 60)
-					isec = "00" + str(re_ti.seconds - (imin * 60))
-					isec = isec[-2:]
-					re_ti_str = f"remaining time: {imin}:{isec} min."
-				gui.Status.setText(f"{perc_str}  {re_ti_str}")
-				gui.Progress_Bar.setValue(int(s2_value / s2_max * 100))
-				s2_value += 1
-			else:
-				gui.Status.setText("Status: ok")
-				gui.Progress_Bar.setValue(10)
-		QApplication.processEvents()
+			gui.Status.setText("Status: ok")
+			gui.Progress_Bar.setValue(10)
+	QApplication.processEvents()
 
 
 def stream_last_refresh(text):
@@ -3208,6 +3241,7 @@ def ai_log():
 	pass
 
 def log(add_text, line=False, indent=True, color="normal", visible=True):
+	LogTo = "Gui"
 	if visible:
 		if LogTo == "Gui":
 			i_vbar = gui.LT_scrollArea_2.verticalScrollBar()
@@ -3370,7 +3404,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							"stock_size": stock_size,
 							"stop_loss_limit": stop_loss,
 							"profit_take_limit": -1,  # -1 nincs bekapcsolva
-							"trailer_stop": .15,
+							"trailer_stop": .55,
 							"trailer_min_profit": 10,
 							"value_limit_profit_reinvest": True,
 							"steps_limit": 120,
@@ -3869,39 +3903,27 @@ def tr_info_refresh():
 
 
 if __name__ == "__main__":
-	
+	print("Status: Start")
 	wl = watch_list()
 	nddf = {}
 	nddb = n_db(nddf, log)
 	ai = n_ai(log, nddf)
-	
-	if LocalRUN:
-		print("Status: GUI Loading...")
-		app = QApplication([])
-		gui = gui()
-		ntrade = n_trade(gui=gui)
-		nchart = n_chart(ntrade)
-		gui.refresh_ui()
-		gui.show()
+
+	print("Status: GUI Loading...")
+	app = QApplication([])
+	gui = gui()
+	ntrade = n_trade(gui=gui)
+	nchart = n_chart(ntrade)
+	gui.refresh_ui()
+	gui.show()
 	
 	ndf = n_date_frame2()
 	ndf_meta = n_date_frame_meta(log)
 	n_tools = n_tools(gui=gui)
 	md = n_market_data(log, s, n_tools, ndf, stream_job)
 	nbt = n_binance_trade(log=log, s=s, tools=n_tools)
+	mp_tech = n_tech_mp
+	# do2("BTCUSDT")
+	app.exec()
 
 
-	if not LocalRUN:
-		i_start = datetime.now()
-		print("")
-		print("nDot job mode.")
-		print("_" * 80)
-		# ------------------------------------------------------------------------ JOB Strat
-		ndf_tech("APA", "SMA30")
-		
-		# ------------------------------------------------------------------------ JOB End
-		log("Ready.", False, False)
-		log("Runtime:" + str(datetime.now() - i_start), False, False)
-	
-	if LocalRUN:
-		sys.exit(app.exec_())

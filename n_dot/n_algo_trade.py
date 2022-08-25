@@ -346,12 +346,12 @@ class n_algo_trade:
         self.sig_way = y_last_mean
 
         if self.strategy == 66:  # signal drived
-            if self.steps == 10:  # and self.actual_qt <= 0:
+            if self.steps == 18:  # and self.act_profit <= 0:
                 decision = "STOP"
                 decision_qt = 0
                 return decision, decision_qt
 
-            if y_predict == 1 and 1.2 >= y_last_mean >= .8:  # and price_dict["actual_macdh"] > 0:
+            if y_predict == 1:  # and 1.2 >= y_last_mean >= 0:  # and price_dict["actual_macdh"] > 0:
 
                 # if self.enter_count > 1 and self.name == "BTCUSDT" + " Ai decisions drived":
                 #     print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
