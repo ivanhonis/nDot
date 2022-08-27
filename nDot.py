@@ -50,6 +50,7 @@ from n_dot.n_algo_trade import n_algo_trade
 from n_dot.n_ai import n_ai
 from n_dot.n_tech_mp import n_tech_mp
 from n_dot.n_binance_trade import n_binance_trade
+from n_dot.n_dataset_constructor_mp import n_dataset_constructor_mp
 
 # # Ai components
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -1393,48 +1394,56 @@ class n_date_frame2:
 			s2()
 
 	def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
+		
+		def get_slice_index(xlen, parts, slice_no):
+			slices = np.array_split(list(np.arange(0, xlen)), parts)
+			start = slices[slice_no][0]
+			end = slices[slice_no][-1:][0]
+			end += 1
+			end = min(end, xlen)
+			return start, end
 
 		# def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, nd_dset, back_shift=0):
-		def dataset_constructor(params):
-			print("start")
-			task = params['task']
-			symbol = params['symbol']
-			indexes = params['indexes']
-			time_window_size = params['time_window_size']
-			y = params['y']
-			original_fields = params['original_fields']
-			contras = params['contras']
-			nd_dset = params['nd_dset']
-			back_shift = params['back_shift']
-
-			array_len = time_window_size * (len(original_fields) + len(contras))
-			
-			# contra_copies = self.get_contra_copies(contras)
-			contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
-			asked = 0
-			recieved = 0
-			for nx, i_il in enumerate(indexes):
-				asked += 1
-
-				i_data_array = self.get_dataset_by_index(symbol=symbol,
-														 index=i_il + back_shift,
-														 # :) predict in the present, but trade in the future
-														 time_window_size=time_window_size,
-														 original_fields=original_fields,
-														 contras=contras,
-														 contra_copies=contra_copies,
-														 contra_copies_dt=contra_copies_dt)
-
-				if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
-					recieved += 1
-					nd_dset.add_X(i_data_array)
-					nd_dset.add_y(y)
-
-				# s2()
-				if nx % 1000 == 0:
-					print("task ->",task, nx)
-			log("  Get dataset from ndf: (asked, recieved) by y" + str(y) + ": " + str(asked)+" , "+str(recieved))
-			del contra_copies
+		# def dataset_constructor(params):
+		# 	print("start")
+		# 	task = params['task']
+		# 	symbol = params['symbol']
+		# 	indexes = params['indexes']
+		# 	time_window_size = params['time_window_size']
+		# 	y = params['y']
+		# 	original_fields = params['original_fields']
+		# 	contras = params['contras']
+		# 	nd_dset = params['nd_dset']
+		# 	back_shift = params['back_shift']
+		#
+		# 	array_len = time_window_size * (len(original_fields) + len(contras))
+		#
+		# 	# contra_copies = self.get_contra_copies(contras)
+		# 	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+		# 	asked = 0
+		# 	recieved = 0
+		# 	for nx, i_il in enumerate(indexes):
+		# 		asked += 1
+		#
+		# 		i_data_array = self.get_dataset_by_index(symbol=symbol,
+		# 												 index=i_il + back_shift,
+		# 												 # :) predict in the present, but trade in the future
+		# 												 time_window_size=time_window_size,
+		# 												 original_fields=original_fields,
+		# 												 contras=contras,
+		# 												 contra_copies=contra_copies,
+		# 												 contra_copies_dt=contra_copies_dt)
+		#
+		# 		if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+		# 			recieved += 1
+		# 			nd_dset.add_X(i_data_array)
+		# 			nd_dset.add_y(y)
+		#
+		# 		# s2()
+		# 		if nx % 1000 == 0:
+		# 			print("task ->",task, nx)
+		# 	log("  Get dataset from ndf: (asked, recieved) by y" + str(y) + ": " + str(asked)+" , "+str(recieved))
+		# 	del contra_copies
 
 		i_save = nddf[symbol].copy()
 		log("  Set locked part of the ndf:")
@@ -1474,8 +1483,6 @@ class n_date_frame2:
 					else:
 						log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
 						self.sig_to_y(symbol, sig_field, y_field, overlay_steps)
-
-
 					
 					log("Creating dataset.")
 					# image fej megcsinálása, minden image nél ugyan az
@@ -1536,8 +1543,13 @@ class n_date_frame2:
 					# i_index_bad_short = i_index_bad_short[0:max_signals]
 					
 					nd_dset.set_window_size(time_window_size)
-					tasks = [1, 2, 3]
-					for ix in range(3):
+					used_cores = cpu_count()
+					runing_processes = np.zeros(used_cores)
+					contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+					prc_count = 0
+					for ix in range(5):
+						x_from = get_slice_index(i_indexes[0].shape[0], 5, ix)[0]
+						x_to = get_slice_index(i_indexes[0].shape[0], 5, ix)[1]
 						# print(ix)
 						# dataset_constructor(symbol=symbol,
 						# 					indexes=i_indexes[ix],
@@ -1548,56 +1560,82 @@ class n_date_frame2:
 						# 					back_shift=back_shift,
 						# 					nd_dset=nd_dset)
 
-						params = {'task': ix,
+						params = {'cores': used_cores,
+								  'process': ix,
 								  'symbol': symbol,
-								  'indexes': i_indexes[ix],
+								  'indexes': i_indexes[0][x_from:x_to],
 								  'time_window_size': time_window_size,
-								  'y': ix,
+								  'y': 0,
 								  'original_fields': original_fields,
 								  'contras': contras,
 								  'back_shift': back_shift,
-								  'nd_dset': nd_dset}
+								  'contra_copies_dt': contra_copies_dt,
+								  'nddf': nddf
+								  }
+						
+						runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+						prc_count += 1
+					
+					params = {'cores': used_cores,
+							  'process': 6,
+							  'symbol': symbol,
+							  'indexes': i_indexes[1],
+							  'time_window_size': time_window_size,
+							  'y': 1,
+							  'original_fields': original_fields,
+							  'contras': contras,
+							  'back_shift': back_shift,
+							  'contra_copies_dt': contra_copies_dt,
+							  'nddf': nddf
+							  }
+					
+					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+					prc_count += 1
+					
+					params = {'cores': used_cores,
+							  'process': 7,
+							  'symbol': symbol,
+							  'indexes': i_indexes[2],
+							  'time_window_size': time_window_size,
+							  'y': 2,
+							  'original_fields': original_fields,
+							  'contras': contras,
+							  'back_shift': back_shift,
+							  'contra_copies_dt': contra_copies_dt,
+							  'nddf': nddf
+							  }
+					
+					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+					prc_count += 1
+					
+					for x, prc in enumerate(runing_processes):
+						prc.start()
+						# soft start for processor cooler sincronize
+						if x == 3:
+							time.sleep(15)
+						else:
+							time.sleep(3)
+					
+					for prc in runing_processes:
+						prc.join()
+					
+					X_arra = []
+	
 
-
-						tasks[ix] = threading.Thread(target=dataset_constructor, args=(params,))
-						tasks[ix].start()
-
-					for ix in range(3):
-						tasks[ix].join()
-
-					# s2()
-					# dataset_constructor(symbol=symbol,
-					# 					indexes=i_index_good_long,
-					# 					time_window_size=time_window_size,
-					# 					y=0,
-					# 					original_fields=original_fields,
-					# 					contras=contras,
-					# 					back_shift=back_shift)
-					# s2()
-					# dataset_constructor(symbol=symbol,
-					# 					indexes=i_index_good_short,
-					# 					time_window_size=time_window_size,
-					# 					y=1,
-					# 					original_fields=original_fields,
-					# 					contras=contras,
-					# 					back_shift=back_shift)
-					# s2()
-					# dataset_constructor(symbol=symbol,
-					# 					indexes=i_index_bad_long,
-					# 					time_window_size=time_window_size,
-					# 					y=2,
-					# 					original_fields=original_fields,
-					# 					contras=contras,
-					# 					back_shift=back_shift)
-					# s2()
-					# dataset_constructor(symbol=symbol,
-					# 					indexes=i_index_bad_short,
-					# 					time_window_size=time_window_size,
-					# 					y=3,
-					# 					original_fields=original_fields,
-					# 					contras=contras,
-					# 					back_shift=back_shift)
-					# s2()
+					for ic in range(used_cores):
+						file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(ic) + '.npy'
+						X_arra.append(np.load(file_name))
+					X_arra = np.concatenate(X_arra)
+					
+					nd_dset.add_X(X_arra)
+					
+					y_arra = []
+					for ic in range(used_cores):
+						file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_y_RESULTS' + str(ic) + '.npy'
+						y_arra.append(np.load(file_name))
+					y_arra = np.concatenate(y_arra)
+					nd_dset.add_y(y_arra)
+					
 					# historic max and min ---------------------------------
 					
 					i_historic_max = np.array([])
@@ -3979,6 +4017,7 @@ if __name__ == "__main__":
 	md = n_market_data(log, s, n_tools, ndf, stream_job)
 	nbt = n_binance_trade(log=log, s=s, tools=n_tools)
 	mp_tech = n_tech_mp
+	mp_dataset_constructor = n_dataset_constructor_mp
 	# do2("BTCUSDT")
 	app.exec()
 

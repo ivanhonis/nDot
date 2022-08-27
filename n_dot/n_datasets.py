@@ -62,11 +62,11 @@ class n_dataset:
         self.data['historic_min'] = historic_min
 
     def add_X(self, array):
+        self.data['X_count'] += len(array)
         if len(self.data['X']) == 0:
             self.data['X'] = array
         else:
             self.data['X'] = np.vstack((self.data['X'], array))
-        self.data['X_count'] += 1
 
     def add_y(self, label):
         label = np.array([int(label)])
