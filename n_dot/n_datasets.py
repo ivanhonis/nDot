@@ -1,5 +1,7 @@
 import pickle
 import datetime
+import sys
+
 import numpy as np
 
 
@@ -68,7 +70,11 @@ class n_dataset:
 
     def add_y(self, label):
         label = np.array([int(label)])
-        self.data['y'] = np.concatenate((self.data['y'], label))
+        # print("ybug", self.data['y'].shape, label.shape)
+        # self.data['y'] = np.concatenate((self.data['y'], label))
+        # self.data['y'] = np.concatenate((self.data['y'], label))
+        self.data['y'] = np.append(self.data['y'], label)
+
 
     def add_field(self, field):
         self.fields_dict[field] = 0

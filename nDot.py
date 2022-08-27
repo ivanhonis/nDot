@@ -33,8 +33,10 @@ import pickle
 # import re  # dataset config beolvasóhoz kell
 import pathlib  # dataset config beolvasóhoz kell
 
-from multiprocessing import shared_memory, Lock, Pool, cpu_count
+from multiprocessing import shared_memory, Lock, Pool, cpu_count, Process
 lock = Lock()
+
+import asyncio
 
 # User nDot ------------------------------------------------------
 from n_dot.n_trade import n_trade
@@ -54,7 +56,6 @@ from n_dot.n_binance_trade import n_binance_trade
 # from tensorflow.keras.models import load_model
 
 # from tqdm import tqdm
-
 # import websocket
 
 class gui(QWidget, object):
@@ -701,6 +702,7 @@ class n_date_frame2:
 	def __init__(self):
 		self.indicators = pd.DataFrame(None)
 		self.load_indicators()
+		self.temp_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\temp\\"
 	
 	# def get_dataset_config(self, file_name):
 	#     log("ndf-> get_dataset_config " + file_name )
@@ -1096,7 +1098,8 @@ class n_date_frame2:
 					result[con_symbol].set_index("Date", inplace=True)
 					result_dt[con_symbol] = np.array(result[con_symbol].index)
 		return result, result_dt
-	
+
+
 	def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras, contra_copies, contra_copies_dt):
 		
 		i_int_to = int(index)
@@ -1370,10 +1373,40 @@ class n_date_frame2:
 		
 		else:
 			log("config file is missing:" + str(config_file_path))
-	
+
+
+	async def add_x_y(self, symbol, i_il, back_shift, time_window_size, original_fields, contras, contra_copies,
+				contra_copies_dt, array_len, nd_dset, y):
+		i_data_array = await self.get_dataset_by_index_async(symbol=symbol,
+												 index=i_il + back_shift,
+												 # :) predict in the present, but trade in the future
+												 time_window_size=time_window_size,
+												 original_fields=original_fields,
+												 contras=contras,
+												 contra_copies=contra_copies,
+												 contra_copies_dt=contra_copies_dt)
+
+		if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+			nd_dset.add_X(i_data_array)
+			# print(y)
+			nd_dset.add_y(y)
+			s2()
+
 	def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
-		
-		def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, back_shift=0):
+
+		# def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, nd_dset, back_shift=0):
+		def dataset_constructor(params):
+			print("start")
+			task = params['task']
+			symbol = params['symbol']
+			indexes = params['indexes']
+			time_window_size = params['time_window_size']
+			y = params['y']
+			original_fields = params['original_fields']
+			contras = params['contras']
+			nd_dset = params['nd_dset']
+			back_shift = params['back_shift']
+
 			array_len = time_window_size * (len(original_fields) + len(contras))
 			
 			# contra_copies = self.get_contra_copies(contras)
@@ -1381,8 +1414,8 @@ class n_date_frame2:
 			asked = 0
 			recieved = 0
 			for nx, i_il in enumerate(indexes):
-				s2()
 				asked += 1
+
 				i_data_array = self.get_dataset_by_index(symbol=symbol,
 														 index=i_il + back_shift,
 														 # :) predict in the present, but trade in the future
@@ -1391,13 +1424,15 @@ class n_date_frame2:
 														 contras=contras,
 														 contra_copies=contra_copies,
 														 contra_copies_dt=contra_copies_dt)
-				
+
 				if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
 					recieved += 1
 					nd_dset.add_X(i_data_array)
 					nd_dset.add_y(y)
 
 				# s2()
+				if nx % 1000 == 0:
+					print("task ->",task, nx)
 			log("  Get dataset from ndf: (asked, recieved) by y" + str(y) + ": " + str(asked)+" , "+str(recieved))
 			del contra_copies
 
@@ -1464,8 +1499,8 @@ class n_date_frame2:
 						i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
 						# i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
 
-					i_indexes[1] = i_indexes[1][0:25000]
-					i_indexes[2] = i_indexes[2][0:25000]
+					# i_indexes[1] = i_indexes[1][0:25000]
+					# i_indexes[2] = i_indexes[2][0:25000]
 
 					len1 = len(i_indexes[1])
 					len2 = len(i_indexes[2])
@@ -1501,15 +1536,35 @@ class n_date_frame2:
 					# i_index_bad_short = i_index_bad_short[0:max_signals]
 					
 					nd_dset.set_window_size(time_window_size)
+					tasks = [1, 2, 3]
 					for ix in range(3):
 						# print(ix)
-						dataset_constructor(symbol=symbol,
-											indexes=i_indexes[ix],
-											time_window_size=time_window_size,
-											y=ix,
-											original_fields=original_fields,
-											contras=contras,
-											back_shift=back_shift)
+						# dataset_constructor(symbol=symbol,
+						# 					indexes=i_indexes[ix],
+						# 					time_window_size=time_window_size,
+						# 					y=ix,
+						# 					original_fields=original_fields,
+						# 					contras=contras,
+						# 					back_shift=back_shift,
+						# 					nd_dset=nd_dset)
+
+						params = {'task': ix,
+								  'symbol': symbol,
+								  'indexes': i_indexes[ix],
+								  'time_window_size': time_window_size,
+								  'y': ix,
+								  'original_fields': original_fields,
+								  'contras': contras,
+								  'back_shift': back_shift,
+								  'nd_dset': nd_dset}
+
+
+						tasks[ix] = threading.Thread(target=dataset_constructor, args=(params,))
+						tasks[ix].start()
+
+					for ix in range(3):
+						tasks[ix].join()
+
 					# s2()
 					# dataset_constructor(symbol=symbol,
 					# 					indexes=i_index_good_long,
@@ -2598,7 +2653,7 @@ class n_date_frame2:
 
 				params = str(params[1:-1]).split(',')
 				if len(params) != 3:
-					params = [.9, 60, 15]
+					params = [.4, .55, 10]
 
 				# self.remove_columns(symbol, ['SIG_P10INT', 'y_P10INT'])
 
@@ -2608,20 +2663,13 @@ class n_date_frame2:
 				log("  Settings: profit limit: " + str(profit_limit * 100) + "%,   Prob. limit: " +
 					str(round(prob_limit * 100, 2)) + "%   Time frame: " + str(time_frame))
 				full_time_traded_istrument = True  # kriptókhoz
-				if symbol in nbt.crypto:
-					tick_size = float(nbt.pai[symbol]['tick_size'])
-					if nddf[symbol]["ohlc4"][
-						0] > 10000:  # BTCUSDT .01 a tick size de 2-5 van a low and a high között túl sok lenne a esetek száma
-						tick_size = float(10)
-					else:
-						tick_size = float(nbt.pai[symbol]['tick_size'])
-				else:
-					tick_size = float(0.1)  # ezt majd le kell kérni a részvény adataiból
-				log("  Tick size: " + str(tick_size))
+				price_slices = 10  # ezt majd le kell kérni a részvény adataiból
+				log("  Price slices: " + str(price_slices))
 
 				used_cores = cpu_count()
 				mp_params = []
 
+				runing_processes = [None] * used_cores
 				for x in range(used_cores):
 					x_from = get_slice_index(nddf[symbol].shape[0], used_cores, x)[0]
 					x_to = get_slice_index(nddf[symbol].shape[0], used_cores, x)[1]
@@ -2631,42 +2679,51 @@ class n_date_frame2:
 					low_s = np.array(nddf[symbol]["Low"])[x_from:x_to]
 					high_s = np.array(nddf[symbol]["High"])[x_from:x_to]
 
-					params = {'symbol': symbol,
+					params = {'cores': used_cores,
+							  'process': x,
 							  'profit_limit': profit_limit,
 							  'prob_limit': prob_limit,
 							  'time_frame': time_frame,
-							  'tick_size': tick_size,
+							  'price_slices': price_slices,
 							  'date_s_slice': date_s,
 							  'low_s_slice': low_s,
 							  'high_s_slice': high_s}
 
-					mp_params.append([used_cores, x + 1, params])
-					time.sleep(1)
+					# mp_params.append([used_cores, x + 1, params])
 
-				xpool = Pool(used_cores)
-				res = xpool.map(mp_tech, mp_params)
+					runing_processes[x] = Process(target=mp_tech, args=(params,))
+
+				for x, prc in enumerate(runing_processes):
+					prc.start()
+					# soft start for processor cooler sincronize
+					if x == 3:
+						time.sleep(15)
+					else:
+						time.sleep(3)
+
+				for prc in runing_processes:
+					prc.join()
+
+				# xpool = Pool(used_cores)
+				# res = xpool.map(mp_tech, mp_params)
 				res_arra = []
 				for ic in range(used_cores):
-					file_name = 'P10INT_MP_RESULT' + str(ic)
+					file_name = self.temp_path + 'P10INT_MP_RESULT' + str(ic) + '.npy'
 					res_arra.append(np.load(file_name))
 				afr = np.concatenate(res_arra)
-				print(afr)
+				# print(len(afr), nddf[symbol].shape[0])
 
 				log("Result: ")
 				log("  0 = Under limit: " + str(np.count_nonzero(afr == 0)))
 				log("  1 = Long over limit: " + str(np.count_nonzero(afr == 1)))
 				log("  2 = Shor over limit: " + str(np.count_nonzero(afr == 2)))
 				log("  9 = GAP: " + str(np.count_nonzero(afr == 9)))
-				#
-				# nddf[symbol]["SIG_P10INT"] = r_array
-				# nddf[symbol]['SIG_P10INT'] = nddf[symbol]['SIG_P10INT'].astype(int)
-				# nddf[symbol]["y_P10INT"] = nddf[symbol]["SIG_P10INT"]
-				# nddf[symbol].set_index('Date', inplace=True)
-				# # mask = nddf[symbol].between_time('20:00', '16:00').index
-				# # nddf[symbol].loc[mask, 'y_P10INT'] = -1000
-				#
-				# ndf.set_dt_order(symbol)
-				# nddb.write(symbol)
+
+				nddf[symbol]["SIG_P10INT"] = afr
+				nddf[symbol]['SIG_P10INT'] = nddf[symbol]['SIG_P10INT'].astype(int)
+				nddf[symbol]["y_P10INT"] = nddf[symbol]["SIG_P10INT"]
+				ndf.set_dt_order(symbol)
+				nddb.write(symbol)
 
 			elif tech_indicator == "P10INT_1C":
 				params = str(params[1:-1]).split(',')
@@ -3650,9 +3707,8 @@ def ndf_dataset_int(symbol="", config_file="", force="FORCE", overlay_manager="r
 		force = True
 	else:
 		force = False
-	
+
 	ndf.create_dataset_int(symbol, config_file, force, overlay_manager.lower())
-	s("ok :)")
 
 
 def ndf_remove(symbol=""):
