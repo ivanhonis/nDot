@@ -745,6 +745,13 @@ class n_date_frame2:
 	#         ok = False
 	#
 	#     return ok, description, dataset_config, original_fields, contras
+	def get_slice_index(self, xlen, parts, slice_no):
+		slices = np.array_split(list(np.arange(0, xlen)), parts)
+		start = slices[slice_no][0]
+		end = slices[slice_no][-1:][0]
+		end += 1
+		end = min(end, xlen)
+		return start, end
 	
 	def get_all_symbol(self):
 		return nddf.keys()
@@ -3257,7 +3264,65 @@ def do(symbol="", p2="", p3=""):
 	ndf.sig_to_y("BTCUSDT", "SIG_P10INT", "y_P10INT", 10)
 
 def do2(symbol="", p2="", p3=""):
-	pass
+	temp_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\temp\\"
+	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
+	symbol = "BTCUSDT"
+	project = "APA_P10"
+	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
+	
+	time_window_size = int(dataset_config['time_window_size'])
+	back_shift = dataset_config["data_window_back_shift"]
+	
+	i_indexes = np.arra(range(time_window_size, nddf[symbol].shape[0]))
+	used_cores = cpu_count()
+	runing_processes = np.array([None] * used_cores)
+	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+	prc_count = 0
+	for ix in range(used_cores):
+		x_from = ndf.get_slice_index(i_indexes[0].shape[0], 6, ix)[0]
+		x_to = ndf.get_slice_index(i_indexes[0].shape[0], 6, ix)[1]
+		
+		params = {'cores': used_cores,
+				  'process': ix,
+				  'symbol': symbol,
+				  'indexes': i_indexes[0][x_from:x_to],
+				  'time_window_size': time_window_size,
+				  'y': 0,
+				  'original_fields': original_fields,
+				  'contras': contras,
+				  'back_shift': back_shift,
+				  'contra_copies_dt': contra_copies_dt,
+				  'nddf': nddf,
+				  'gap': "empty"
+				  }
+		
+		runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+		prc_count += 1
+	
+	
+	runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+	prc_count += 1
+	
+	for x, prc in enumerate(runing_processes):
+		prc.start()
+		time.sleep(.25)
+	
+	for prc in runing_processes:
+		prc.join()
+	
+	X_arra = []
+	
+	for ic in range(used_cores):
+		file_name = temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(ic) + '.npy'
+		X_arra.append(np.load(file_name))
+	X_full = np.concatenate(X_arra)
+	
+	import hashlib
+	full_cache_name = str(time_window_size) + ""
+	full_cache_name = hashlib.md5(full_cache_name).hexdigest()
+	print(f"len chk {nddf[symbol].shape[0]} {X_full.shape[0]}")
+	
+	np.save(cache_path + "DATASET_FULL_CACHE_" + full_cache_name, X_full)
 
 
 def stream_job():

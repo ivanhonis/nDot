@@ -64,6 +64,7 @@ class n_dataset_constructor_mp:
         back_shift = params['back_shift']
         contra_copies_dt = params['contra_copies_dt']
         nddf = params['nddf']
+        gap = params['gap_empty']
         
         array_len = time_window_size * (len(original_fields) + len(contras))
         
@@ -71,6 +72,7 @@ class n_dataset_constructor_mp:
         recieved = 0
         X_array = np.array([])
         y_array = np.array([])
+        last_X = []
         for nx, i_il in enumerate(indexes):
             asked += 1
             
@@ -91,6 +93,19 @@ class n_dataset_constructor_mp:
                 else:
                     X_array = np.vstack((X_array, i_data_array))
                 y_array = np.append(y_array, y)
+            elif gap == "empty":
+                if len(X_array) == 0:
+                    X_array = []
+                else:
+                    X_array = np.vstack((X_array, []))
+                y_array = np.append(y_array, 9)
+            elif gap == "last":
+                if len(X_array) == 0:
+                    X_array = last_X
+                else:
+                    X_array = np.vstack((X_array, last_X))
+                y_array = np.append(y_array, y)
+            last_X = i_data_array
 
             if nx % 1000 == 0:
                 if self.process == 7:
