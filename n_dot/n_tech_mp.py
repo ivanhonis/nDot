@@ -21,7 +21,7 @@ class n_tech_mp:
         self.cores = self.s['cores']  # összesen hány process van
         self.process = self.s['process']  # én hanyadik process vagyok
         self.mpi = str(self.process + 1) + "/" + str(self.cores) + " core ->"
-        if self.process == 7 :
+        if self.process == 7:
             print(self.mpi, "multiprocessing P10INT starts. Last speak.")
         self.tech()
 
@@ -100,11 +100,14 @@ class n_tech_mp:
             pr = prob_profit(low_np, high_np, price_slices, self.s['profit_limit'], self.s['prob_limit'])
             # print(self.mpi, g)
             r_array[g] = pr
-            # if g % 25000 == 0:
+            if g % 1000 == 0 and self.process == 7:
+                print("\r" + str(100 * round(g / (len(self.s['low_s_slice']) - self.s['time_frame'] - 1), 2)) + " % ", end="")
             #     r0 = str(np.count_nonzero(r_array == 0))
             #     r1 = str(np.count_nonzero(r_array == 1))
             #     r2 = str(np.count_nonzero(r_array == 2))
             #     print(f"{self.mpi} - 0:{r0}   1:{r1}   2:{r2}")
+        if self.process == 7:
+            print(" ")
 
         # print(self.mpi, "Result: ")
         # print("  0 = Under limit: " + str(np.count_nonzero(r_array == 0)))

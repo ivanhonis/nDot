@@ -69,7 +69,9 @@ class n_dataset:
             self.data['X'] = np.vstack((self.data['X'], array))
 
     def add_y(self, label):
-        label = np.array([int(label)])
+        label = np.array([label])
+        label = label.astype(int)
+        label = label[0]
         # print("ybug", self.data['y'].shape, label.shape)
         # self.data['y'] = np.concatenate((self.data['y'], label))
         # self.data['y'] = np.concatenate((self.data['y'], label))

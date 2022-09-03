@@ -11,7 +11,7 @@ class n_dataset_constructor_mp:
         self.process = param_mp['process']  # én hanyadik process vagyok
         self.mpi = str(self.process + 1) + "/" + str(self.cores) + " core ->"
         if self.process == 7:
-            print(self.mpi, "multiprocessing dataset_constuctor")
+            print(self.mpi, "start multiprocessing dataset_constuctor. Last speak.")
         self.dataset_constructor(param_mp)
 
     def get_dataset_by_index(self, symbol, index, time_window_size, original_fields,
@@ -82,14 +82,20 @@ class n_dataset_constructor_mp:
                                                      contras=contras,
                                                      contra_copies_dt=contra_copies_dt,
                                                      nddf=nddf)
-            
+
+
             if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
                 recieved += 1
-                X_array = np.append(X_array, i_data_array)
+                if len(X_array) == 0:
+                    X_array = i_data_array
+                else:
+                    X_array = np.vstack((X_array, i_data_array))
                 y_array = np.append(y_array, y)
 
             if nx % 1000 == 0:
-                print(self.mpi, nx)
+                if self.process == 7:
+                    print(self.mpi, nx)
+                    # print(X_array)
 
         file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(self.process)
         np.save(file_name, X_array)

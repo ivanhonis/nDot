@@ -13,13 +13,23 @@ class n_binance_trade():
         self.log = log
         self.s = s
         self.tools = tools
+        self.started = False
         self.api_key = "DAqss9T987L0ruIbVEW9rBEFDD2sKxEKBvpvDVUJfdjijzqPqBgD8semkNF2I5Ul"
         self.api_secret = "3C1203CjVU3J0djfqG62QUSA2sFJJwWnHAmd7gd7t87OoOJJbx7NCnFV7PXx4Wpk"
         # self.client_spot = Spot(key=self.api_key, secret=self.api_secret)
-        self.binance_client = Client(self.api_key, self.api_secret)
+        self.binance_client = None
         self.exchange_info = []
-        self.crypto = self.get_all_symbols()
-        self.pai = self.defa_pair_info()
+        self.crypto = None
+        self.pai = None
+
+    def strart(self):
+        if not self.started:
+            self.binance_client = Client(self.api_key, self.api_secret)
+            self.exchange_info = []
+            self.crypto = self.get_all_symbols()
+            self.pai = self.defa_pair_info()
+            self.started = True
+
 
     def defa_pair_info(self):
         pair_info = {}
@@ -109,6 +119,7 @@ class n_binance_trade():
         print(self.binance_client.get_historical_trades(symbol='BNBBTC'))
 
     def get_klines(self, symbol, from_dt, to_dt):
+        self.strart()
         i_df = pd.DataFrame(None)
         klines = []
         # klines = self.binance_client.get_historical_klines(symbol=symbol,

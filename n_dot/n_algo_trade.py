@@ -50,6 +50,7 @@ class n_algo_trade:
         self.steps = 0
         self.stock_size_orig = 0
         self.price_dict = {}
+        self.enter_limit_order = False
         # hisory -------------------------
         # self.sig_way_memory = np.zeros(11)
         self.sig_way = 0
@@ -90,7 +91,8 @@ class n_algo_trade:
         self.silent_investor_actual_amount = float(conf_dict["value_limit"])
         self.silent_investor_orig_amount = float(conf_dict["value_limit"])
         self.id = int(conf_dict["id"])
-        
+        self.enter_limit_order = conf_dict["enter_limit_order"]
+
     # def get_sig_way(self, sig):
     #
     #     m_sig = 0
@@ -127,14 +129,15 @@ class n_algo_trade:
     def buy(self, buy_qt):
         # print("buy" , buy_qt)
         trade_price = self.next_rnd_price("buy")
-        self.income_value += round(buy_qt * trade_price, 8)
-        self.turnover += buy_qt * trade_price
-        self.actual_qt += buy_qt
-        self.avg_income_price = self.income_value / self.actual_qt
-        self.avg_income_price_h = self.avg_income_price
-        self.trailer_profit = round((trade_price - self.avg_income_price) * self.actual_qt, 8)
-        self.deal_count += 1
-        self.enter_count += 1
+        if (trade_price <= self.actual_price and self.enter_limit_order) or not self.enter_limit_order:
+            self.income_value += round(buy_qt * trade_price, 8)
+            self.turnover += buy_qt * trade_price
+            self.actual_qt += buy_qt
+            self.avg_income_price = self.income_value / self.actual_qt
+            self.avg_income_price_h = self.avg_income_price
+            self.trailer_profit = round((trade_price - self.avg_income_price) * self.actual_qt, 8)
+            self.deal_count += 1
+            self.enter_count += 1
 
         # if not self.next_price_random:
         #     trade_price = self.next_rnd_price
@@ -346,10 +349,10 @@ class n_algo_trade:
         self.sig_way = y_last_mean
 
         if self.strategy == 66:  # signal drived
-            if self.steps == 18:  # and self.act_profit <= 0:
-                decision = "STOP"
-                decision_qt = 0
-                return decision, decision_qt
+            # if self.steps == 12:  # and self.act_profit <= 0:
+            #     decision = "STOP"
+            #     decision_qt = 0
+            #     return decision, decision_qt
 
             if y_predict == 1:  # and 1.2 >= y_last_mean >= 0:  # and price_dict["actual_macdh"] > 0:
 
@@ -380,17 +383,41 @@ class n_algo_trade:
             self.last_ohlc4 = self.price_dict['actual_ohlc4']
             return decision, decision_qt
 
-        elif self.strategy == 67:  # signal drived
-            if y_predict == 1 and y_predict_strength > .99:
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif y_predict == 2 and y_predict_strength > .99:
+        if self.strategy == 67:  # signal drived
+            # if self.steps == 12 and self.act_profit <= 0:
+            #     decision = "STOP"
+            #     decision_qt = 0
+            #     return decision, decision_qt
+
+            if y_predict == 1:  # and 1.2 >= y_last_mean >= 0:  # and price_dict["actual_macdh"] > 0:
+
+                # if self.enter_count > 1 and self.name == "BTCUSDT" + " Ai decisions drived":
+                #     print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
+                #     if self.price_dict['actual_ohlc4'] > self.last_ohlc4:
+                #         time.sleep(5)
+
+                if self.enter_count == 1 and y_predict_strength > .9:
+                    decision = "BUY"
+                    decision_qt = self.get_stock_qt() ## / 50
+                # elif self.enter_count == 2 and self.trailer_profit > 0 and self.steps < 10:  # and self.price_dict['actual_ohlc4'] > self.last_ohlc4:
+                #     decision = "BUY"
+                #     decision_qt = (self.get_stock_qt() / 50) * 49
+                #     if self.id == 1:
+                #         print("----------------")
+                #         print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
+                else:
+                    decision = "None"
+                    decision_qt = 0
+                # print(decision_qt)
+            elif y_predict == 2 and y_predict_strength > .8:
                 decision = "SELL"
                 decision_qt = 0
             else:
                 decision = "NONE"
                 decision_qt = 0
+            self.last_ohlc4 = self.price_dict['actual_ohlc4']
             return decision, decision_qt
+
 
         elif self.strategy == 1:  # signal drived
             if sig == 0 and y_predict_strength > .9:

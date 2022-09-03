@@ -5,6 +5,8 @@
 # GUI -----------------------------------------------
 # from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QScrollArea, QProgressBar, QToolButton, QMessageBox, \
 #     QFrame
+import statistics
+
 from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QProgressBar, QToolButton, QMessageBox, QFrame
 # from PyQt5 import QtGui, QtCore, QtWebEngineWidgets, uic
 from PyQt5 import QtGui, QtCore, uic
@@ -1101,7 +1103,7 @@ class n_date_frame2:
 		return result, result_dt
 
 
-	def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras, contra_copies, contra_copies_dt):
+	def get_dataset_by_index(self, symbol, index, time_window_size, original_fields, contras, contra_copies_dt):
 		
 		i_int_to = int(index)
 		i_int_from = i_int_to - time_window_size + 1
@@ -1506,8 +1508,8 @@ class n_date_frame2:
 						i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
 						# i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
 
-					# i_indexes[1] = i_indexes[1][0:25000]
-					# i_indexes[2] = i_indexes[2][0:25000]
+					# i_indexes[1] = i_indexes[1][0:2000]
+					# i_indexes[2] = i_indexes[2][0:2000]
 
 					len1 = len(i_indexes[1])
 					len2 = len(i_indexes[2])
@@ -1544,12 +1546,12 @@ class n_date_frame2:
 					
 					nd_dset.set_window_size(time_window_size)
 					used_cores = cpu_count()
-					runing_processes = np.zeros(used_cores)
+					runing_processes = np.array([None] * used_cores)
 					contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
 					prc_count = 0
-					for ix in range(5):
-						x_from = get_slice_index(i_indexes[0].shape[0], 5, ix)[0]
-						x_to = get_slice_index(i_indexes[0].shape[0], 5, ix)[1]
+					for ix in range(6):
+						x_from = get_slice_index(i_indexes[0].shape[0], 6, ix)[0]
+						x_to = get_slice_index(i_indexes[0].shape[0], 6, ix)[1]
 						# print(ix)
 						# dataset_constructor(symbol=symbol,
 						# 					indexes=i_indexes[ix],
@@ -1607,14 +1609,10 @@ class n_date_frame2:
 					
 					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
 					prc_count += 1
-					
+
 					for x, prc in enumerate(runing_processes):
 						prc.start()
-						# soft start for processor cooler sincronize
-						if x == 3:
-							time.sleep(15)
-						else:
-							time.sleep(3)
+						time.sleep(.25)
 					
 					for prc in runing_processes:
 						prc.join()
@@ -2708,10 +2706,15 @@ class n_date_frame2:
 				mp_params = []
 
 				runing_processes = [None] * used_cores
+				log(f"  Creating multiprocessing objects (params). ")
 				for x in range(used_cores):
 					x_from = get_slice_index(nddf[symbol].shape[0], used_cores, x)[0]
 					x_to = get_slice_index(nddf[symbol].shape[0], used_cores, x)[1]
 					# print(x_from, x_to)
+
+					# np.save("BTCUSDT_Date", np.array(nddf[symbol]["Date"]))
+					# np.save("BTCUSDT_Low", np.array(nddf[symbol]["Low"]))
+					# np.save("BTCUSDT_High", np.array(nddf[symbol]["High"]))
 
 					date_s = nddf[symbol]["Date"][x_from:x_to]
 					low_s = np.array(nddf[symbol]["Low"])[x_from:x_to]
@@ -2733,6 +2736,7 @@ class n_date_frame2:
 
 				for x, prc in enumerate(runing_processes):
 					prc.start()
+					log(f"  P10INT start process: {x + 1} ")
 					# soft start for processor cooler sincronize
 					if x == 3:
 						time.sleep(15)
@@ -3425,22 +3429,23 @@ def ai_remove(symbol="", project=""):
 def ai_download(project_name, rename=""):
 	ai.download(project_name, rename)
 
-def summary(obj):
-	log("  ")
-	log(f"{obj.name}")
-	log(f"  value limit: {obj.value_limit} stock_size: {obj.stock_size_orig}")
-	log(f"  profit/day: {obj.get_profit_per_day()} profit/closed deal: {obj.get_profit_per_closed_deal()}")
-	log(f"  closed_deal/day: {obj.get_closed_deal_per_day()} transaction/day: {obj.get_transaction_per_day()}")
-	log(f"  turnover: {int(obj.get_turnover())} gross profit: {obj.get_profit()}")
-	log(f"  net profit (0.075%): {obj.get_profit() - int(obj.get_turnover() * (.075 / 100))}")
-	log(f"  net profit (0.055%): {obj.get_profit() - int(obj.get_turnover() * (.055 / 100))}")
-	log(f"  net profit (0.025%): {obj.get_profit() - int(obj.get_turnover() * (.025 / 100))}")
-
-
-	pass
 
 def ai_backtest(symbol, run_time_window, project, start_position=0):
-	parallel_backtest = False
+
+	def summary(obj):
+		log("  ")
+		log(f"{obj.name}")
+		log(f"  (1) value limit: {obj.value_limit}       (2) stock_size: {obj.stock_size_orig}")
+		log(f"  (3) avg. profit/day: {obj.get_profit_per_day()}       (4) avg. profit/closed deal: {obj.get_profit_per_closed_deal()}")
+		log(f"  (5) closed_deal/day: {obj.get_closed_deal_per_day()}  (6) transaction/day: {obj.get_transaction_per_day()}")
+		log(f"  (7) turnover: {int(obj.get_turnover())}      (8) gross profit: {obj.get_profit()}")
+		p1 = obj.get_profit() - int(obj.get_turnover() * (.075 / 100))
+		p2 = obj.get_profit() - int(obj.get_turnover() * (.055 / 100))
+		p3 = obj.get_profit() - int(obj.get_turnover() * (.025 / 100))
+		log(f"  (8) net profit (.075%, .055%, .025%): {p1}, {p2} ,{p3}")
+
+	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
+	parallel_backtest = True
 	start_position = int(start_position)
 	log(f"ai_backtest {symbol} {run_time_window} {project}")
 	run_time_window = int(run_time_window)
@@ -3470,25 +3475,26 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	stock_size = 10000
 	# transaction_fee_p = 0.055 /100  # %
 	# transaction_fee_c = int(stock_size * transaction_fee_p)
-	stop_loss = stock_size * .1 / 100 * -1  # %
+	# stop_loss = stock_size * .25 / 100 * -1  # %
 	log(f"stock size: {stock_size} USD")
-	log(f"stop loss: {stop_loss} USD")
+	# log(f"stop loss: {stop_loss} USD")
 
 	algo_ai_override = n_algo_trade()
 	algo_ai_override.config({"name": symbol + " Ai " + str(x_from) + " - " + str(x_to),
 							 "id": 1,
 							 "value_limit": value_limit,
 							 "stock_size": stock_size,
-							 "stop_loss_limit": stop_loss,
-							 "profit_take_limit": -1,  # -1 nincs bekapcsolva
-							 "trailer_stop": .15,
+							 "stop_loss_limit": stock_size * .1 / 100 * -1,
+							 "profit_take_limit": -1,  # -1 nincs bekapcsolva nominálisan mondja
+							 "trailer_stop": .50,
 							 "trailer_min_profit": 10,
 							 "value_limit_profit_reinvest": True,
 							 "steps_limit": 120,
 							 "strategy": 66,
 							 "trade_time_start": (0, 1),
 							 "trade_time_stop": (23, 59),
-							 "next_price_random": True
+							 "next_price_random": True,
+							 "enter_limit_order": False  # limit = actual_ohlc4
 							 })
 
 	if parallel_backtest:
@@ -3497,18 +3503,56 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							"id": 2,
 							"value_limit": value_limit,
 							"stock_size": stock_size,
-							"stop_loss_limit": stop_loss,
+							"stop_loss_limit": stock_size * .1 / 100 * -1,
 							"profit_take_limit": -1,  # -1 nincs bekapcsolva
-							"trailer_stop": .55,
+							"trailer_stop": .15,
 							"trailer_min_profit": 10,
 							"value_limit_profit_reinvest": True,
-							"steps_limit": 120,
+							"steps_limit": 6,
 							"strategy": 66,
 							"trade_time_start": (0, 1),
 							"trade_time_stop": (23, 59),
-							"next_price_random": True
+							"next_price_random": True,
+							 "enter_limit_order": False  # limit = actual_ohlc4
 							})
-	
+
+		algo_sig = n_algo_trade()
+		algo_sig.config({"name": symbol + " y - what the qfy said "  + str(x_from) + " - " + str(x_to),
+							"id": 3,
+							"value_limit": value_limit,
+							"stock_size": stock_size,
+							"stop_loss_limit": stock_size * .1 / 100 * -1,
+							"profit_take_limit": -1,  # -1 nincs bekapcsolva
+							"trailer_stop": .10,
+							"trailer_min_profit": 10,
+							"value_limit_profit_reinvest": True,
+							"steps_limit": 6,
+							"strategy": 66,
+							"trade_time_start": (0, 1),
+							"trade_time_stop": (23, 59),
+							"next_price_random": True,
+							 "enter_limit_order": False  # limit = actual_ohlc4
+							})
+
+		algo_over_x = n_algo_trade()
+		algo_over_x.config({"name": symbol + " sig strength over .90 trailer is .75 " + str(x_from) + " - " + str(x_to),
+							"id": 4,
+							"value_limit": value_limit,
+							"stock_size": stock_size,
+							"stop_loss_limit": stock_size * .5 / 100 * -1,
+							"profit_take_limit": -1,  # -1 nincs bekapcsolva
+							"trailer_stop": .5,
+							"trailer_min_profit": 10,
+							"value_limit_profit_reinvest": True,
+							"steps_limit": 120,
+							"strategy": 67,
+							"trade_time_start": (0, 1),
+							"trade_time_stop": (23, 59),
+							"next_price_random": True,
+							 "enter_limit_order": False  # limit = actual_ohlc4
+							})
+
+
 
 	s2(True, (x_to - x_from) * 2)
 
@@ -3528,26 +3572,40 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	backtest_cache_name = "x_set_" + str(x_from) + "_"+str(x_to)
 
 	try:
-		x_set = np.load(backtest_cache_name + '.npy')
+		X_array = np.load(cache_path + backtest_cache_name + '.npy')
 		s2(True, (x_to - x_from) * 1)
 	except:
 		s2(True, (x_to - x_from) * 2)
-		x_set = []
+		X_array = np.array([])
+		array_len = time_window_size * (len(original_fields) + len(contras))
+		last_i_data_array = []
 		for ix in range(0, x_to - x_from):
-			s2()
-			x_set.append(ndf.get_dataset_by_index(symbol=symbol,
+			i_data_array = ndf.get_dataset_by_index(symbol=symbol,
 												  index=ix + x_from,
 												  time_window_size=time_window_size,
 												  original_fields=original_fields,
 												  contras=contras,
-												  contra_copies=contra_copies,
-												  contra_copies_dt=contra_copies_dt))
-		x_set = np.array(x_set)
-		np.save(backtest_cache_name, x_set)
+												  contra_copies_dt=contra_copies_dt)
 
-	gui.ailog(f"Predict y: {symbol} {project} X_set size: {len(x_set)}")
-	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, x_set)
-	del x_set
+			if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+				if len(X_array) == 0:
+					X_array = i_data_array
+				else:
+					X_array = np.vstack((X_array, i_data_array))
+				last_i_data_array = i_data_array
+			else:
+				X_array = np.vstack((X_array, last_i_data_array))
+				print(ix, "hiányzó X")
+			s2()
+
+		np.save(cache_path + backtest_cache_name, X_array)
+	else:
+		log(f"Dataset loaded from cache.")
+
+
+	gui.ailog(f"Predict y: {symbol} {project} X_set size: {len(X_array)}")
+	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, X_array)
+	del X_array
 	del contra_copies
 	y_predict_sig_rnd = y_predict_sig.copy()
 	y_predict_strength_rnd = y_predict_strength.copy()
@@ -3557,7 +3615,16 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	# 	print(y_predict[i], y_predict_sig[i], y_predict_strength[i])
 	# 	time.sleep(0)
 
-	last_y = [0]
+	last_y = []
+	last_y_strength = []
+	missed_2 = 0
+	missed_0 = 0
+	right_1 = 0
+	underlimit_1 = 0
+	underlimit_else = 0
+	over_02 = 0
+	bad_0_in = 0
+
 	for ix in range(0, x_to - x_from):
 		price_dict = {
 			"actual_low": pre_low[ix],
@@ -3573,25 +3640,80 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		# 	mod_ypedict_sig = 0
 		# else:
 		# 	mod_ypedict_sig = y_predict_sig[ix]
-		# last_y.append(mod_ypedict_sig)
-		# last_y = last_y[-10:]
+
+
+		# if y_predict_sig[ix] == 2:
+		# 	last_y.append(-1)
+		# else:
+		# 	last_y.append(y_predict_sig[ix])
+		# last_y = last_y[-3:]
+		#
+		# last_y_strength.append(y_predict_strength[ix])
+		# last_y_strength = last_y_strength[-3:]
+		#
+		# if y_predict_strength[ix] > .90:
+		# 	if y_predict_sig[ix] == 1 and pre_sig[ix] == 0:
+		# 		c = np.array(last_y) * np.array(last_y_strength) # * np.array(range(1, len(last_y)+1))
+		# 		# print(ix, "-" * 30)
+		# 		# print("1_0,", np.sum(c))
+		#
+		# 		if np.random.randint(1, 101) > 0:
+		# 			mod_ypedict_sig = 1
+		# 			bad_0_in += 1
+		# 		else:
+		# 			mod_ypedict_sig = 0
+		#
+		# 		missed_0 += 1
+		# 	elif y_predict_sig[ix] == 1 and pre_sig[ix] == 1:
+		# 		# print(ix, "-" * 30)
+		# 		c = np.array(last_y) * np.array(last_y_strength) # * np.array(range(1, len(last_y)+1))
+		# 		# print("1_1,", np.sum(c))
+		#
+		# 		mod_ypedict_sig = 1
+		# 		right_1 += 1
+		# 	elif y_predict_sig[ix] == 1 and pre_sig[ix] == 2:
+		# 		# print(ix, "-" * 30)
+		# 		c = np.array(last_y) * np.array(last_y_strength) # * np.array(range(1, len(last_y)+1))
+		# 		# print("1_2,", np.sum(c))
+		# 		mod_ypedict_sig = 1
+		# 		missed_2 += 1
+		# 	else:
+		# 		mod_ypedict_sig = 0
+		# 		over_02 += 1
+		# else:
+		# 	mod_ypedict_sig = 0
+		# 	if y_predict_sig[ix] == 1:
+		# 		underlimit_1 += 1
+		# 	else:
+		# 		underlimit_else += 1
+		#
+		# if ix % 1000 == 0:
+		# 	print(right_1, missed_2, missed_0, "->", bad_0_in, over_02 + underlimit_1 + underlimit_else,
+		# 		  right_1 + underlimit_1 + missed_2 + missed_0 + over_02 + underlimit_else)
 
 		mod_ypedict_sig = y_predict_sig[ix]
-
 		algo_ai_override.transaction(pre_sig[ix], mod_ypedict_sig, y_predict_strength[ix], price_dict, pre_date[ix])
 		if parallel_backtest:
+			algo_sig.transaction(pre_sig[ix], pre_sig[ix], 1, price_dict, pre_date[ix])
 			algo_ai_rnd.transaction(pre_sig[ix], y_predict_sig_rnd[ix], y_predict_strength_rnd[ix], price_dict, pre_date[ix])
+			algo_over_x.transaction(pre_sig[ix], y_predict_sig_rnd[ix], y_predict_strength_rnd[ix], price_dict, pre_date[ix])
 		s2()
 
-	summary(algo_ai_override)
 	if parallel_backtest:
+		summary(algo_sig)
 		summary(algo_ai_rnd)
+		summary(algo_over_x)
+	summary(algo_ai_override)
 
-	log(f"""  Average prediction runtime: {round(ai.ai_models[project]["predict_average_runtime"], 3)}""")
 
-	algo_ai_override.show_history()
+	# log(f"""  Average prediction runtime: {round(ai.ai_models[project]["predict_average_runtime"], 3)}""")
+
+
 	if parallel_backtest:
+		algo_sig.show_history()
 		algo_ai_rnd.show_history()
+		algo_over_x.show_history()
+	algo_ai_override.show_history()
 
 	# algo_ai_override.history.to_excel('algo_ai_override.xlsx', engine='xlsxwriter')
 	# algo_ai_rnd.history.to_excel('algo_ai_rnd.xlsx', engine='xlsxwriter')
@@ -3599,10 +3721,12 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	del algo_ai_override
 	if parallel_backtest:
 		del algo_ai_rnd
+		del algo_over_x
+		del algo_sig
 
 
 def ai_build():
-	log("Build Ai Model and Scaler library.")
+	log("Build TF and Minmax Scaler object.")
 	ai.build()
 
 
@@ -4015,7 +4139,10 @@ if __name__ == "__main__":
 	ndf_meta = n_date_frame_meta(log)
 	n_tools = n_tools(gui=gui)
 	md = n_market_data(log, s, n_tools, ndf, stream_job)
-	nbt = n_binance_trade(log=log, s=s, tools=n_tools)
+	try:
+		nbt = n_binance_trade(log=log, s=s, tools=n_tools)
+	except:
+		print("Internet connection error. (Binance)")
 	mp_tech = n_tech_mp
 	mp_dataset_constructor = n_dataset_constructor_mp
 	# do2("BTCUSDT")
