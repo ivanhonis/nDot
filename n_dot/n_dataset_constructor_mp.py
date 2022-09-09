@@ -64,8 +64,8 @@ class n_dataset_constructor_mp:
         back_shift = params['back_shift']
         contra_copies_dt = params['contra_copies_dt']
         nddf = params['nddf']
-        gap = params['gap_empty']
-        
+        gap_manager = params['gap_manager']
+
         array_len = time_window_size * (len(original_fields) + len(contras))
         
         asked = 0
@@ -73,6 +73,7 @@ class n_dataset_constructor_mp:
         X_array = np.array([])
         y_array = np.array([])
         last_X = []
+        gap_manager_count = 0
         for nx, i_il in enumerate(indexes):
             asked += 1
             
@@ -85,33 +86,40 @@ class n_dataset_constructor_mp:
                                                      contra_copies_dt=contra_copies_dt,
                                                      nddf=nddf)
 
-
-            if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+            if not np.isnan(i_data_array).any() \
+                    and array_len == len(i_data_array) \
+                    and np.isfinite(i_data_array).all():
                 recieved += 1
                 if len(X_array) == 0:
                     X_array = i_data_array
                 else:
                     X_array = np.vstack((X_array, i_data_array))
                 y_array = np.append(y_array, y)
-            elif gap == "empty":
+            elif gap_manager == "empty":
+                gap_manager_count += 1
                 if len(X_array) == 0:
-                    X_array = []
+                    X_array = np.array([0] * array_len)
                 else:
-                    X_array = np.vstack((X_array, []))
+                    X_array = np.vstack((X_array, np.array([0] * array_len)))
                 y_array = np.append(y_array, 9)
-            elif gap == "last":
+            elif gap_manager == "last":
+                gap_manager_count += 1
                 if len(X_array) == 0:
                     X_array = last_X
                 else:
                     X_array = np.vstack((X_array, last_X))
                 y_array = np.append(y_array, y)
+            elif gap_manager == "drop":
+                gap_manager_count += 1
+
             last_X = i_data_array
 
             if nx % 1000 == 0:
                 if self.process == 7:
-                    print(self.mpi, nx)
+                    print(f"{self.mpi} {len(indexes)} / {nx} gaps: {gap_manager_count}")
                     # print(X_array)
-
+        if gap_manager_count > 0:
+            print(f"{self.mpi} gaps: {gap_manager_count}")
         file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(self.process)
         np.save(file_name, X_array)
         file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_y_RESULTS' + str(self.process)

@@ -12,12 +12,17 @@ os_environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow.keras.models import load_model
 # import time as time
 
+import matplotlib.pyplot as plt
+import seaborn as sns
+import tensorflow as tf
+
 
 class n_ai:
     
-    def __init__(self, log, nddf):
+    def __init__(self, log, nddf, gui):
         self.nddf = nddf
         self.log = log
+        self.gui = gui
         # print("itt")
         self.ai_models = {}
         self.ai_settings = {}
@@ -83,7 +88,54 @@ class n_ai:
             return True
         else:
             return False
-    
+
+    def confusion(self, predict, predict_strength,  sig):
+        self.ai_log(f" ai.confusion martix", line=True)
+        sig = np.array(sig)
+        # predict_strength = np.array(predict_strength)
+        # predict = np.array(predict)
+        sig[sig == 9] = 0
+        confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], predict)
+        fig = plt.figure(figsize=(5, 4))
+        fig.canvas.manager.window.move(200, 250)
+        sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2], yticklabels=[0, 1, 2],
+                    annot=True, fmt='g', cbar=False)
+        plt.xlabel('Prediction')
+        plt.ylabel('Label')
+        plt.title('Confusion Matrix - not filtered')
+        plt.show()
+
+        startplt = 80
+        filters = np.array(range(startplt, startplt + 9))
+        filters = filters / 100
+        # print(filters)
+
+        self.ai_log(f" Filtering y. filters: {filters}")
+        poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+
+        fig2 = plt.figure(figsize=(8, 6))
+        fig2.canvas.manager.window.move(800, 100)
+        for pos, filter in enumerate(filters):
+            y_filtered = []
+            for xy, ys in enumerate(predict_strength):
+                if ys > filter:
+                    y_filtered.append(predict[xy])
+                else:
+                    y_filtered.append(3)
+
+            confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
+            # print(int(confusion_mtx[1][1]))
+            plt.subplot(poses[pos])
+
+            sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
+                        annot=True, fmt='g', cbar=False)
+            plt.xlabel('Prediction')
+            plt.ylabel('Label')
+            plt.title('Conf. Mtrx.:' + str(filter))
+        plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
+        plt.show()
+
+
     def add(self, symbol, project):
         local_path_pro = self.is_file_exist(self.projects_path + project + "\\nDot_PRO_" + project + ".txt")
         local_path_minmax = self.is_file_exist(self.projects_path + project + "\\nDot_MinMaxScaler_" + project + ".pickle")
@@ -187,8 +239,8 @@ class n_ai:
         self.set_avg_runtime(project, datetime.now() - i_start)
         return i_return
         
-    def ai_log(self, text):
-        self.log(text)
+    def ai_log(self, text, line=False):
+        self.gui.ailog(text, line=line)
         # print(text)
         
     def build(self):
@@ -217,7 +269,7 @@ class n_ai:
                 # print('MLUPD: ',self.ai_models[i_project]["MinMaxScaler_last_update"], os_path.getmtime(local_path))
                 
                 if self.ai_models[i_project]["MinMaxScaler_last_update"] != os_path.getmtime(local_path):
-                    self.ai_log(f"MinMaxScaler model has been set: {i_project}")
+                    self.ai_log(f"MinMaxScaler model has been set: {i_project}", line=True)
                     self.ai_models[i_project]["MinMaxScaler"] = pickle.load(open(local_path, "rb"))
                     self.ai_models[i_project]["MinMaxScaler_last_update"] = os_path.getmtime(local_path)
 

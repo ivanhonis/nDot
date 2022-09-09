@@ -22,6 +22,7 @@ import pandas as pd
 from xlsxwriter import Workbook
 import numpy as np
 import os  # for test command
+import os.path
 import pandas_ta as ta  # technical indicators for ndf.tech
 from datetime import datetime, timedelta  # , time as dt_time  # a log ban használom
 import time
@@ -30,6 +31,7 @@ import sys  # a test parancs használja hdd szabad hely kiíratására
 import threading  # info párhuzamosítva van illetve ndf.add
 import random  # a gambling módszerhez kell
 import pickle
+import hashlib
 # import pickle as pickle
 # import json  # dataset config beolvasóhoz kell
 # import re  # dataset config beolvasóhoz kell
@@ -55,6 +57,9 @@ from n_dot.n_binance_trade import n_binance_trade
 from n_dot.n_dataset_constructor_mp import n_dataset_constructor_mp
 
 # # Ai components
+import matplotlib.pyplot as plt
+import seaborn as sns
+import tensorflow as tf
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # from tensorflow.keras.models import load_model
 
@@ -351,7 +356,8 @@ class gui(QWidget, object):
 			['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
 			['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
 			['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project> <<NOFORCE / FORCE>> <<FULL / VECTOR / RND_CHOICE>>', 1],
-			['ndf.dataset.int', 'ndf_dataset_int','ndf.dataset.int <symbol> <project> (only NOFORCE)', 1],
+			['ndf.dataset.int', 'ndf_dataset_int', 'ndf.dataset.int <symbol> <project> <<NOFORCE>>', 1],
+			['ndf.dataset.full', 'ndf_dataset_full', 'ndf.dataset.full <symbol> <project>', 1],
 			['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
 			['ndf.remove.column', 'ndf_remove_column', 'ndf.remove.column <symbol> <column_name> <<SAVE>>', 1],
 			['ndf.refresh', 'ndf_refresh', 'ndf.refresh <symbol>', 1],
@@ -367,6 +373,7 @@ class gui(QWidget, object):
 			['ai.remove', 'ai_remove', 'ai.remove <symbol> <project>', 1],
 			['ai.download', 'ai_download', 'ai.download <project name> <<rename>>', 0],
 			['ai.backtest', 'ai_backtest', 'ai.backtest <symbol> <time_window> <project> <<start position>>', 3],
+			['ai.confusion', 'ai_confusion', 'ai.confusion <symbol> <project>', 1],
 			['exit', 'exit', 'exit', 0]
 		]
 		i_return = pd.DataFrame(i_return)
@@ -706,6 +713,7 @@ class n_date_frame2:
 		self.indicators = pd.DataFrame(None)
 		self.load_indicators()
 		self.temp_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\temp\\"
+		self.cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
 	
 	# def get_dataset_config(self, file_name):
 	#     log("ndf-> get_dataset_config " + file_name )
@@ -789,6 +797,7 @@ class n_date_frame2:
 	def i_df_dt_order(self, df):
 		if not str(df.index.name) == "None":
 			df.reset_index(drop=False, inplace=True)
+		log(f"Duplicates: {len(df['Date']) - len(df['Date'].drop_duplicates())}")
 		df.drop_duplicates('Date', keep='last', inplace=True)
 		df.sort_values(by=['Date'], inplace=True, ascending=True)
 		df.reset_index(drop=True, inplace=True)
@@ -839,24 +848,61 @@ class n_date_frame2:
 		else:
 			log("Symbol not found in Binance listed pairs.")
 
-	# def add(self, symbol):
-	#     ''' új nddf et hoz létre letölti a részvény árakat'''
-	#     log("ndf-> add " + symbol)
-	#     i_now = datetime.now() + timedelta(days=1)
-	#     i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
-	#     i_datetime_series = pd.date_range(start=i_now, periods=1017, freq='-30d')
-	#     nddf[symbol] = pd.DataFrame(None)
-	#     for i_i in range(len(i_datetime_series)-1):
-	#         i_tounix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i] + timedelta(days=4)))
-	#         i_fromunix = tools.dbdt_to_unixdt(str(i_datetime_series[i_i+1]))
-	#         i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True)
-	#         nddf[symbol] = nddf[symbol].append(i_res, ignore_index=True)
-	#     if nddf[symbol].shape[0] > 0:
-	#         self.set_dt_order(symbol)
-	#         log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
-	#
-	#     log("Number of rows: " + str(nddf[symbol].shape[0]))
-	#     nddb.write(symbol)
+	def add_crypto_multi(self, symbol, years=1):
+		years = int(years)
+		if symbol in nbt.crypto:
+			nddf[symbol] = pd.DataFrame(None)
+			i_now = datetime.now() - timedelta(minutes=1001)
+			i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+			period = (years * 365 * 24 * 60) / 1000
+			i_datetime_series = pd.date_range(start=i_now, periods=period, freq='-1000min')
+			s2(True, len(i_datetime_series) - 1)
+			result = []
+			thr = []
+			nddf[symbol] = pd.DataFrame(None)
+			log("Thread -  Get klines from Binance: " + str(i_now))
+			for i_i in range(len(i_datetime_series) - 1):
+				s2()
+				from_dto = i_datetime_series[i_i]
+				from_dt = int(datetime.timestamp(from_dto) * 1000)
+				to_dto = i_datetime_series[i_i + 1]
+				param = {"symbol": symbol,
+						 "from_dt": from_dt,
+						 "result":result}
+
+				thr.append(threading.Thread(target=nbt.get_klines_mth, args=(param,)))
+				thr[-1].start()
+				time.sleep(.09)  # max 1200 request / 1 minute
+				max_paralel_thr = 100
+				if i_i % max_paralel_thr == 0 and i_i != 0:
+					for itr in thr:
+						itr.join()
+					result.append(nddf[symbol])
+					nddf[symbol] = pd.concat(result, ignore_index=True)
+					time.sleep(2)
+
+					thr = []
+					result = []
+
+					log(str(i_i) + " Thread -  Get klines from Binance: " + str(to_dto))
+
+			for itr in thr:
+				itr.join()
+
+			result.append(nddf[symbol])
+			nddf[symbol] = pd.concat(result, ignore_index=True)
+
+			nddf[symbol] = ndf.i_df_dt_order(nddf[symbol])
+			self.set_dt_order(symbol)
+
+			if nddf[symbol].shape[0] > 0:
+				log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+			log("Number of rows: " + str(nddf[symbol].shape[0]))
+			nddb.write(symbol)
+		else:
+			log("Symbol not found in Binance listed pairs.")
+
+
 
 	def add(self, symbol, years=1):
 		years = int(years)
@@ -953,12 +999,19 @@ class n_date_frame2:
 			['SMA5813', ['SMA_5', 'SMA_8', 'SMA_13', 'SIG_SMA5813',
 						 'SMA_5_DIFF', 'SMA_8_DIFF', 'SMA_13_DIFF',
 						 'SMA_5_R_OHLC4', 'SMA_8_R_OHLC4', 'SMA_13_R_OHLC4']],
+
+			['MA_X', ['SMA_5', 'SMA_8', 'SMA_13', 'SMA_26', 'SMA_52',
+					   'EMA_5', 'EMA_8', 'EMA_13', 'EMA_26', 'EMA_52'
+					   'SMA_5_DIFF', 'SMA_8_DIFF', 'SMA_13_DIFF', 'SMA_26_DIFF', 'SMA_52_DIFF',
+					   'EMA_5_DIFF', 'EMA_8_DIFF', 'EMA_13_DIFF', 'EMA_26_DIFF', 'EMA_52_DIFF']],
+
 			['PRICE_DIFF', ['LOW_DIFF', 'HIGH_DIFF',
 							'OPEN_DIFF', 'CLOSE_DIFF',
 							'OHLC4_DIFF', 'VOLUME_DIFF',
 							'LOW_R_OHLC4', 'HIGH_R_OHLC4']],
 			['RSI14', ['RSI_14']],
 			['MACD', ['MACD_12_2', 'MACD_12_26_9', 'MACDh_12_26_9', 'MACDs_12_26_9']],
+			['MACD_LONG', ['MACDh_26_48_12']],
 			['BREAKOUT', ['SIG_BREAKOUT']],
 			['ADX8', ['ADX_8', 'DMP_8', 'DMN_8', 'ADX_8_ONE']],
 			['ICHIMOKU', ['ISA_9', 'ISB_26', 'ITS_9', 'IKS_26', 'ICS_26',
@@ -1402,6 +1455,70 @@ class n_date_frame2:
 			nd_dset.add_y(y)
 			s2()
 
+	def create_dataset_full(self, symbol, project_name):
+		log(f"ndf-> create_dataset_full: {symbol} {project_name}")
+
+
+		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
+
+		time_window_size = int(dataset_config['time_window_size'])
+		back_shift = dataset_config["data_window_back_shift"]
+
+		i_indexes = np.array(range(time_window_size + 1, nddf[symbol].shape[0]))
+
+		used_cores = cpu_count()
+		runing_processes = np.array([None] * used_cores)
+		contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+		for ix in range(used_cores):
+			x_from = ndf.get_slice_index(i_indexes.shape[0], used_cores, ix)[0]
+			x_to = ndf.get_slice_index(i_indexes.shape[0], used_cores, ix)[1]
+			params = {'cores': used_cores,
+					  'process': ix,
+					  'symbol': symbol,
+					  'indexes': i_indexes[x_from:x_to],
+					  'time_window_size': time_window_size,
+					  'y': 0,
+					  'original_fields': original_fields,
+					  'contras': contras,
+					  'back_shift': back_shift,
+					  'contra_copies_dt': contra_copies_dt,
+					  'nddf': nddf,
+					  'gap_manager': "empty"
+					  }
+
+			runing_processes[ix] = Process(target=mp_dataset_constructor, args=(params,))
+
+		log(f"Start multiproess. Full dataset is creating.")
+		for x, prc in enumerate(runing_processes):
+			prc.start()
+
+		for prc in runing_processes:
+			prc.join()
+
+		X_arra = []
+
+		for ic in range(used_cores):
+			file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(ic) + '.npy'
+			l_array = np.load(file_name)
+			X_arra.append(l_array)
+		X_full = np.concatenate(X_arra)
+
+		# the first windowsize + 1 is missing !! create it
+		array_len = time_window_size * (len(original_fields) + len(contras))
+		missing_part_array = np.array([0] * array_len)
+		for ii in range(time_window_size):
+			missing_part_array = np.vstack((missing_part_array, np.array([0] * array_len)))
+		X_full = np.vstack((missing_part_array, X_full))
+
+		cstr = "".join(contras)
+		ostr = "".join(original_fields)
+		full_cache_name = str(time_window_size) + cstr + ostr
+		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+		log(f"Len chk: nddf.len: {nddf[symbol].shape[0]} dataset.len:{X_full.shape[0]}")
+
+		np.save(self.cache_path + "DATASET_FULL_CACHE_" + full_cache_name, X_full)
+		log(f"Cache dataset saved: DATASET_FULL_CACHE_{full_cache_name}")
+
 	def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
 		
 		def get_slice_index(xlen, parts, slice_no):
@@ -1521,7 +1638,8 @@ class n_date_frame2:
 					len1 = len(i_indexes[1])
 					len2 = len(i_indexes[2])
 					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
-					i_indexes[0] = i_indexes[0][0: max_elemet]
+					i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
+					# i_indexes[0] = i_indexes[0][0: max_elemet]
 					i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
 					s2(True, len1 + len2 + max_elemet)
 					for ix in range(3):
@@ -1579,7 +1697,8 @@ class n_date_frame2:
 								  'contras': contras,
 								  'back_shift': back_shift,
 								  'contra_copies_dt': contra_copies_dt,
-								  'nddf': nddf
+								  'nddf': nddf,
+								  'gap_manager': 'drop'
 								  }
 						
 						runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
@@ -1595,7 +1714,8 @@ class n_date_frame2:
 							  'contras': contras,
 							  'back_shift': back_shift,
 							  'contra_copies_dt': contra_copies_dt,
-							  'nddf': nddf
+							  'nddf': nddf,
+							  'gap_manager': 'drop'
 							  }
 					
 					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
@@ -1611,7 +1731,8 @@ class n_date_frame2:
 							  'contras': contras,
 							  'back_shift': back_shift,
 							  'contra_copies_dt': contra_copies_dt,
-							  'nddf': nddf
+							  'nddf': nddf,
+							  'gap_manager': 'drop'
 							  }
 					
 					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
@@ -2271,6 +2392,14 @@ class n_date_frame2:
 				nddf[symbol].ta.macd(append=True)
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
+
+			elif tech_indicator == "MACD_LONG":
+				df_copy = nddf[symbol].copy()
+				df_copy.ta.macd(fast=26, slow=48, signal=12, append=True)
+				nddf[symbol]['MACDh_26_48_12'] = df_copy['MACDh_26_48_12']
+				del df_copy
+				ndf.set_dt_order(symbol)
+				nddb.write(symbol)
 			
 			elif tech_indicator == "BBANDS":
 				nddf[symbol].ta.bbands(append=True)
@@ -2356,7 +2485,37 @@ class n_date_frame2:
 
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
-			
+
+			elif tech_indicator == "MA_X":
+				nddf[symbol].ta.sma(length=5, append=True)
+				nddf[symbol].ta.sma(length=8, append=True)
+				nddf[symbol].ta.sma(length=13, append=True)
+				nddf[symbol].ta.sma(length=26, append=True)
+				nddf[symbol].ta.sma(length=52, append=True)
+
+
+				nddf[symbol].ta.ema(length=5, append=True)
+				nddf[symbol].ta.ema(length=8, append=True)
+				nddf[symbol].ta.ema(length=13, append=True)
+				nddf[symbol].ta.ema(length=26, append=True)
+				nddf[symbol].ta.ema(length=52, append=True)
+
+				nddf[symbol]["SMA_5_DIFF"] = (nddf[symbol]["SMA_5"] / nddf[symbol]["SMA_5"].shift(1)) - 1
+				nddf[symbol]["SMA_8_DIFF"] = (nddf[symbol]["SMA_8"] / nddf[symbol]["SMA_8"].shift(1)) - 1
+				nddf[symbol]["SMA_13_DIFF"] = (nddf[symbol]["SMA_13"] / nddf[symbol]["SMA_13"].shift(1)) - 1
+				nddf[symbol]["SMA_26_DIFF"] = (nddf[symbol]["SMA_26"] / nddf[symbol]["SMA_26"].shift(1)) - 1
+				nddf[symbol]["SMA_52_DIFF"] = (nddf[symbol]["SMA_52"] / nddf[symbol]["SMA_52"].shift(1)) - 1
+
+				nddf[symbol]["EMA_5_DIFF"] = (nddf[symbol]["EMA_5"] / nddf[symbol]["EMA_5"].shift(1)) - 1
+				nddf[symbol]["EMA_8_DIFF"] = (nddf[symbol]["EMA_8"] / nddf[symbol]["EMA_8"].shift(1)) - 1
+				nddf[symbol]["EMA_13_DIFF"] = (nddf[symbol]["EMA_13"] / nddf[symbol]["EMA_13"].shift(1)) - 1
+				nddf[symbol]["EMA_26_DIFF"] = (nddf[symbol]["EMA_26"] / nddf[symbol]["EMA_26"].shift(1)) - 1
+				nddf[symbol]["EMA_52_DIFF"] = (nddf[symbol]["EMA_52"] / nddf[symbol]["EMA_52"].shift(1)) - 1
+
+				ndf.set_dt_order(symbol)
+				nddb.write(symbol)
+
+
 			elif tech_indicator == "SMA5813":
 				nddf[symbol].ta.sma(length=5, append=True)
 				nddf[symbol].ta.sma(length=8, append=True)
@@ -3235,7 +3394,7 @@ class watch_list:
 			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'snt_bullish'] = 0
 			self.write()
 			gui.refresh_ui()
-			ndf.add_crypto(symbol, years)
+			ndf.add_crypto_multi(symbol, years)
 		else:
 			log(symbol + " - non listed symbol on Binance.")
 		return
@@ -3264,65 +3423,76 @@ def do(symbol="", p2="", p3=""):
 	ndf.sig_to_y("BTCUSDT", "SIG_P10INT", "y_P10INT", 10)
 
 def do2(symbol="", p2="", p3=""):
-	temp_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\temp\\"
-	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
+
 	symbol = "BTCUSDT"
-	project = "APA_P10"
+	project = "BTCUSDT_P10INT"
 	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
-	
+
 	time_window_size = int(dataset_config['time_window_size'])
-	back_shift = dataset_config["data_window_back_shift"]
-	
-	i_indexes = np.arra(range(time_window_size, nddf[symbol].shape[0]))
-	used_cores = cpu_count()
-	runing_processes = np.array([None] * used_cores)
-	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
-	prc_count = 0
-	for ix in range(used_cores):
-		x_from = ndf.get_slice_index(i_indexes[0].shape[0], 6, ix)[0]
-		x_to = ndf.get_slice_index(i_indexes[0].shape[0], 6, ix)[1]
-		
-		params = {'cores': used_cores,
-				  'process': ix,
-				  'symbol': symbol,
-				  'indexes': i_indexes[0][x_from:x_to],
-				  'time_window_size': time_window_size,
-				  'y': 0,
-				  'original_fields': original_fields,
-				  'contras': contras,
-				  'back_shift': back_shift,
-				  'contra_copies_dt': contra_copies_dt,
-				  'nddf': nddf,
-				  'gap': "empty"
-				  }
-		
-		runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
-		prc_count += 1
-	
-	
-	runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
-	prc_count += 1
-	
-	for x, prc in enumerate(runing_processes):
-		prc.start()
-		time.sleep(.25)
-	
-	for prc in runing_processes:
-		prc.join()
-	
-	X_arra = []
-	
-	for ic in range(used_cores):
-		file_name = temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(ic) + '.npy'
-		X_arra.append(np.load(file_name))
-	X_full = np.concatenate(X_arra)
-	
-	import hashlib
-	full_cache_name = str(time_window_size) + ""
-	full_cache_name = hashlib.md5(full_cache_name).hexdigest()
-	print(f"len chk {nddf[symbol].shape[0]} {X_full.shape[0]}")
-	
-	np.save(cache_path + "DATASET_FULL_CACHE_" + full_cache_name, X_full)
+
+	cstr = "".join(contras)
+	ostr = "".join(original_fields)
+	full_cache_name = str(time_window_size) + cstr + ostr
+	full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+
+	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
+	f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
+	cX_array = np.load(f_name)
+
+	array_len = time_window_size * (len(original_fields) + len(contras))
+	empty_array = [0] * array_len
+
+	# check dataset infiniti elemnts, if inf then change [0]*winsize
+	idx_inf = [i for i, arr in enumerate(cX_array) if not np.isfinite(arr).all()]
+	for ix in idx_inf:
+		cX_array[ix] = empty_array
+
+	ai.build()
+	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, cX_array)
+	y_filed = "y_" + dataset_config['sig_suffix']
+	y_np = np.array(nddf[symbol][y_filed])
+	y_np[y_np == 9] = 0
+
+	import matplotlib.pyplot as plt
+	import seaborn as sns
+	import tensorflow as tf
+
+	confusion_mtx = tf.math.confusion_matrix(y_np, y_predict_sig)
+	fig = plt.figure(figsize=(5, 4))
+	fig.canvas.manager.window.move(200, 250)
+	sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2], yticklabels=[0, 1, 2],
+				annot=True, fmt='g')
+	plt.xlabel('Prediction')
+	plt.ylabel('Label')
+	plt.title('Confusion Matrix - not filtered')
+	plt.show()
+
+	filters = [0.9, 0.95, .97, .99]
+	poses = (221, 222, 223, 224)
+
+	fig2 = plt.figure(figsize=(10, 8))
+	fig2.canvas.manager.window.move(800, 100)
+	for pos, filter in enumerate(filters):
+		y_filtered = []
+		for xy, ys in enumerate(y_predict_strength):
+			if ys > filter:
+				y_filtered.append(y_predict_sig[xy])
+			else:
+				y_filtered.append(3)
+
+		confusion_mtx = tf.math.confusion_matrix(y_np, y_filtered)
+		plt.subplot(poses[pos])
+
+		sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
+					annot=True, fmt='g')
+		plt.xlabel('Prediction')
+		plt.ylabel('Label')
+		plt.title('Confusion Matrix - filter:' + str(filter))
+	plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+	plt.show()
+
+
+
 
 
 def stream_job():
@@ -3494,10 +3664,42 @@ def ai_remove(symbol="", project=""):
 def ai_download(project_name, rename=""):
 	ai.download(project_name, rename)
 
+def ai_confusion(symbol, project):
+
+	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
+
+	time_window_size = int(dataset_config['time_window_size'])
+
+	cstr = "".join(contras)
+	ostr = "".join(original_fields)
+	full_cache_name = str(time_window_size) + cstr + ostr
+	full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+
+	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
+	f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
+	cX_array = np.load(f_name)
+	# cX_array = cX_array[0:len(cX_array)-200000]
+
+	array_len = time_window_size * (len(original_fields) + len(contras))
+	empty_array = [0] * array_len
+
+	# check dataset infiniti elemnts, if inf then change [0]*winsize
+	idx_inf = [i for i, arr in enumerate(cX_array) if not np.isfinite(arr).all()]
+	for ix in idx_inf:
+		cX_array[ix] = empty_array
+
+	ai.build()
+	log(f" Predicting y, full dataset: {nddf[symbol].shape[0]}")
+	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, cX_array)
+	y_filed = "y_" + dataset_config['sig_suffix']
+	y_np = np.array(nddf[symbol][y_filed])
+
+	ai.confusion(y_predict_sig, y_predict_strength, y_np)
+
+
 
 def ai_backtest(symbol, run_time_window, project, start_position=0):
-
-	def summary(obj):
+	def summary(obj, run_time_window):
 		log("  ")
 		log(f"{obj.name}")
 		log(f"  (1) value limit: {obj.value_limit}       (2) stock_size: {obj.stock_size_orig}")
@@ -3507,10 +3709,14 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		p1 = obj.get_profit() - int(obj.get_turnover() * (.075 / 100))
 		p2 = obj.get_profit() - int(obj.get_turnover() * (.055 / 100))
 		p3 = obj.get_profit() - int(obj.get_turnover() * (.025 / 100))
-		log(f"  (8) net profit (.075%, .055%, .025%): {p1}, {p2} ,{p3}")
+		log(f"  (8) net profit (nominal) (.075%, .055%, .025%): {p1}, {p2} ,{p3}")
+		pp1 = round((((p1 / run_time_window) * 60 * 24 * 365) / obj.value_limit) * 100, 2)
+		pp2 = round((((p2 / run_time_window) * 60 * 24 * 365) / obj.value_limit) * 100, 2)
+		pp3 = round((((p3 / run_time_window) * 60 * 24 * 365) / obj.value_limit) * 100, 2)
+		log(f"  (9) net profit (% year)(.075%, .055%, .025%): {pp1}%, {pp2}% ,{pp3}%")
 
 	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
-	parallel_backtest = True
+
 	start_position = int(start_position)
 	log(f"ai_backtest {symbol} {run_time_window} {project}")
 	run_time_window = int(run_time_window)
@@ -3533,8 +3739,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	from_date = res[2]
 	res = tuple(nddf[symbol].loc[x_to, ['ohlc4', sig_field, 'Date']])
 	to_date = res[2]
-	log(f"start_position: {x_from}")
-	log(f"Selected test time window: {from_date} - {to_date}")
+	log(f"Selected time frame: {from_date} - {to_date}")
 	
 	value_limit = 10000
 	stock_size = 10000
@@ -3544,18 +3749,40 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	log(f"stock size: {stock_size} USD")
 	# log(f"stop loss: {stop_loss} USD")
 
-	algo_ai_override = n_algo_trade()
-	algo_ai_override.config({"name": symbol + " Ai " + str(x_from) + " - " + str(x_to),
+	parallel_backtest = True
+	overrider = False
+
+
+	# algo_main = n_algo_trade()
+	# algo_main.config({"name": symbol + " Ai " + str(x_from) + " - " + str(x_to),
+	# 						 "id": 1,
+	# 						 "value_limit": value_limit,
+	# 						 "stock_size": stock_size,
+	# 						 "stop_loss_limit": -stock_size * (.1 / 100),
+	# 						 "profit_take_limit": -1,  # -1 nincs bekapcsolva, amúgy nominálisan mondja usd ben
+	# 						 "trailer_stop": .15,  #.15 = 15% ennyivel eshet vissz a aktuális profit a legmagasabb trailer profithoz képest
+	# 						 "trailer_min_profit": 10, # nominal in usd
+	# 						 "value_limit_profit_reinvest": False,
+	# 						 "steps_limit": 6,
+	# 						 "strategy": 66,
+	# 						 "trade_time_start": (0, 1),
+	# 						 "trade_time_stop": (23, 59),
+	# 						 "next_price_random": True,
+	# 						 "enter_limit_order": False  # limit = actual_ohlc4
+	# 						 })
+
+	algo_main = n_algo_trade()
+	algo_main.config({"name": symbol + " Ai " + str(x_from) + " - " + str(x_to),
 							 "id": 1,
 							 "value_limit": value_limit,
 							 "stock_size": stock_size,
-							 "stop_loss_limit": stock_size * .1 / 100 * -1,
-							 "profit_take_limit": -1,  # -1 nincs bekapcsolva nominálisan mondja
-							 "trailer_stop": .50,
-							 "trailer_min_profit": 10,
-							 "value_limit_profit_reinvest": True,
-							 "steps_limit": 120,
-							 "strategy": 66,
+							 "stop_loss_limit": -stock_size * (.25 / 100),
+							 "profit_take_limit": -1,  # -1 nincs bekapcsolva, amúgy nominálisan mondja usd ben
+							 "trailer_stop": .25,  #.15 = 15% ennyivel eshet vissz a aktuális profit a legmagasabb trailer profithoz képest
+							 "trailer_min_profit": 10, # nominal in usd
+							 "value_limit_profit_reinvest": False,
+							 "steps_limit": 60,
+							 "strategy": 68,
 							 "trade_time_start": (0, 1),
 							 "trade_time_stop": (23, 59),
 							 "next_price_random": True,
@@ -3563,26 +3790,26 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							 })
 
 	if parallel_backtest:
-		algo_ai_rnd = n_algo_trade()
-		algo_ai_rnd.config({"name": symbol + " sig random.shuffle "  + str(x_from) + " - " + str(x_to),
-							"id": 2,
-							"value_limit": value_limit,
-							"stock_size": stock_size,
-							"stop_loss_limit": stock_size * .1 / 100 * -1,
-							"profit_take_limit": -1,  # -1 nincs bekapcsolva
-							"trailer_stop": .15,
-							"trailer_min_profit": 10,
-							"value_limit_profit_reinvest": True,
-							"steps_limit": 6,
-							"strategy": 66,
-							"trade_time_start": (0, 1),
-							"trade_time_stop": (23, 59),
-							"next_price_random": True,
-							 "enter_limit_order": False  # limit = actual_ohlc4
-							})
+		# algo_rnd = n_algo_trade()
+		# algo_rnd.config({"name": symbol + " sig random.shuffle "  + str(x_from) + " - " + str(x_to),
+		# 					"id": 2,
+		# 					"value_limit": value_limit,
+		# 					"stock_size": stock_size,
+		# 					"stop_loss_limit": stock_size * .1 / 100 * -1,
+		# 					"profit_take_limit": -1,  # -1 nincs bekapcsolva
+		# 					"trailer_stop": .15,
+		# 					"trailer_min_profit": 10,
+		# 					"value_limit_profit_reinvest": True,
+		# 					"steps_limit": 6,
+		# 					"strategy": 66,
+		# 					"trade_time_start": (0, 1),
+		# 					"trade_time_stop": (23, 59),
+		# 					"next_price_random": True,
+		# 					 "enter_limit_order": False  # limit = actual_ohlc4
+		# 					})
 
 		algo_sig = n_algo_trade()
-		algo_sig.config({"name": symbol + " y - what the qfy said "  + str(x_from) + " - " + str(x_to),
+		algo_sig.config({"name": "TARGET   " + symbol + " y - what the qfy said   " + str(x_from) + " - " + str(x_to),
 							"id": 3,
 							"value_limit": value_limit,
 							"stock_size": stock_size,
@@ -3600,13 +3827,13 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							})
 
 		algo_over_x = n_algo_trade()
-		algo_over_x.config({"name": symbol + " sig strength over .90 trailer is .75 " + str(x_from) + " - " + str(x_to),
+		algo_over_x.config({"name": "LONG RUN   " + symbol + " sig strength over 98 trailer is 75   " + str(x_from) + " - " + str(x_to),
 							"id": 4,
 							"value_limit": value_limit,
 							"stock_size": stock_size,
-							"stop_loss_limit": stock_size * .5 / 100 * -1,
+							"stop_loss_limit": stock_size * .25 / 100 * -1,
 							"profit_take_limit": -1,  # -1 nincs bekapcsolva
-							"trailer_stop": .5,
+							"trailer_stop": .25,
 							"trailer_min_profit": 10,
 							"value_limit_profit_reinvest": True,
 							"steps_limit": 120,
@@ -3617,6 +3844,23 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							 "enter_limit_order": False  # limit = actual_ohlc4
 							})
 
+		# algo_sig_filter = n_algo_trade()
+		# algo_sig_filter.config({"name": symbol + " sig filter 70 strength filter 96   " + str(x_from) + " - " + str(x_to),
+		# 					"id": 5,
+		# 					"value_limit": value_limit,
+		# 					"stock_size": stock_size,
+		# 					"stop_loss_limit": stock_size * .5 / 100 * -1,
+		# 					"profit_take_limit": -1,  # -1 nincs bekapcsolva
+		# 					"trailer_stop": .75,
+		# 					"trailer_min_profit": 10,
+		# 					"value_limit_profit_reinvest": True,
+		# 					"steps_limit": 120,
+		# 					"strategy": 66,
+		# 					"trade_time_start": (0, 1),
+		# 					"trade_time_stop": (23, 59),
+		# 					"next_price_random": True,
+		# 					 "enter_limit_order": False  # limit = actual_ohlc4
+		# 					})
 
 
 	s2(True, (x_to - x_from) * 2)
@@ -3627,51 +3871,79 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	pre_load = nddf[symbol].loc[x_from:x_to + 1, ['ohlc4', sig_field, 'Date', 'Low', 'High', 'MACDh_12_26_9']]
 	# print(pre_load)
 	pre_ohlc4 = tuple(pre_load['ohlc4'])
-	pre_sig = tuple(pre_load[sig_field])
+	sig = tuple(pre_load[sig_field])
 	# pre_sig_all = tuple(pre_load['SIG_ALL_MT'])
 	pre_date = tuple(pre_load['Date'])
 	pre_low = tuple(pre_load['Low'])
 	pre_high = tuple(pre_load['High'])
-	pre_macdh = tuple(pre_load['MACDh_12_26_9'])
 
-	backtest_cache_name = "x_set_" + str(x_from) + "_"+str(x_to)
+	# load dataset
+	cstr = "".join(contras)
+	ostr = "".join(original_fields)
+	full_cache_name = str(time_window_size) + cstr + ostr
+	full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+	array_len = time_window_size * (len(original_fields) + len(contras))
 
-	try:
-		X_array = np.load(cache_path + backtest_cache_name + '.npy')
+	cache_path = ndf.cache_path
+	f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
+	if os.path.isfile(f_name):
+		log(f"Dataset loaded from full cache.")
+		# ha van full cache akkor onnan
+		X_array = np.load(f_name)
+		X_array = X_array[x_from:x_to]
 		s2(True, (x_to - x_from) * 1)
-	except:
-		s2(True, (x_to - x_from) * 2)
-		X_array = np.array([])
-		array_len = time_window_size * (len(original_fields) + len(contras))
-		last_i_data_array = []
-		for ix in range(0, x_to - x_from):
-			i_data_array = ndf.get_dataset_by_index(symbol=symbol,
-												  index=ix + x_from,
-												  time_window_size=time_window_size,
-												  original_fields=original_fields,
-												  contras=contras,
-												  contra_copies_dt=contra_copies_dt)
-
-			if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
-				if len(X_array) == 0:
-					X_array = i_data_array
-				else:
-					X_array = np.vstack((X_array, i_data_array))
-				last_i_data_array = i_data_array
-			else:
-				X_array = np.vstack((X_array, last_i_data_array))
-				print(ix, "hiányzó X")
-			s2()
-
-		np.save(cache_path + backtest_cache_name, X_array)
 	else:
-		log(f"Dataset loaded from cache.")
+		backtest_cache_name = "x_set_" + str(x_from) + "_"+str(x_to)
+		try:
+			# ha van sub cache akkor onnan
+			X_array = np.load(cache_path + backtest_cache_name + '.npy')
+			s2(True, (x_to - x_from) * 1)
+		except:
+			# ha semmisincs akkor meg kell csinálni
+			s2(True, (x_to - x_from) * 2)
+			X_array = np.array([])
+			last_i_data_array = []
+			gap_manager = "empty"
+			idx = []
+			for ix in range(0, x_to - x_from):
+				i_data_array = ndf.get_dataset_by_index(symbol=symbol,
+													  index=ix + x_from,
+													  time_window_size=time_window_size,
+													  original_fields=original_fields,
+													  contras=contras,
+													  contra_copies_dt=contra_copies_dt)
+
+				if not np.isnan(i_data_array).any() \
+						and array_len == len(i_data_array) \
+						and np.isfinite(i_data_array).all():
+					if len(X_array) == 0:
+						X_array = i_data_array
+					else:
+						X_array = np.vstack((X_array, i_data_array))
+				elif gap_manager == "empty":
+					idx.append(ix)
+					if len(X_array) == 0:
+						X_array = np.array([0] * array_len)
+					else:
+						X_array = np.vstack((X_array, np.array([0] * array_len)))
+
+				s2()
+
+			np.save(cache_path + backtest_cache_name, X_array)
+		else:
+			log(f"Dataset loaded from cache.")
 
 
 	gui.ailog(f"Predict y: {symbol} {project} X_set size: {len(X_array)}")
 	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, X_array)
+	idx = np.where(X_array == np.array([0] * array_len)) # az üres dataseteket keresem és cserélem 0 ra
+	np.put(y_predict_sig, idx, 0)
 	del X_array
 	del contra_copies
+
+	# Confusion matrix ------------------------------------
+	ai.confusion(y_predict_sig, y_predict_strength, sig)
+
 	y_predict_sig_rnd = y_predict_sig.copy()
 	y_predict_strength_rnd = y_predict_strength.copy()
 	np.random.shuffle(y_predict_sig_rnd)
@@ -3680,15 +3952,18 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	# 	print(y_predict[i], y_predict_sig[i], y_predict_strength[i])
 	# 	time.sleep(0)
 
-	last_y = []
-	last_y_strength = []
-	missed_2 = 0
-	missed_0 = 0
-	right_1 = 0
-	underlimit_1 = 0
-	underlimit_else = 0
-	over_02 = 0
-	bad_0_in = 0
+	p1_s2 = 0
+	p1_s0 = 0
+	p1_s1 = 0
+	p1_under_limit = 0
+	p2_p0_under_limit = 0
+	p0_and_p2 = 0
+	p1_s0_override = 0
+	p1_s2_override = 0
+
+	p1_s0_limit = 70  # persentage tell the truth 101, 0 leave the predicted
+	p1_s2_limit = 70  # persentage tell the truth 101; 0 leave the predicted
+	or_strength_filter = .96
 
 	for ix in range(0, x_to - x_from):
 		price_dict = {
@@ -3697,97 +3972,100 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 			"actual_ohlc4": pre_ohlc4[ix],
 			"next_low": pre_low[ix + 1],
 			"next_high": pre_high[ix + 1],
-			"next_ohlc4": pre_ohlc4[ix + 1],
-			"actual_macdh": pre_macdh[ix]
+			"next_ohlc4": pre_ohlc4[ix + 1]
 		}
 
-		# if y_predict_sig[ix] in last_y:  # kilövöm azokat amikor egymás után ugyan azt nyomja
-		# 	mod_ypedict_sig = 0
-		# else:
-		# 	mod_ypedict_sig = y_predict_sig[ix]
+		if parallel_backtest and overrider: #turn off
+			if y_predict_strength[ix] > or_strength_filter:
+				if y_predict_sig[ix] == 1 and sig[ix] == 0:
+					if np.random.randint(1, 101) > p1_s0_limit:
+						# hagyom a rosszat
+						mod_y_pedict_sig = 1
+						mod_y_predict_strength = y_predict_strength[ix]
+					else:
+						# megmondom az igazit
+						mod_y_pedict_sig = 0
+						mod_y_predict_strength = 1
+						p1_s0_override += 1
 
+					p1_s0 += 1
+				elif y_predict_sig[ix] == 1 and sig[ix] == 1:
+					mod_y_pedict_sig = 1
+					mod_y_predict_strength = y_predict_strength[ix]
+					p1_s1 += 1
+				elif y_predict_sig[ix] == 1 and sig[ix] == 2:
+					if np.random.randint(1, 101) > p1_s2_limit:
+						# hagyom a rosszat
+						mod_y_pedict_sig = 1
+						mod_y_predict_strength = y_predict_strength[ix]
+					else:
+						# megmondom az igazit
+						mod_y_pedict_sig = 2
+						mod_y_predict_strength = 1
+						p1_s2_override += 1
 
-		# if y_predict_sig[ix] == 2:
-		# 	last_y.append(-1)
-		# else:
-		# 	last_y.append(y_predict_sig[ix])
-		# last_y = last_y[-3:]
-		#
-		# last_y_strength.append(y_predict_strength[ix])
-		# last_y_strength = last_y_strength[-3:]
-		#
-		# if y_predict_strength[ix] > .90:
-		# 	if y_predict_sig[ix] == 1 and pre_sig[ix] == 0:
-		# 		c = np.array(last_y) * np.array(last_y_strength) # * np.array(range(1, len(last_y)+1))
-		# 		# print(ix, "-" * 30)
-		# 		# print("1_0,", np.sum(c))
-		#
-		# 		if np.random.randint(1, 101) > 0:
-		# 			mod_ypedict_sig = 1
-		# 			bad_0_in += 1
-		# 		else:
-		# 			mod_ypedict_sig = 0
-		#
-		# 		missed_0 += 1
-		# 	elif y_predict_sig[ix] == 1 and pre_sig[ix] == 1:
-		# 		# print(ix, "-" * 30)
-		# 		c = np.array(last_y) * np.array(last_y_strength) # * np.array(range(1, len(last_y)+1))
-		# 		# print("1_1,", np.sum(c))
-		#
-		# 		mod_ypedict_sig = 1
-		# 		right_1 += 1
-		# 	elif y_predict_sig[ix] == 1 and pre_sig[ix] == 2:
-		# 		# print(ix, "-" * 30)
-		# 		c = np.array(last_y) * np.array(last_y_strength) # * np.array(range(1, len(last_y)+1))
-		# 		# print("1_2,", np.sum(c))
-		# 		mod_ypedict_sig = 1
-		# 		missed_2 += 1
-		# 	else:
-		# 		mod_ypedict_sig = 0
-		# 		over_02 += 1
-		# else:
-		# 	mod_ypedict_sig = 0
-		# 	if y_predict_sig[ix] == 1:
-		# 		underlimit_1 += 1
-		# 	else:
-		# 		underlimit_else += 1
-		#
+					p1_s2 += 1
+				else:
+					mod_y_pedict_sig = 0
+					mod_y_predict_strength = 1
+					p0_and_p2 += 1
+			else:
+				mod_y_pedict_sig = 0
+				mod_y_predict_strength = 1
+				if y_predict_sig[ix] == 1:
+					p1_under_limit += 1
+				else:
+					p2_p0_under_limit += 1
+		else:
+			mod_y_pedict_sig = y_predict_sig[ix]
+			mod_y_predict_strength = y_predict_strength[ix]
+
 		# if ix % 1000 == 0:
-		# 	print(right_1, missed_2, missed_0, "->", bad_0_in, over_02 + underlimit_1 + underlimit_else,
-		# 		  right_1 + underlimit_1 + missed_2 + missed_0 + over_02 + underlimit_else)
+		# 	print(p1_s1, p1_s2, p1_s0, "->", p1_s0_override, p0_and_p2 + p1_under_limit + p2_p0_under_limit,
+		# 		  p1_s1 + p1_under_limit + p1_s2 + p1_s0 + p0_and_p2 + p2_p0_under_limit)
 
-		mod_ypedict_sig = y_predict_sig[ix]
-		algo_ai_override.transaction(pre_sig[ix], mod_ypedict_sig, y_predict_strength[ix], price_dict, pre_date[ix])
+
+		algo_main.transaction(sig[ix], y_predict_sig[ix], y_predict_strength[ix], price_dict, pre_date[ix])
 		if parallel_backtest:
-			algo_sig.transaction(pre_sig[ix], pre_sig[ix], 1, price_dict, pre_date[ix])
-			algo_ai_rnd.transaction(pre_sig[ix], y_predict_sig_rnd[ix], y_predict_strength_rnd[ix], price_dict, pre_date[ix])
-			algo_over_x.transaction(pre_sig[ix], y_predict_sig_rnd[ix], y_predict_strength_rnd[ix], price_dict, pre_date[ix])
+			algo_sig.transaction(sig[ix], sig[ix], 1, price_dict, pre_date[ix])
+			# algo_rnd.transaction(sig[ix], y_predict_sig_rnd[ix], y_predict_strength_rnd[ix], price_dict, pre_date[ix])
+			algo_over_x.transaction(sig[ix], y_predict_sig[ix], y_predict_strength[ix], price_dict, pre_date[ix])
+			# algo_sig_filter.transaction(sig[ix], mod_y_pedict_sig, mod_y_predict_strength, price_dict, pre_date[ix])
 		s2()
 
 	if parallel_backtest:
-		summary(algo_sig)
-		summary(algo_ai_rnd)
-		summary(algo_over_x)
-	summary(algo_ai_override)
+		summary(algo_sig, run_time_window)
+		# summary(algo_rnd, run_time_window)
+		summary(algo_over_x, run_time_window)
+		# summary(algo_sig_filter, run_time_window)
+	summary(algo_main, run_time_window)
 
-
-	# log(f"""  Average prediction runtime: {round(ai.ai_models[project]["predict_average_runtime"], 3)}""")
+	if parallel_backtest and overrider:
+		log(f"Overrider.", line=True)
+		log(f"  Strength filter: {or_strength_filter}")
+		log(f"  Overrider limit p1_s0: {p1_s0_limit}    overided cases: {p1_s0_override}")
+		log(f"  Overrider limit p1_s2: {p1_s2_limit}    overided cases: {p1_s2_override}")
+		log(f"  Case stat. p1:{p1_s1 + p1_s0 + p1_s2}  p1_s1: {p1_s1}   p1_s0: {p1_s0}   p1_s2: {p1_s2}")
+		log(f"  Case stat. p0 and p2:{p0_and_p2}")
+		log(f"  Strength filtered:  p1 {p1_under_limit}, filtered p2 p0: {p2_p0_under_limit}")
 
 
 	if parallel_backtest:
 		algo_sig.show_history()
-		algo_ai_rnd.show_history()
+		# algo_rnd.show_history()
 		algo_over_x.show_history()
-	algo_ai_override.show_history()
+		# algo_sig_filter.show_history()
+	algo_main.show_history()
 
 	# algo_ai_override.history.to_excel('algo_ai_override.xlsx', engine='xlsxwriter')
 	# algo_ai_rnd.history.to_excel('algo_ai_rnd.xlsx', engine='xlsxwriter')
 
-	del algo_ai_override
+	del algo_main
 	if parallel_backtest:
-		del algo_ai_rnd
+		# del algo_rnd
 		del algo_over_x
 		del algo_sig
+		# del algo_sig_filter
 
 
 def ai_build():
@@ -3802,7 +4080,7 @@ def ndf_add(symbol="", years=1):
 	ndf.add(symbol, years)
 
 def ndf_add_crypto(symbol="", years=1):
-	ndf.add_crypto(symbol, years)
+	ndf.add_crypto_multi(symbol, years)
 
 def ndf_tech(symbol, tech_indicator, params=[]):
 	ndf.add_tech(symbol, tech_indicator, params)
@@ -3927,6 +4205,10 @@ def ndf_dataset(symbol="", config_file="", force="NOFORCE", overlay_manager="rnd
 	
 	ndf.create_dataset(symbol, config_file, force, overlay_manager.lower())
 	s("")
+
+
+def ndf_dataset_full(symbol="", project=""):
+	ndf.create_dataset_full(symbol, project)
 
 
 def ndf_dataset_int(symbol="", config_file="", force="FORCE", overlay_manager="rnd_choice"):
@@ -4190,11 +4472,12 @@ if __name__ == "__main__":
 	wl = watch_list()
 	nddf = {}
 	nddb = n_db(nddf, log)
-	ai = n_ai(log, nddf)
+
 
 	print("Status: GUI Loading...")
 	app = QApplication([])
 	gui = gui()
+	ai = n_ai(log, nddf, gui)
 	ntrade = n_trade(gui=gui)
 	nchart = n_chart(ntrade)
 	gui.refresh_ui()
