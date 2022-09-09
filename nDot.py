@@ -1454,6 +1454,52 @@ class n_date_frame2:
 			# print(y)
 			nd_dset.add_y(y)
 			s2()
+		
+	def roll_time_frame(self, iarray, time_window, data_window_back_shift=0):  # rolling time frame
+		a = np.array(iarray)
+		s_array = [0] * time_window
+		for i in range(time_window):
+			nprt = np.roll(a, (time_window - i - 1 + data_window_back_shift))
+			# print(nprt)
+			s_array[i] = nprt
+			for n in range(time_window - i - 1 + data_window_back_shift):
+				s_array[i][n] = np.NaN
+		# print(stack_array[i])
+		
+		return np.vstack(s_array).T
+	
+	def create_dataset_full_stack(self, symbol, project_name):
+		log(f"ndf-> create_dataset_full: {symbol} {project_name}")
+
+		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
+
+		time_window_size = int(dataset_config['time_window_size'])
+		back_shift = dataset_config["data_window_back_shift"]
+		
+		
+		
+		hstack_array = []
+		for field in original_fields:
+			hstack_array.append(self.roll_time_frame(nddf[symbol][field], time_window_size))
+		
+		X_full = np.hstack(hstack_array)
+
+		# # the first windowsize + 1 is missing !! create it
+		# array_len = time_window_size * (len(original_fields) + len(contras))
+		# missing_part_array = np.array([0] * array_len)
+		# for ii in range(time_window_size):
+		# 	missing_part_array = np.vstack((missing_part_array, np.array([0] * array_len)))
+		# X_full = np.vstack((missing_part_array, X_full))
+
+		cstr = "".join(contras)
+		ostr = "".join(original_fields)
+		full_cache_name = str(time_window_size) + cstr + ostr
+		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+		log(f"Len chk: nddf.len: {nddf[symbol].shape[0]} dataset.len:{X_full.shape[0]}")
+
+		np.save(self.cache_path + "DATASET_FULL_CACHE_" + full_cache_name, X_full)
+		log(f"Cache dataset saved: DATASET_FULL_CACHE_{full_cache_name}")
+
 
 	def create_dataset_full(self, symbol, project_name):
 		log(f"ndf-> create_dataset_full: {symbol} {project_name}")
@@ -3423,77 +3469,103 @@ def do(symbol="", p2="", p3=""):
 	ndf.sig_to_y("BTCUSDT", "SIG_P10INT", "y_P10INT", 10)
 
 def do2(symbol="", p2="", p3=""):
-
+	def get_dataset_by_index(symbol, index, time_window_size, original_fields,
+							 contras, contra_copies_dt, nddf):
+		
+		i_int_to = int(index)
+		i_int_from = i_int_to - time_window_size + 1
+		# print(nddf[symbol]["Date"][i_int_to:i_int_to + 1])
+		# sys.exit(0)
+		
+		i_data_array = np.array([])
+		if i_int_from > 0:
+			if len(original_fields) > 0:
+				for i_of in original_fields:
+					i_add = np.array(nddf[symbol][i_of][i_int_from:i_int_to + 1])
+					i_data_array = np.append(i_data_array, i_add)
+			
+			if len(contras) > 0:
+				for i_con in contras:
+					contra_sep_pre = i_con.split('_')
+					con_sep = []
+					if len(contra_sep_pre) > 2:
+						con_sep.append(contra_sep_pre[0])
+						s = "_"
+						con_sep.append(s.join(contra_sep_pre[1:]))
+					else:
+						con_sep = contra_sep_pre
+					
+					con_symbol = con_sep[0]
+					con_field = con_sep[1]
+					
+					orig_date = nddf[symbol]["Date"][index:index + 1].values[0]
+					try:
+						i_int_to_contra = np.where(contra_copies_dt[con_symbol] == orig_date)[0][0]
+					except:
+						return np.array([])
+					
+					i_int_from_contra = i_int_to_contra - time_window_size + 1
+					i_new = np.array(nddf[con_symbol][con_field][i_int_from_contra:i_int_to_contra + 1])
+					i_data_array = np.append(i_data_array, i_new)
+		return i_data_array
+	
+	def roll_time_frame(array, time_window, data_window_back_shift=0):  # rolling time frame
+		a = np.array(array).astype(float)
+		stack_array = [0] * time_window
+		for i in range(time_window):
+			nprt = np.roll(a, (time_window - i - 1 + data_window_back_shift))
+			# print(nprt)
+			stack_array[i] = nprt
+			for n in range(time_window - i - 1 + data_window_back_shift):
+				stack_array[i][n] = np.NaN
+			# print(stack_array[i])
+		
+		return np.vstack(stack_array).T
+	
 	symbol = "BTCUSDT"
 	project = "BTCUSDT_P10INT"
 	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
-
+	# print(contras)
 	time_window_size = int(dataset_config['time_window_size'])
-
-	cstr = "".join(contras)
-	ostr = "".join(original_fields)
-	full_cache_name = str(time_window_size) + cstr + ostr
-	full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
-
-	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
-	f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
-	cX_array = np.load(f_name)
-
-	array_len = time_window_size * (len(original_fields) + len(contras))
-	empty_array = [0] * array_len
-
-	# check dataset infiniti elemnts, if inf then change [0]*winsize
-	idx_inf = [i for i, arr in enumerate(cX_array) if not np.isfinite(arr).all()]
-	for ix in idx_inf:
-		cX_array[ix] = empty_array
-
-	ai.build()
-	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, cX_array)
-	y_filed = "y_" + dataset_config['sig_suffix']
-	y_np = np.array(nddf[symbol][y_filed])
-	y_np[y_np == 9] = 0
-
-	import matplotlib.pyplot as plt
-	import seaborn as sns
-	import tensorflow as tf
-
-	confusion_mtx = tf.math.confusion_matrix(y_np, y_predict_sig)
-	fig = plt.figure(figsize=(5, 4))
-	fig.canvas.manager.window.move(200, 250)
-	sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2], yticklabels=[0, 1, 2],
-				annot=True, fmt='g')
-	plt.xlabel('Prediction')
-	plt.ylabel('Label')
-	plt.title('Confusion Matrix - not filtered')
-	plt.show()
-
-	filters = [0.9, 0.95, .97, .99]
-	poses = (221, 222, 223, 224)
-
-	fig2 = plt.figure(figsize=(10, 8))
-	fig2.canvas.manager.window.move(800, 100)
-	for pos, filter in enumerate(filters):
-		y_filtered = []
-		for xy, ys in enumerate(y_predict_strength):
-			if ys > filter:
-				y_filtered.append(y_predict_sig[xy])
-			else:
-				y_filtered.append(3)
-
-		confusion_mtx = tf.math.confusion_matrix(y_np, y_filtered)
-		plt.subplot(poses[pos])
-
-		sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
-					annot=True, fmt='g')
-		plt.xlabel('Prediction')
-		plt.ylabel('Label')
-		plt.title('Confusion Matrix - filter:' + str(filter))
-	plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
-	plt.show()
-
-
-
-
+	
+	hstack_array = []
+	for field in original_fields:
+		hstack_array.append(roll_time_frame(nddf[symbol][field], time_window_size))
+	
+	# print(nddf[symbol].shape)
+	
+	dataset_new = np.hstack(hstack_array)
+	
+	for i in range(nddf[symbol].shape[0]):
+		if i % 1000 == 0:
+			print(i)
+		old_data = get_dataset_by_index(symbol, i, time_window_size, original_fields, contras, {}, nddf)
+		# print(old_data)
+		if len(old_data) == 0:
+			old_data = [np.NaN] * (time_window_size * len(original_fields))
+		# print(dataset_new[i])
+		# print(old_data)
+		dataset_new[i] = np.array(list(dataset_new[i])).astype(np.float64).round(5)
+		old_data = np.array(list(old_data)).astype(np.float64).round(5)
+		# print(dataset_new[i])
+		# print(old_data)
+		
+		if not np.allclose(old_data, dataset_new[i]):
+			print(i, "eltérés")
+			# print(str(dataset_new[i]))
+			# print(str(old_data))
+			# i_int_to = int(i)
+			# i_int_from = i_int_to - time_window_size + 1
+			#
+			# for i_of in original_fields:
+			# 	print(nddf[symbol][i_of][i_int_from:i_int_to + 1])
+				
+		
+		# for dsx, dsn in enumerate(dataset_new[i]):
+			# 	if dsn != old_data[dsx]:
+			# 		print(dsn, old_data[dsx])
+			# 		time.sleep(1)
+			
 
 def stream_job():
 	print("run outer job")
@@ -4208,7 +4280,7 @@ def ndf_dataset(symbol="", config_file="", force="NOFORCE", overlay_manager="rnd
 
 
 def ndf_dataset_full(symbol="", project=""):
-	ndf.create_dataset_full(symbol, project)
+	ndf.create_dataset_full_stack(symbol, project)
 
 
 def ndf_dataset_int(symbol="", config_file="", force="FORCE", overlay_manager="rnd_choice"):

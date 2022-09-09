@@ -28,6 +28,8 @@ class n_ai:
         self.ai_settings = {}
         self.ndot_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\"
         self.projects_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\projects\\"
+        # self.projects_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\"
+
         self.gdrive_path = "X:\\Apa\\cloud\\GoogleDrive\\Saját meghajtó\\nDot_Colabs\\"
         self.model_dict = {
             "MinMaxScaler": "-",
@@ -293,6 +295,7 @@ class n_ai:
             
     def get_project_config(self, project):
         local_path = self.projects_path + project + "\\nDot_PRO_" + project + ".txt"
+        print(local_path)
         return self.get_dataset_config(local_path)
 
     def get_dataset_config(self, config_file_path):
