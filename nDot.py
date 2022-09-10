@@ -1493,6 +1493,11 @@ class n_date_frame2:
 		return x_full
 
 	def get_dataset_full_stack(self, symbol, project_name, nan_manager="leave"):
+		def get_bug_index(array):
+			i_inf = np.where(array == np.inf)[0]
+			i_nan = np.where(np.isnan(array))[0]
+			return np.unique(np.concatenate([i_inf, i_nan]))
+		
 		log(f"ndf-> get_dataset_full_stack: {symbol} {project_name}")
 		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
 
@@ -1527,6 +1532,11 @@ class n_date_frame2:
 					pass
 				else:
 					bug_index.append(ic)
+					
+			bug_index2 = get_bug_index(x_array)
+			if bug_index2 == bug_index:
+				print("új bug_index működik")
+			
 			if nan_manager == "empty":
 				x_array[bug_index] = np.array([0] * array_len)
 			elif nan_manager == "drop":
@@ -3943,8 +3953,6 @@ def ai_confusion(symbol, project):
 	y_np[bug_index] = 3
 
 	ai.confusion(y_predict_sig, y_predict_strength, y_np)
-
-
 
 def ai_backtest(symbol, run_time_window, project, start_position=0):
 	def summary(obj, run_time_window):
