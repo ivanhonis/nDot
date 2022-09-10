@@ -21,7 +21,7 @@ class n_binance_trade():
         self.exchange_info = []
         self.crypto = None
         self.pai = None
-        self.strart()
+        # self.strart()
 
 
     def strart(self):

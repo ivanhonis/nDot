@@ -1469,36 +1469,70 @@ class n_date_frame2:
 		return np.vstack(s_array).T
 	
 	def create_dataset_full_stack(self, symbol, project_name):
-		log(f"ndf-> create_dataset_full: {symbol} {project_name}")
-
+		log(f"ndf-> create_dataset_full_stack: {symbol} {project_name}")
 		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
 
 		time_window_size = int(dataset_config['time_window_size'])
 		back_shift = dataset_config["data_window_back_shift"]
-		
-		
-		
+		array_len = time_window_size * (len(original_fields) + len(contras))
+
 		hstack_array = []
 		for field in original_fields:
-			hstack_array.append(self.roll_time_frame(nddf[symbol][field], time_window_size))
+			hstack_array.append(self.roll_time_frame(nddf[symbol][field], time_window_size, back_shift))
 		
-		X_full = np.hstack(hstack_array)
-
-		# # the first windowsize + 1 is missing !! create it
-		# array_len = time_window_size * (len(original_fields) + len(contras))
-		# missing_part_array = np.array([0] * array_len)
-		# for ii in range(time_window_size):
-		# 	missing_part_array = np.vstack((missing_part_array, np.array([0] * array_len)))
-		# X_full = np.vstack((missing_part_array, X_full))
+		x_full = np.hstack(hstack_array)
 
 		cstr = "".join(contras)
 		ostr = "".join(original_fields)
 		full_cache_name = str(time_window_size) + cstr + ostr
 		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
-		log(f"Len chk: nddf.len: {nddf[symbol].shape[0]} dataset.len:{X_full.shape[0]}")
+		log(f"Len chk: nddf.len: {nddf[symbol].shape[0]} dataset.len:{x_full.shape[0]}")
 
-		np.save(self.cache_path + "DATASET_FULL_CACHE_" + full_cache_name, X_full)
+		np.save(self.cache_path + "DATASET_FULL_CACHE_" + full_cache_name, x_full)
 		log(f"Cache dataset saved: DATASET_FULL_CACHE_{full_cache_name}")
+		return x_full
+
+	def get_dataset_full_stack(self, symbol, project_name, nan_manager="leave"):
+		log(f"ndf-> get_dataset_full_stack: {symbol} {project_name}")
+		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
+
+		time_window_size = int(dataset_config['time_window_size'])
+		array_len = time_window_size * (len(original_fields) + len(contras))
+
+		cstr = "".join(contras)
+		ostr = "".join(original_fields)
+		full_cache_name = str(time_window_size) + cstr + ostr
+		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+
+		cache_path = ndf.cache_path
+		f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
+		if os.path.isfile(f_name):
+			log(f"Dataset loaded from full cache.")
+			x_array = np.load(f_name)
+		else:
+			x_array = self.create_dataset_full_stack(symbol, project_name)
+
+		bug_index = []
+		if nan_manager == "leave":
+			pass
+		elif nan_manager == "empty" or nan_manager == "drop":
+			log(f"Detect bugs (Nan, Inf) manager:{nan_manager}")
+			s2(True, int(len(x_array) / 5000))
+			for ic, xia in enumerate(x_array):  # TODO: gyorsítsd fel wher használatával :)
+				if ic % 5000 == 0:
+					s2()
+				if not np.isnan(xia).any() \
+						and array_len == len(xia) \
+						and np.isfinite(xia).all():
+					pass
+				else:
+					bug_index.append(ic)
+			if nan_manager == "empty":
+				x_array[bug_index] = np.array([0] * array_len)
+			elif nan_manager == "drop":
+				x_array = np.delete(x_array, bug_index, 0)
+		s("ok :)")
+		return x_array, bug_index
 
 
 	def create_dataset_full(self, symbol, project_name):
@@ -1564,6 +1598,154 @@ class n_date_frame2:
 
 		np.save(self.cache_path + "DATASET_FULL_CACHE_" + full_cache_name, X_full)
 		log(f"Cache dataset saved: DATASET_FULL_CACHE_{full_cache_name}")
+
+	def create_dataset_int_stack(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
+
+		config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
+		file = pathlib.Path(config_file_path)
+		if file.exists():
+			gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_dataset_config(
+				config_file_path)
+			if gdc_ok:
+				sig_field = "SIG_" + dataset_config['sig_suffix']
+				field_ok_basic = ndf.is_field_exist(symbol, sig_field)
+
+				if not force:
+					field_ok_basic = True  # ha force akkor nincs szükség sigre sem
+
+				field_ok_original_fields = True
+				for o_f in original_fields:
+					field_ok_original_fields = field_ok_original_fields and ndf.is_field_exist(symbol, o_f)
+
+				field_ok_contras = True
+				for c in contras:
+					field_ok_contras = field_ok_contras and ndf.is_contra(c)
+
+				if field_ok_basic and field_ok_original_fields and field_ok_contras:
+					time_window_size = dataset_config["time_window_size"]
+					back_shift = dataset_config["data_window_back_shift"]
+					overlay_steps = dataset_config["overlay_steps"]
+					y_field = "y_" + dataset_config["sig_suffix"]
+					if force:  # ha már van y akkor kitörli és mindenképen megcsinálja
+						ndf.remove_columns(symbol, [y_field])
+					if y_field in nddf[symbol].columns:
+						log(y_field + " already exist.")
+					else:
+						log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
+						self.sig_to_y(symbol, sig_field, y_field, overlay_steps)
+
+					log("Creating dataset.")
+					# image fej megcsinálása, minden image nél ugyan az
+					nd_dset = n_dataset(log)
+					nd_dset.set_symbol(symbol)
+
+					nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int")
+					nd_dset.set_name("nDot_DATASET_" + project_name)
+					nd_dset.set_project_name(project_name)
+
+					nd_dset.set_description(description)
+
+					y_names = {'0=under limit; 1=good long; 2=good short'}
+					nd_dset.add_y_names(y_names)
+					nd_dset.set_window_size(time_window_size)
+					i_indexes = {}
+					X_array_all, bug_index = ndf.get_dataset_full_stack(symbol, project_name, nan_manager="drop")
+
+					# print(nddf[symbol].shape)
+					# print(X_array_all.shape)
+					# print(len(bug_index))
+
+					y_sig_all = np.array(nddf[symbol][y_field].values)
+					# print(y_sig_all.shape)
+					y_sig_all = np.delete(y_sig_all, bug_index, 0)
+					# print(y_sig_all.shape)
+
+					log("  Set locked part of the dataset:")
+					log("  Orig size:" + str(X_array_all.shape))
+					X_array_all = X_array_all[0:-200000]
+					y_sig_all = y_sig_all[0:-200000]
+					log("  New size:" + str(X_array_all.shape))
+
+
+
+					for ix in range(3):
+						i_indexes[ix] = np.where(y_sig_all == ix)[0]
+						# print(i_indexes[ix].shape)
+
+					# módosítom a nullák számát
+					len1 = len(i_indexes[1])
+					len2 = len(i_indexes[2])
+					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
+					# i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
+					# i_indexes[0] = i_indexes[0][0: max_elemet]
+					i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
+					s2(True, len1 + len2 + max_elemet)
+					for ix in range(3):
+						log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
+
+					X_arra = np.concatenate((X_array_all[i_indexes[0]], X_array_all[i_indexes[1]], X_array_all[i_indexes[2]]))
+					nd_dset.add_X(X_arra)
+
+					y_arra = np.concatenate((y_sig_all[i_indexes[0]], y_sig_all[i_indexes[1]], y_sig_all[i_indexes[2]]))
+					nd_dset.add_y(y_arra)
+
+					# historic max and min ---------------------------------
+
+					i_historic_max = np.array([])
+					i_historic_min = np.array([])
+					if len(original_fields) > 0:
+						for i_of in original_fields:
+							nd_dset.add_field(i_of)
+							i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
+							i_conc = np.full(time_window_size, i_conc)
+							i_historic_max = np.concatenate((i_historic_max, i_conc))
+
+							i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
+							i_conc = np.full(time_window_size, i_conc)
+							i_historic_min = np.concatenate((i_historic_min, i_conc))
+
+					for i_con in contras:
+						nd_dset.add_field(i_con)
+						contra_sep_pre = i_con.split('_')
+						con_sep = []
+						if len(contra_sep_pre) > 2:
+							con_sep.append(contra_sep_pre[0])
+							s = "_"
+							con_sep.append(s.join(contra_sep_pre[1:]))
+						else:
+							con_sep = contra_sep_pre
+
+						con_symbol = con_sep[0]
+						con_field = con_sep[1]
+						i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
+						i_conc = np.full(time_window_size, i_conc)
+						i_historic_max = np.concatenate((i_historic_max, i_conc))
+
+						i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
+						i_conc = np.full(time_window_size, i_conc)
+						i_historic_min = np.concatenate((i_historic_min, i_conc))
+					s2()
+					nd_dset.set_historic_max(i_historic_max)
+					nd_dset.set_historic_min(i_historic_min)
+					s2()
+					nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
+					s2()
+					nd_dset.save()
+					s2()
+					del nd_dset
+				else:
+					if not field_ok_basic:
+						log("Config file, basic parameter(s) is missing.")
+					if not field_ok_original_fields:
+						log("Config file, Orifinal field(s) is missing.")
+					if not field_ok_contras:
+						log("Config file, Contra field(s) is missing.")
+			else:
+				log("config file conversion error. (,) is missing ? :)")
+
+		else:
+			log("config file is missing:" + str(config_file_path))
+
 
 	def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
 		
@@ -1684,7 +1866,7 @@ class n_date_frame2:
 					len1 = len(i_indexes[1])
 					len2 = len(i_indexes[2])
 					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
-					i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
+					# i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
 					# i_indexes[0] = i_indexes[0][0: max_elemet]
 					i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
 					s2(True, len1 + len2 + max_elemet)
@@ -3466,7 +3648,20 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-	ndf.sig_to_y("BTCUSDT", "SIG_P10INT", "y_P10INT", 10)
+	symbol = "BRCUSDT"
+	project = "BTCUSDT_P10INT"
+	x_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="leave")
+	print(x_array.shape)
+	print(bug_index)
+
+	x_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="empty")
+	print(x_array.shape)
+	print(bug_index)
+
+	x_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="drop")
+	print(x_array.shape)
+	print(bug_index)
+
 
 def do2(symbol="", p2="", p3=""):
 	def get_dataset_by_index(symbol, index, time_window_size, original_fields,
@@ -3739,32 +3934,13 @@ def ai_download(project_name, rename=""):
 def ai_confusion(symbol, project):
 
 	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
-
-	time_window_size = int(dataset_config['time_window_size'])
-
-	cstr = "".join(contras)
-	ostr = "".join(original_fields)
-	full_cache_name = str(time_window_size) + cstr + ostr
-	full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
-
-	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
-	f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
-	cX_array = np.load(f_name)
-	# cX_array = cX_array[0:len(cX_array)-200000]
-
-	array_len = time_window_size * (len(original_fields) + len(contras))
-	empty_array = [0] * array_len
-
-	# check dataset infiniti elemnts, if inf then change [0]*winsize
-	idx_inf = [i for i, arr in enumerate(cX_array) if not np.isfinite(arr).all()]
-	for ix in idx_inf:
-		cX_array[ix] = empty_array
-
+	cX_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="empty")
 	ai.build()
 	log(f" Predicting y, full dataset: {nddf[symbol].shape[0]}")
 	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, cX_array)
 	y_filed = "y_" + dataset_config['sig_suffix']
 	y_np = np.array(nddf[symbol][y_filed])
+	y_np[bug_index] = 3
 
 	ai.confusion(y_predict_sig, y_predict_strength, y_np)
 
@@ -3935,7 +4111,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		# 					})
 
 
-	s2(True, (x_to - x_from) * 2)
+
 
 	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
 	# print(contra_copies_dt)
@@ -3949,72 +4125,87 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	pre_low = tuple(pre_load['Low'])
 	pre_high = tuple(pre_load['High'])
 
-	# load dataset
-	cstr = "".join(contras)
-	ostr = "".join(original_fields)
-	full_cache_name = str(time_window_size) + cstr + ostr
-	full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+	# # load dataset
+	# cstr = "".join(contras)
+	# ostr = "".join(original_fields)
+	# full_cache_name = str(time_window_size) + cstr + ostr
+	# full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+	# array_len = time_window_size * (len(original_fields) + len(contras))
+	#
+	# cache_path = ndf.cache_path
+	# f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
+	# if os.path.isfile(f_name):
+	# 	log(f"Dataset loaded from full cache.")
+	# 	# ha van full cache akkor onnan
+	# 	X_array = np.load(f_name)
+	# 	X_array = X_array[x_from:x_to]
+	#
+	# 	for ic, xia in enumerate(X_array):
+	# 		if not np.isnan(xia).any() \
+	# 				and array_len == len(xia) \
+	# 				and np.isfinite(xia).all():
+	# 			pass
+	# 		else:
+	# 			X_array[ic] = np.array([0] * array_len)
+	# 	s2(True, (x_to - x_from) * 1)
+	# else:
+	# 	backtest_cache_name = "x_set_" + str(x_from) + "_"+str(x_to)
+	# 	try:
+	# 		# ha van sub cache akkor onnan
+	# 		X_array = np.load(cache_path + backtest_cache_name + '.npy')
+	# 		s2(True, (x_to - x_from) * 1)
+	# 	except:
+	# 		# ha semmisincs akkor meg kell csinálni
+	# 		s2(True, (x_to - x_from) * 2)
+	# 		X_array = np.array([])
+	# 		last_i_data_array = []
+	# 		gap_manager = "empty"
+	# 		idx = []
+	# 		for ix in range(0, x_to - x_from):
+	# 			i_data_array = ndf.get_dataset_by_index(symbol=symbol,
+	# 												  index=ix + x_from,
+	# 												  time_window_size=time_window_size,
+	# 												  original_fields=original_fields,
+	# 												  contras=contras,
+	# 												  contra_copies_dt=contra_copies_dt)
+	#
+	# 			if not np.isnan(i_data_array).any() \
+	# 					and array_len == len(i_data_array) \
+	# 					and np.isfinite(i_data_array).all():
+	# 				if len(X_array) == 0:
+	# 					X_array = i_data_array
+	# 				else:
+	# 					X_array = np.vstack((X_array, i_data_array))
+	# 			elif gap_manager == "empty":
+	# 				idx.append(ix)
+	# 				if len(X_array) == 0:
+	# 					X_array = np.array([0] * array_len)
+	# 				else:
+	# 					X_array = np.vstack((X_array, np.array([0] * array_len)))
+	#
+	# 			s2()
+	#
+	# 		np.save(cache_path + backtest_cache_name, X_array)
+	# 	else:
+	# 		log(f"Dataset loaded from cache.")
+	#
+	# print(X_array.shape)
+
 	array_len = time_window_size * (len(original_fields) + len(contras))
-
-	cache_path = ndf.cache_path
-	f_name = cache_path + "DATASET_FULL_CACHE_" + full_cache_name + '.npy'
-	if os.path.isfile(f_name):
-		log(f"Dataset loaded from full cache.")
-		# ha van full cache akkor onnan
-		X_array = np.load(f_name)
-		X_array = X_array[x_from:x_to]
-		s2(True, (x_to - x_from) * 1)
-	else:
-		backtest_cache_name = "x_set_" + str(x_from) + "_"+str(x_to)
-		try:
-			# ha van sub cache akkor onnan
-			X_array = np.load(cache_path + backtest_cache_name + '.npy')
-			s2(True, (x_to - x_from) * 1)
-		except:
-			# ha semmisincs akkor meg kell csinálni
-			s2(True, (x_to - x_from) * 2)
-			X_array = np.array([])
-			last_i_data_array = []
-			gap_manager = "empty"
-			idx = []
-			for ix in range(0, x_to - x_from):
-				i_data_array = ndf.get_dataset_by_index(symbol=symbol,
-													  index=ix + x_from,
-													  time_window_size=time_window_size,
-													  original_fields=original_fields,
-													  contras=contras,
-													  contra_copies_dt=contra_copies_dt)
-
-				if not np.isnan(i_data_array).any() \
-						and array_len == len(i_data_array) \
-						and np.isfinite(i_data_array).all():
-					if len(X_array) == 0:
-						X_array = i_data_array
-					else:
-						X_array = np.vstack((X_array, i_data_array))
-				elif gap_manager == "empty":
-					idx.append(ix)
-					if len(X_array) == 0:
-						X_array = np.array([0] * array_len)
-					else:
-						X_array = np.vstack((X_array, np.array([0] * array_len)))
-
-				s2()
-
-			np.save(cache_path + backtest_cache_name, X_array)
-		else:
-			log(f"Dataset loaded from cache.")
-
+	X_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="empty")
+	X_array = X_array[x_from:x_to]
 
 	gui.ailog(f"Predict y: {symbol} {project} X_set size: {len(X_array)}")
 	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, X_array)
-	idx = np.where(X_array == np.array([0] * array_len)) # az üres dataseteket keresem és cserélem 0 ra
-	np.put(y_predict_sig, idx, 0)
+	idx = np.where(X_array == np.array([0] * array_len))  # az üres dataseteket keresem és cserélem 0 ra
+	np.put(y_predict_sig, idx, 3)
 	del X_array
-	del contra_copies
+	# del contra_copies
 
 	# Confusion matrix ------------------------------------
 	ai.confusion(y_predict_sig, y_predict_strength, sig)
+
+	s2(True, (x_to - x_from))
 
 	y_predict_sig_rnd = y_predict_sig.copy()
 	y_predict_strength_rnd = y_predict_strength.copy()
@@ -4138,6 +4329,8 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		del algo_over_x
 		del algo_sig
 		# del algo_sig_filter
+
+	s("ok :)")
 
 
 def ai_build():
@@ -4289,7 +4482,8 @@ def ndf_dataset_int(symbol="", config_file="", force="FORCE", overlay_manager="r
 	else:
 		force = False
 
-	ndf.create_dataset_int(symbol, config_file, force, overlay_manager.lower())
+	# ndf.create_dataset_int(symbol, config_file, force, overlay_manager.lower())
+	ndf.create_dataset_int_stack(symbol, config_file, force, overlay_manager.lower())
 
 
 def ndf_remove(symbol=""):

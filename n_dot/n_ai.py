@@ -99,15 +99,15 @@ class n_ai:
         sig[sig == 9] = 0
         confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], predict)
         fig = plt.figure(figsize=(5, 4))
-        fig.canvas.manager.window.move(200, 250)
-        sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2], yticklabels=[0, 1, 2],
+        fig.canvas.manager.window.move(50, 250)
+        sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
                     annot=True, fmt='g', cbar=False)
         plt.xlabel('Prediction')
         plt.ylabel('Label')
         plt.title('Confusion Matrix - not filtered')
         plt.show()
 
-        startplt = 80
+        startplt = 82
         filters = np.array(range(startplt, startplt + 9))
         filters = filters / 100
         # print(filters)
@@ -115,8 +115,8 @@ class n_ai:
         self.ai_log(f" Filtering y. filters: {filters}")
         poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
 
-        fig2 = plt.figure(figsize=(8, 6))
-        fig2.canvas.manager.window.move(800, 100)
+        fig2 = plt.figure(figsize=(13, 6))
+        fig2.canvas.manager.window.move(600, 100)
         for pos, filter in enumerate(filters):
             y_filtered = []
             for xy, ys in enumerate(predict_strength):
@@ -129,6 +129,37 @@ class n_ai:
             # print(int(confusion_mtx[1][1]))
             plt.subplot(poses[pos])
 
+            sns.set(font_scale=.8)
+            sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
+                        annot=True, fmt='g', cbar=False)
+            plt.xlabel('Prediction')
+            plt.ylabel('Label')
+            plt.title('Conf. Mtrx.:' + str(filter))
+        plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
+        plt.show()
+
+        startplt = 91
+        filters = np.array(range(startplt, startplt + 9))
+        filters = filters / 100
+        # print(filters)
+
+        self.ai_log(f" Filtering y. filters: {filters}")
+        poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+
+        fig2 = plt.figure(figsize=(13, 6))
+        fig2.canvas.manager.window.move(600, 100)
+        for pos, filter in enumerate(filters):
+            y_filtered = []
+            for xy, ys in enumerate(predict_strength):
+                if ys > filter:
+                    y_filtered.append(predict[xy])
+                else:
+                    y_filtered.append(3)
+
+            confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
+            plt.subplot(poses[pos])
+
+            sns.set(font_scale=.8)
             sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
                         annot=True, fmt='g', cbar=False)
             plt.xlabel('Prediction')
@@ -295,7 +326,7 @@ class n_ai:
             
     def get_project_config(self, project):
         local_path = self.projects_path + project + "\\nDot_PRO_" + project + ".txt"
-        print(local_path)
+        # print(local_path)
         return self.get_dataset_config(local_path)
 
     def get_dataset_config(self, config_file_path):
