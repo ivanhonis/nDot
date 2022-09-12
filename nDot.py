@@ -1517,26 +1517,24 @@ class n_date_frame2:
 		else:
 			x_array = self.create_dataset_full_stack(symbol, project_name)
 
-		bug_index = []
+		# bug_index = []
 		if nan_manager == "leave":
 			pass
 		elif nan_manager == "empty" or nan_manager == "drop":
 			log(f"Detect bugs (Nan, Inf) manager:{nan_manager}")
 			s2(True, int(len(x_array) / 5000))
-			for ic, xia in enumerate(x_array):  # TODO: gyorsítsd fel wher használatával :)
-				if ic % 5000 == 0:
-					s2()
-				if not np.isnan(xia).any() \
-						and array_len == len(xia) \
-						and np.isfinite(xia).all():
-					pass
-				else:
-					bug_index.append(ic)
+			# for ic, xia in enumerate(x_array):  # TODO: gyorsítsd fel wher használatával :)
+			# 	if ic % 5000 == 0:
+			# 		s2()
+			# 	if not np.isnan(xia).any() \
+			# 			and array_len == len(xia) \
+			# 			and np.isfinite(xia).all():
+			# 		pass
+			# 	else:
+			# 		bug_index.append(ic)
 					
-			bug_index2 = get_bug_index(x_array)
-			if bug_index2 == bug_index:
-				print("új bug_index működik")
-			
+			bug_index = get_bug_index(x_array)
+
 			if nan_manager == "empty":
 				x_array[bug_index] = np.array([0] * array_len)
 			elif nan_manager == "drop":
@@ -4005,7 +4003,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 	log(f"stock size: {stock_size} USD")
 	# log(f"stop loss: {stop_loss} USD")
 
-	parallel_backtest = True
+	parallel_backtest = False
 	overrider = False
 
 
@@ -4034,7 +4032,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							 "stock_size": stock_size,
 							 "stop_loss_limit": -stock_size * (.25 / 100),
 							 "profit_take_limit": -1,  # -1 nincs bekapcsolva, amúgy nominálisan mondja usd ben
-							 "trailer_stop": .25,  #.15 = 15% ennyivel eshet vissz a aktuális profit a legmagasabb trailer profithoz képest
+							 "trailer_stop": .55,  #.15 = 15% ennyivel eshet vissz a aktuális profit a legmagasabb trailer profithoz képest
 							 "trailer_min_profit": 10, # nominal in usd
 							 "value_limit_profit_reinvest": False,
 							 "steps_limit": 60,

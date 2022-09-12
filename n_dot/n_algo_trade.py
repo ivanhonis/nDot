@@ -370,7 +370,7 @@ class n_algo_trade:
                 #     if self.price_dict['actual_ohlc4'] > self.last_ohlc4:
                 #         time.sleep(5)
 
-                if self.enter_count == 1 and y_predict_strength > .8:
+                if self.enter_count == 1 and y_predict_strength > .0:
                     decision = "BUY"
                     decision_qt = self.get_stock_qt() ## / 50
                 # elif self.enter_count == 2 and self.trailer_profit > 0 and self.steps < 10:  # and self.price_dict['actual_ohlc4'] > self.last_ohlc4:
