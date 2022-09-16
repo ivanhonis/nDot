@@ -21,7 +21,7 @@ class n_binance_trade():
         self.exchange_info = []
         self.crypto = None
         self.pai = None
-        # self.strart()
+        self.strart()
 
 
     def strart(self):
@@ -120,10 +120,67 @@ class n_binance_trade():
     def get_historical_trade(self):
         print(self.binance_client.get_historical_trades(symbol='BNBBTC'))
 
+    def fts(self, unix_datetime):
+        return str(datetime.datetime.fromtimestamp(int(unix_datetime/1000)).strftime('%Y-%m-%d %H:%M:%S %Z'))
+
+    def get_klines_mth2(self, param):
+        symbol = param["symbol"]
+        from_dt = param["from_dt"]
+        to_dt = param["to_dt"]
+        self.strart()
+        i_df = pd.DataFrame(None)
+        # egyben tölti le de ugyan úgy hibás vannak benne Gap ok,
+        # ezt itt hagyom de a multi t használom
+        # Calculate the timestamps for the binance api function
+        # untilThisDate = datetime.datetime.now()
+        # sinceThisDate = untilThisDate - datetime.timedelta(days=howLong)
+        # Execute the query from binance - timestamps must be converted to strings !
+        try:
+            klines = self.binance_client.get_historical_klines(symbol, Client.KLINE_INTERVAL_1MINUTE,
+                                                               str(from_dt), str(to_dt))
+        except Exception as e:
+            print(e)
+        else:
+
+            i_df = pd.DataFrame(klines, columns=('Date',
+                                                 'Open', 'High', 'Low', 'Close',
+                                                 'Volume',
+                                                 'Close time',
+                                                 'Quote_asset_volume',
+                                                 'Number_of_trades',
+                                                 'Taker_buy_base_asset_volume',
+                                                 'Taker_buy_quote_asset_volume',
+                                                 'Ignore'))
+
+            i_df = i_df.drop(['Close time', 'Ignore'], axis=1)
+
+
+            i_df['Date'] = i_df['Date'].astype(np.int64)
+            i_df['Date'] = i_df['Date'] / 1000
+            i_df['Date'] = i_df['Date'].astype(int)
+            i_df['t'] = i_df['Date']
+
+            i_df['Open'] = i_df['Open'].astype(float)
+            i_df['High'] = i_df['High'].astype(float)
+            i_df['Low'] = i_df['Low'].astype(float)
+            i_df['Close'] = i_df['Close'].astype(float)
+            i_df['Volume'] = i_df['Volume'].astype(float)
+
+            i_df['Quote_asset_volume'] = i_df['Quote_asset_volume'].astype(float)
+            i_df['Number_of_trades'] = i_df['Number_of_trades'].astype(float)
+            i_df['Taker_buy_base_asset_volume'] = i_df['Taker_buy_base_asset_volume'].astype(float)
+            i_df['Taker_buy_quote_asset_volume'] = i_df['Taker_buy_quote_asset_volume'].astype(float)
+            i_df['Date'] = pd.to_datetime(i_df.Date, unit='s')
+            i_df['ohlc4'] = round(((i_df['Open'] + i_df['High'] + i_df['Low'] + i_df['Close']) / 4), 8)
+
+
+        param["result"].append(i_df)
+        return i_df
 
     def get_klines_mth(self, param):
         symbol = param["symbol"]
         from_dt = param["from_dt"]
+        print(from_dt)
         self.strart()
         i_df = pd.DataFrame(None)
         klines = []
@@ -137,10 +194,14 @@ class n_binance_trade():
         try:
             klines = self.binance_client.get_historical_klines(symbol=symbol,
                                                                interval=Client.KLINE_INTERVAL_1MINUTE,
-                                                               start_str=from_dt,
+                                                               start_str=str(self.fts(from_dt)),
                                                                limit=1002)
             # print(klines)
             # self.binance_client.close_connection()
+            # if not klines:
+            if klines[0][0] != from_dt or len(klines) != 1000:
+                print(f"Binance adatletöltési hiba: len {len(klines)} kaptam: {self.fts(klines[0][0])} kértem: {self.fts(from_dt)}")
+
         except Exception as e:
             print(e)
             # self.log("Binance exception: " + symbol + " - "
@@ -150,7 +211,7 @@ class n_binance_trade():
             # self.log(str(e))
             # i_df = pd.DataFrame(None)
         else:
-            i_df = pd.DataFrame(klines, columns=('Open Time',
+            i_df = pd.DataFrame(klines, columns=('Date',
                                                  'Open',
                                                  'High',
                                                  'Low',
@@ -163,14 +224,17 @@ class n_binance_trade():
                                                  'Taker buy quote asset volume',
                                                  'Ignore'))
 
-            i_df = i_df[['Open Time',
-                         'Open',
-                         'High',
-                         'Low',
-                         'Close',
-                         'Volume']]
-            i_df = i_df.rename(columns={"Open Time": "Date"},
-                               errors="ignore")
+            if i_df.isna().sum().sum() != 0:
+                print(f" Nan bug in downloaded slice from_dt: {from_dt}")
+
+            # i_df = i_df[['Open Time',
+            #              'Open',
+            #              'High',
+            #              'Low',
+            #              'Close',
+            #              'Volume',
+            #              'Number of trades']]
+
 
             i_df['Date'] = i_df['Date'].astype(np.int64)
             i_df['Date'] = i_df['Date'] / 1000
@@ -189,12 +253,12 @@ class n_binance_trade():
         # print("-" * 80)
         # print(i_df.T)
         # print("-" * 80)
-        from_dt = param["result"].append(i_df)
+        param["result"].append(i_df)
 
         return i_df
 
 
-    def get_klines(self, symbol, from_dt, to_dt):
+    def get_klines(self, symbol, from_dt):
         self.strart()
         i_df = pd.DataFrame(None)
         klines = []
@@ -208,7 +272,7 @@ class n_binance_trade():
         try:
             klines = self.binance_client.get_historical_klines(symbol=symbol,
                                                                interval=Client.KLINE_INTERVAL_1MINUTE,
-                                                               start_str=from_dt,
+                                                               start_str=str(self.fts(from_dt)),
                                                                limit=1002)
             # print(klines)
             # self.binance_client.close_connection()
@@ -221,7 +285,7 @@ class n_binance_trade():
             # self.log(str(e))
             # i_df = pd.DataFrame(None)
         else:
-            i_df = pd.DataFrame(klines, columns=('Open Time',
+            i_df = pd.DataFrame(klines, columns=('Date',
                                                  'Open',
                                                  'High',
                                                  'Low',
@@ -234,14 +298,6 @@ class n_binance_trade():
                                                  'Taker buy quote asset volume',
                                                  'Ignore'))
 
-            i_df = i_df[['Open Time',
-                         'Open',
-                         'High',
-                         'Low',
-                         'Close',
-                         'Volume']]
-            i_df = i_df.rename(columns={"Open Time": "Date"},
-                               errors="ignore")
 
             i_df['Date'] = i_df['Date'].astype(np.int64)
             i_df['Date'] = i_df['Date'] / 1000

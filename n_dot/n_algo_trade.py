@@ -34,6 +34,7 @@ class n_algo_trade:
         self.trade_time_start = (15, 30)
         self.trade_time_stop = (21, 30)
         self.next_price_random = False
+        self.strength_filter = 0.5
         # ---------------------------------------
         self.actual_qt = 0
         self.avg_income_price = 0
@@ -96,6 +97,7 @@ class n_algo_trade:
         self.silent_investor_orig_amount = float(conf_dict["value_limit"])
         self.id = int(conf_dict["id"])
         self.enter_limit_order = conf_dict["enter_limit_order"]
+        self.strength_filter = conf_dict["strength_filter"]
 
     # def get_sig_way(self, sig):
     #
@@ -370,7 +372,7 @@ class n_algo_trade:
                 #     if self.price_dict['actual_ohlc4'] > self.last_ohlc4:
                 #         time.sleep(5)
 
-                if self.enter_count == 1 and y_predict_strength > .0:
+                if self.enter_count == 1 and y_predict_strength > self.strength_filter:
                     decision = "BUY"
                     decision_qt = self.get_stock_qt() ## / 50
                 # elif self.enter_count == 2 and self.trailer_profit > 0 and self.steps < 10:  # and self.price_dict['actual_ohlc4'] > self.last_ohlc4:
@@ -428,11 +430,11 @@ class n_algo_trade:
             return decision, decision_qt
 
         if self.strategy == 68:  # inverted startegi enter after 2
-            if self.monitor > 10:
+            if self.monitor > 13:
                 self.monitor = 0
                 self.monitor_ohlc4 = 0
 
-            if y_predict == 1 and y_predict_strength > .0:
+            if y_predict == 1 and y_predict_strength > self.strength_filter:
                 if self.monitor > 2 and (self.monitor_ohlc4 / self.actual_ohlc4) - 1 > (.28 / 100) and self.actual_qt == 0:
                     decision = "BUY"
                     decision_qt = self.get_stock_qt() ## / 50
@@ -758,7 +760,7 @@ class n_algo_trade:
             view_sig = CDSView(source=deals, filters=[BooleanFilter(sig)])
             p.text('index', 'actual_price_y_perc', text="y_predict_strength", text_font_size="8pt", text_color="#ff0000", source=deals, view=view_sig)
             p.text('index', 'actual_price_sig_way', text="y_predict_strength", text_font_size="7pt", text_color="#CDA49E", source=deals)
-            p.text('index', 'actual_price_sig', text="sig", text_font_size="7pt", text_color="#654321", source=deals)
+            p.text('index', 'actual_price_sig', text="sig", text_font_size="7pt", text_color="#550000", source=deals)
 
             # p.text('index', 'actual_price_sig_way', text="sig_way", text_font_size="7pt", text_color="#CDA49E", source=deals)
 

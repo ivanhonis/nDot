@@ -108,97 +108,97 @@ class n_ai:
         plt.title('Confusion Matrix - not filtered')
         plt.show()
 
-        filters = [.1, .15, .2, .25, .3, .35, .4, .45, .46]
+        # filters = [.1, .15, .2, .25, .3, .35, .4, .45, .46]
+        # # filters = filters / 100
+        # # print(filters)
+        #
+        # self.ai_log(f" Filtering y. filters: {filters}")
+        # poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+        #
+        # fig2 = plt.figure(figsize=(13, 6))
+        # fig2.canvas.manager.window.move(600, 100)
+        # for pos, filter in enumerate(filters):
+        #     y_filtered = []
+        #     for xy, ys in enumerate(predict_strength):
+        #         if ys > filter:
+        #             y_filtered.append(predict[xy])
+        #         else:
+        #             y_filtered.append(3)
+        #
+        #     confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
+        #     # print(int(confusion_mtx[1][1]))
+        #     plt.subplot(poses[pos])
+        #
+        #     sns.set(font_scale=.8)
+        #     sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
+        #                 annot=True, fmt='g', cbar=False)
+        #     plt.xlabel('Prediction')
+        #     plt.ylabel('Label')
+        #     plt.title('Conf. Mtrx.:' + str(filter))
+        # plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
+        # plt.show()
+
+
+        startplt = 30
+        filters = np.array(range(startplt, startplt + 9))
+        filters = filters / 100
+        # print(filters)
+
+        self.ai_log(f" Filtering y. filters: {filters}")
+        poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+
+        fig2 = plt.figure(figsize=(13, 6))
+        fig2.canvas.manager.window.move(600, 100)
+        for pos, filter in enumerate(filters):
+            y_filtered = []
+            for xy, ys in enumerate(predict_strength):
+                if ys > filter:
+                    y_filtered.append(predict[xy])
+                else:
+                    y_filtered.append(3)
+
+            confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
+            # print(int(confusion_mtx[1][1]))
+            plt.subplot(poses[pos])
+
+            sns.set(font_scale=.8)
+            sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
+                        annot=True, fmt='g', cbar=False)
+            plt.xlabel('Prediction')
+            plt.ylabel('Label')
+            plt.title('Conf. Mtrx.:' + str(filter))
+        plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
+        plt.show()
+
+        # startplt = 51
+        # filters = np.array(range(startplt, startplt + 9))
         # filters = filters / 100
-        # print(filters)
-
-        self.ai_log(f" Filtering y. filters: {filters}")
-        poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
-
-        fig2 = plt.figure(figsize=(13, 6))
-        fig2.canvas.manager.window.move(600, 100)
-        for pos, filter in enumerate(filters):
-            y_filtered = []
-            for xy, ys in enumerate(predict_strength):
-                if ys > filter:
-                    y_filtered.append(predict[xy])
-                else:
-                    y_filtered.append(3)
-
-            confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
-            # print(int(confusion_mtx[1][1]))
-            plt.subplot(poses[pos])
-
-            sns.set(font_scale=.8)
-            sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
-                        annot=True, fmt='g', cbar=False)
-            plt.xlabel('Prediction')
-            plt.ylabel('Label')
-            plt.title('Conf. Mtrx.:' + str(filter))
-        plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
-        plt.show()
-
-
-        startplt = 47
-        filters = np.array(range(startplt, startplt + 9))
-        filters = filters / 100
-        # print(filters)
-
-        self.ai_log(f" Filtering y. filters: {filters}")
-        poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
-
-        fig2 = plt.figure(figsize=(13, 6))
-        fig2.canvas.manager.window.move(600, 100)
-        for pos, filter in enumerate(filters):
-            y_filtered = []
-            for xy, ys in enumerate(predict_strength):
-                if ys > filter:
-                    y_filtered.append(predict[xy])
-                else:
-                    y_filtered.append(3)
-
-            confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
-            # print(int(confusion_mtx[1][1]))
-            plt.subplot(poses[pos])
-
-            sns.set(font_scale=.8)
-            sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
-                        annot=True, fmt='g', cbar=False)
-            plt.xlabel('Prediction')
-            plt.ylabel('Label')
-            plt.title('Conf. Mtrx.:' + str(filter))
-        plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
-        plt.show()
-
-        startplt = 91
-        filters = np.array(range(startplt, startplt + 9))
-        filters = filters / 100
-        # print(filters)
-
-        self.ai_log(f" Filtering y. filters: {filters}")
-        poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
-
-        fig2 = plt.figure(figsize=(13, 6))
-        fig2.canvas.manager.window.move(600, 100)
-        for pos, filter in enumerate(filters):
-            y_filtered = []
-            for xy, ys in enumerate(predict_strength):
-                if ys > filter:
-                    y_filtered.append(predict[xy])
-                else:
-                    y_filtered.append(3)
-
-            confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
-            plt.subplot(poses[pos])
-
-            sns.set(font_scale=.8)
-            sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
-                        annot=True, fmt='g', cbar=False)
-            plt.xlabel('Prediction')
-            plt.ylabel('Label')
-            plt.title('Conf. Mtrx.:' + str(filter))
-        plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
-        plt.show()
+        # # print(filters)
+        #
+        # self.ai_log(f" Filtering y. filters: {filters}")
+        # poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+        #
+        # fig2 = plt.figure(figsize=(13, 6))
+        # fig2.canvas.manager.window.move(600, 100)
+        # for pos, filter in enumerate(filters):
+        #     y_filtered = []
+        #     for xy, ys in enumerate(predict_strength):
+        #         if ys > filter:
+        #             y_filtered.append(predict[xy])
+        #         else:
+        #             y_filtered.append(3)
+        #
+        #     confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
+        #     plt.subplot(poses[pos])
+        #
+        #     sns.set(font_scale=.8)
+        #     sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
+        #                 annot=True, fmt='g', cbar=False)
+        #     plt.xlabel('Prediction')
+        #     plt.ylabel('Label')
+        #     plt.title('Conf. Mtrx.:' + str(filter))
+        # plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
+        # plt.show()
 
 
     def add(self, symbol, project):

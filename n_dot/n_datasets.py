@@ -96,6 +96,30 @@ class n_dataset:
         self.data['y'] = self.data['y'].reshape(-1, 1)
         self.log('  X shape: ' + str(self.data['X'].shape))
         self.log('  y shape: ' + str(self.data['y'].shape))
+        if np.isnan(self.data['X']).any():
+            self.log('  X nan - Error! Dataset not saved!')
+            return
+        else:
+            self.log('  X nan - ok')
+
+        if np.isinf(self.data['X']).any():
+            self.log('  X inf - Error! Dataset not saved!')
+            return
+        else:
+            self.log('  X inf - ok')
+
+        if np.isnan(self.data['y']).any():
+            self.log('  y nan - Error! Dataset not saved!')
+            return
+        else:
+            self.log('  y nan - ok')
+
+        if np.isinf(self.data['X']).any():
+            self.log('  y inf - Error! Dataset not saved!')
+            return
+        else:
+            self.log('  y inf - ok')
+
         y_type, y_cases = np.unique(self.data['y'],  return_counts=True)
         self.log('  y unique: ' + str(y_type) + " " + str(y_cases))
         self.log('  Historic max shape: ' + str(self.data['historic_max'].shape))

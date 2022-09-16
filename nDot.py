@@ -356,7 +356,7 @@ class gui(QWidget, object):
 			['ndf.tech.refresh.all', 'ndf_tech_refresh_all', 'ndf.tech.refresh.all', 0],
 			['ndf.tech.info', 'ndf_tech_info', 'ndf.tech.info', 0],
 			['ndf.dataset', 'ndf_dataset', 'ndf.dataset <symbol> <project> <<NOFORCE / FORCE>> <<FULL / VECTOR / RND_CHOICE>>', 1],
-			['ndf.dataset.int', 'ndf_dataset_int', 'ndf.dataset.int <symbol> <project> <<NOFORCE>>', 1],
+			['ndf.dataset.int', 'ndf_dataset_int', 'ndf.dataset.int <symbol> <project>', 1],
 			['ndf.dataset.full', 'ndf_dataset_full', 'ndf.dataset.full <symbol> <project>', 1],
 			['ndf.remove', 'ndf_remove', 'ndf.remove <symbol>', 1],
 			['ndf.remove.column', 'ndf_remove_column', 'ndf.remove.column <symbol> <column_name> <<SAVE>>', 1],
@@ -797,8 +797,9 @@ class n_date_frame2:
 	def i_df_dt_order(self, df):
 		if not str(df.index.name) == "None":
 			df.reset_index(drop=False, inplace=True)
-		log(f"Duplicates: {len(df['Date']) - len(df['Date'].drop_duplicates())}")
-		df.drop_duplicates('Date', keep='last', inplace=True)
+		if len(df['Date']) - len(df['Date'].drop_duplicates()) > 0:
+			log(f"Duplicates: {len(df['Date']) - len(df['Date'].drop_duplicates())}")
+			df.drop_duplicates('Date', keep='last', inplace=True)
 		df.sort_values(by=['Date'], inplace=True, ascending=True)
 		df.reset_index(drop=True, inplace=True)
 		return df
@@ -853,7 +854,7 @@ class n_date_frame2:
 		if symbol in nbt.crypto:
 			nddf[symbol] = pd.DataFrame(None)
 			i_now = datetime.now() - timedelta(minutes=1001)
-			i_now = i_now.strftime('%Y-%m-%d %H:%M:%S')
+			i_now = i_now.strftime('%Y-%m-%d %H:%M')
 			period = (years * 365 * 24 * 60) / 1000
 			i_datetime_series = pd.date_range(start=i_now, periods=period, freq='-1000min')
 			s2(True, len(i_datetime_series) - 1)
@@ -894,6 +895,86 @@ class n_date_frame2:
 
 			nddf[symbol] = ndf.i_df_dt_order(nddf[symbol])
 			self.set_dt_order(symbol)
+
+			# meg kell keresni a hibákat
+			a = np.array(nddf[symbol]["Date"])
+			b = np.roll(a, 1)
+			c = a - b
+			c = c[1:-1]
+			bug_index = np.where(c == np.max(c))[0]
+			print(bug_index)
+			print(nddf[symbol][bug_index])
+
+
+			if nddf[symbol].shape[0] > 0:
+				log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
+			log("Number of rows: " + str(nddf[symbol].shape[0]))
+			nddb.write(symbol)
+		else:
+			log("Symbol not found in Binance listed pairs.")
+
+	def get_date_bug_index(self, symbol):
+		a = nddf[symbol]["Date"].to_numpy(dtype=np.int64)
+		b = np.roll(a, 1)
+		c = a - b
+		c = c[1:-1]
+		c = c / 60000000000
+		bug_index = np.where(c != 1)[0]
+		return bug_index
+
+
+	def add_crypto_multi2(self, symbol, years=1):
+
+		def day_slices(years, slices_size, overlay=3):
+			a = np.array(range(0, years * 365, slices_size))
+			b = np.roll(a, 1)
+			a = a[1:]
+			b = b[1:]
+			res = []
+			for i in range(len(a)):
+				res.append([b[i], a[i] + overlay])
+			return res
+
+
+		years = int(years)
+		if symbol in nbt.crypto:
+			nddf[symbol] = pd.DataFrame(None)
+			i_now = datetime.now()
+			day_shift_arr = day_slices(years, 30)
+			result = []
+			thr = []
+			nddf[symbol] = pd.DataFrame(None)
+			log(f"Thread -  Get klines from Binance. Years: {years}, Num of threads: {len(day_shift_arr)}")
+			for dx, ds in enumerate(day_shift_arr):
+				from_dt = i_now - timedelta(days=int(ds[1]))
+
+				to_dt = i_now - timedelta(days=int(ds[0]))
+				param = {"symbol": symbol,
+						 "from_dt": from_dt,
+						 "to_dt": to_dt,
+						 "result":result}
+
+				thr.append(threading.Thread(target=nbt.get_klines_mth2, args=(param,)))
+				thr[-1].start()
+				time.sleep(5.5)
+
+			for itr in thr:
+				itr.join()
+
+			nddf[symbol] = pd.concat(result, ignore_index=True)
+
+			nddf[symbol] = ndf.i_df_dt_order(nddf[symbol])
+			self.set_dt_order(symbol)
+
+			bx = self.get_date_bug_index(symbol)
+			print("bug index", bx)
+			if len(bx) != 0:
+				log(f" Missing time slices. Resample")
+				nddf[symbol] = nddf[symbol].set_index("Date")
+				nddf[symbol] = nddf[symbol].resample('1min').asfreq()
+				nddf[symbol] = ndf.i_df_dt_order(nddf[symbol])
+				ndf.set_dt_order(symbol)
+
 
 			if nddf[symbol].shape[0] > 0:
 				log("Time frame: " + str(nddf[symbol]["Date"].min()) + " - " + str(nddf[symbol]["Date"].max()))
@@ -1607,455 +1688,454 @@ class n_date_frame2:
 		np.save(self.cache_path + "DATASET_FULL_CACHE_" + full_cache_name, X_full)
 		log(f"Cache dataset saved: DATASET_FULL_CACHE_{full_cache_name}")
 
-	def create_dataset_int_stack(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
+	def create_dataset_int_stack(self, symbol, project_name, full=False):
 
 		config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
 		file = pathlib.Path(config_file_path)
-		if file.exists():
-			gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_dataset_config(
-				config_file_path)
-			if gdc_ok:
-				sig_field = "SIG_" + dataset_config['sig_suffix']
-				field_ok_basic = ndf.is_field_exist(symbol, sig_field)
+		if not file.exists():
+			log("config file is missing:" + str(config_file_path))
+			return
 
-				if not force:
-					field_ok_basic = True  # ha force akkor nincs szükség sigre sem
+		gdc_ok, descr, dataset_config, orig_fields, contras, indexes = ai.get_dataset_config(config_file_path)
+		if not gdc_ok:
+			log("config file conversion error. (,) is missing ? :)")
+			return
 
-				field_ok_original_fields = True
-				for o_f in original_fields:
-					field_ok_original_fields = field_ok_original_fields and ndf.is_field_exist(symbol, o_f)
+		sig_field = "SIG_" + dataset_config['sig_suffix']
+		ok_sig = ndf.is_field_exist(symbol, sig_field)
 
-				field_ok_contras = True
-				for c in contras:
-					field_ok_contras = field_ok_contras and ndf.is_contra(c)
+		y_field = "y_" + dataset_config["sig_suffix"]
+		ok_y = ndf.is_field_exist(symbol, y_field)
 
-				if field_ok_basic and field_ok_original_fields and field_ok_contras:
-					time_window_size = dataset_config["time_window_size"]
-					back_shift = dataset_config["data_window_back_shift"]
-					overlay_steps = dataset_config["overlay_steps"]
-					y_field = "y_" + dataset_config["sig_suffix"]
-					if force:  # ha már van y akkor kitörli és mindenképen megcsinálja
-						ndf.remove_columns(symbol, [y_field])
-					if y_field in nddf[symbol].columns:
-						log(y_field + " already exist.")
-					else:
-						log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
-						self.sig_to_y(symbol, sig_field, y_field, overlay_steps)
+		ok_orig = True
+		for o_f in orig_fields:
+			ok_orig = ok_orig and ndf.is_field_exist(symbol, o_f)
 
-					log("Creating dataset.")
-					# image fej megcsinálása, minden image nél ugyan az
-					nd_dset = n_dataset(log)
-					nd_dset.set_symbol(symbol)
+		ok_contras = True
+		for c in contras:
+			ok_contras = ok_contras and ndf.is_contra(c)
 
-					nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int")
-					nd_dset.set_name("nDot_DATASET_" + project_name)
-					nd_dset.set_project_name(project_name)
+		if not ok_sig or not ok_orig or not ok_contras or not ok_y:
+			if not ok_sig:
+				log("Config file, basic parameter(s) is missing.")
+			if not ok_orig:
+				log("Config file, Orifinal field(s) is missing.")
+			if not ok_contras:
+				log("Config file, Contra field(s) is missing.")
+			if not ok_y:
+				log("Config file, y field(s) is missing.")
+			return
 
-					nd_dset.set_description(description)
+		# create dataset ----------------------------------------------------------------
 
-					y_names = {'0=under limit; 1=good long; 2=good short'}
-					nd_dset.add_y_names(y_names)
-					nd_dset.set_window_size(time_window_size)
-					i_indexes = {}
-					X_array_all, bug_index = ndf.get_dataset_full_stack(symbol, project_name, nan_manager="drop")
+		time_window_size = dataset_config["time_window_size"]
 
-					# print(nddf[symbol].shape)
-					# print(X_array_all.shape)
-					# print(len(bug_index))
+		log("Creating dataset.")
+		# image fej megcsinálása, minden image nél ugyan az
+		nd_dset = n_dataset(log)
+		nd_dset.set_symbol(symbol)
 
-					y_sig_all = np.array(nddf[symbol][y_field].values)
-					# print(y_sig_all.shape)
-					y_sig_all = np.delete(y_sig_all, bug_index, 0)
-					# print(y_sig_all.shape)
+		nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int")
+		nd_dset.set_name("nDot_DATASET_" + project_name)
+		nd_dset.set_project_name(project_name)
+		nd_dset.set_description(descr)
 
-					log("  Set locked part of the dataset:")
-					log("  Orig size:" + str(X_array_all.shape))
-					X_array_all = X_array_all[0:-200000]
-					y_sig_all = y_sig_all[0:-200000]
-					log("  New size:" + str(X_array_all.shape))
+		y_names = {'0=under limit; 1=good long; 2=good short'}
+		nd_dset.add_y_names(y_names)
+		nd_dset.set_window_size(time_window_size)
+		i_indexes = {}
+		X_array_all, bug_index = ndf.get_dataset_full_stack(symbol, project_name, nan_manager="drop")
+		log("  Number of deleted dataset with Nan Inf:" + str(len(bug_index)))
 
+		y_sig_all = np.array(nddf[symbol][y_field].values)
+		y_sig_all = np.delete(y_sig_all, bug_index, 0)
 
+		log("  Set locked part of the dataset:")
+		log("  Orig size:" + str(X_array_all.shape))
+		X_array_all = X_array_all[0:-200000]
+		y_sig_all = y_sig_all[0:-200000]
+		log("  Reduced size:" + str(X_array_all.shape))
 
-					for ix in range(3):
-						i_indexes[ix] = np.where(y_sig_all == ix)[0]
-						# print(i_indexes[ix].shape)
+		if not full:
+			for ix in range(3):
+				i_indexes[ix] = np.where(y_sig_all == ix)[0]
+			# print(i_indexes[ix].shape)
+			# módosítom a nullák számát --------------------------------
+			len1 = len(i_indexes[1])
+			len2 = len(i_indexes[2])
+			max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
+			# i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
+			# i_indexes[0] = i_indexes[0][0: max_elemet]
+			i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
+			s2(True, len1 + len2 + max_elemet)
+			for ix in range(3):
+				log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
 
-					# módosítom a nullák számát
-					len1 = len(i_indexes[1])
-					len2 = len(i_indexes[2])
-					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
-					# i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
-					# i_indexes[0] = i_indexes[0][0: max_elemet]
-					i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
-					s2(True, len1 + len2 + max_elemet)
-					for ix in range(3):
-						log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
-
-					X_arra = np.concatenate((X_array_all[i_indexes[0]], X_array_all[i_indexes[1]], X_array_all[i_indexes[2]]))
-					nd_dset.add_X(X_arra)
-
-					y_arra = np.concatenate((y_sig_all[i_indexes[0]], y_sig_all[i_indexes[1]], y_sig_all[i_indexes[2]]))
-					nd_dset.add_y(y_arra)
-
-					# historic max and min ---------------------------------
-
-					i_historic_max = np.array([])
-					i_historic_min = np.array([])
-					if len(original_fields) > 0:
-						for i_of in original_fields:
-							nd_dset.add_field(i_of)
-							i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
-							i_conc = np.full(time_window_size, i_conc)
-							i_historic_max = np.concatenate((i_historic_max, i_conc))
-
-							i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
-							i_conc = np.full(time_window_size, i_conc)
-							i_historic_min = np.concatenate((i_historic_min, i_conc))
-
-					for i_con in contras:
-						nd_dset.add_field(i_con)
-						contra_sep_pre = i_con.split('_')
-						con_sep = []
-						if len(contra_sep_pre) > 2:
-							con_sep.append(contra_sep_pre[0])
-							s = "_"
-							con_sep.append(s.join(contra_sep_pre[1:]))
-						else:
-							con_sep = contra_sep_pre
-
-						con_symbol = con_sep[0]
-						con_field = con_sep[1]
-						i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
-						i_conc = np.full(time_window_size, i_conc)
-						i_historic_max = np.concatenate((i_historic_max, i_conc))
-
-						i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
-						i_conc = np.full(time_window_size, i_conc)
-						i_historic_min = np.concatenate((i_historic_min, i_conc))
-					s2()
-					nd_dset.set_historic_max(i_historic_max)
-					nd_dset.set_historic_min(i_historic_min)
-					s2()
-					nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
-					s2()
-					nd_dset.save()
-					s2()
-					del nd_dset
-				else:
-					if not field_ok_basic:
-						log("Config file, basic parameter(s) is missing.")
-					if not field_ok_original_fields:
-						log("Config file, Orifinal field(s) is missing.")
-					if not field_ok_contras:
-						log("Config file, Contra field(s) is missing.")
-			else:
-				log("config file conversion error. (,) is missing ? :)")
+			X_arra = np.concatenate((X_array_all[i_indexes[0]], X_array_all[i_indexes[1]], X_array_all[i_indexes[2]]))
+			nd_dset.add_X(X_arra)
+			y_arra = np.concatenate((y_sig_all[i_indexes[0]], y_sig_all[i_indexes[1]], y_sig_all[i_indexes[2]]))
+			nd_dset.add_y(y_arra)
 
 		else:
-			log("config file is missing:" + str(config_file_path))
+			i_indexes_9 = np.where(y_sig_all == 9)[0]
+			y_sig_all = np.delete(y_sig_all, i_indexes_9, 0)
+			X_array_all = np.delete(X_array_all, i_indexes_9, 0)
+			i_indexes_10 = np.where(y_sig_all == 10)[0]
+			y_sig_all = np.delete(y_sig_all, i_indexes_10, 0)
+			X_array_all = np.delete(X_array_all, i_indexes_10, 0)
+			nd_dset.add_X(X_array_all)
+			nd_dset.add_y(y_sig_all)
 
+		# historic max and min ---------------------------------
 
-	def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
-		
-		def get_slice_index(xlen, parts, slice_no):
-			slices = np.array_split(list(np.arange(0, xlen)), parts)
-			start = slices[slice_no][0]
-			end = slices[slice_no][-1:][0]
-			end += 1
-			end = min(end, xlen)
-			return start, end
+		i_historic_max = np.array([])
+		i_historic_min = np.array([])
+		if len(orig_fields) > 0:
+			for i_of in orig_fields:
+				nd_dset.add_field(i_of)
+				i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
+				i_conc = np.full(time_window_size, i_conc)
+				i_historic_max = np.concatenate((i_historic_max, i_conc))
 
-		# def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, nd_dset, back_shift=0):
-		# def dataset_constructor(params):
-		# 	print("start")
-		# 	task = params['task']
-		# 	symbol = params['symbol']
-		# 	indexes = params['indexes']
-		# 	time_window_size = params['time_window_size']
-		# 	y = params['y']
-		# 	original_fields = params['original_fields']
-		# 	contras = params['contras']
-		# 	nd_dset = params['nd_dset']
-		# 	back_shift = params['back_shift']
-		#
-		# 	array_len = time_window_size * (len(original_fields) + len(contras))
-		#
-		# 	# contra_copies = self.get_contra_copies(contras)
-		# 	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
-		# 	asked = 0
-		# 	recieved = 0
-		# 	for nx, i_il in enumerate(indexes):
-		# 		asked += 1
-		#
-		# 		i_data_array = self.get_dataset_by_index(symbol=symbol,
-		# 												 index=i_il + back_shift,
-		# 												 # :) predict in the present, but trade in the future
-		# 												 time_window_size=time_window_size,
-		# 												 original_fields=original_fields,
-		# 												 contras=contras,
-		# 												 contra_copies=contra_copies,
-		# 												 contra_copies_dt=contra_copies_dt)
-		#
-		# 		if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
-		# 			recieved += 1
-		# 			nd_dset.add_X(i_data_array)
-		# 			nd_dset.add_y(y)
-		#
-		# 		# s2()
-		# 		if nx % 1000 == 0:
-		# 			print("task ->",task, nx)
-		# 	log("  Get dataset from ndf: (asked, recieved) by y" + str(y) + ": " + str(asked)+" , "+str(recieved))
-		# 	del contra_copies
+				i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
+				i_conc = np.full(time_window_size, i_conc)
+				i_historic_min = np.concatenate((i_historic_min, i_conc))
 
-		i_save = nddf[symbol].copy()
-		log("  Set locked part of the ndf:")
-		log("  Orig size:" + str(nddf[symbol].shape))
-		nddf[symbol] = nddf[symbol][0:-200000].copy()
-		log("  New size:" + str(nddf[symbol].shape))
-
-		config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
-		file = pathlib.Path(config_file_path)
-		if file.exists():
-			gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_dataset_config(
-				config_file_path)
-			if gdc_ok:
-				sig_field = "SIG_" + dataset_config['sig_suffix']
-				field_ok_basic = ndf.is_field_exist(symbol, sig_field)
-				
-				if not force:
-					field_ok_basic = True  # ha force akkor nincs szükség sigre sem
-				
-				field_ok_original_fields = True
-				for o_f in original_fields:
-					field_ok_original_fields = field_ok_original_fields and ndf.is_field_exist(symbol, o_f)
-				
-				field_ok_contras = True
-				for c in contras:
-					field_ok_contras = field_ok_contras and ndf.is_contra(c)
-				
-				if field_ok_basic and field_ok_original_fields and field_ok_contras:
-					time_window_size = dataset_config["time_window_size"]
-					back_shift = dataset_config["data_window_back_shift"]
-					overlay_steps = dataset_config["overlay_steps"]
-					y_field = "y_" + dataset_config["sig_suffix"]
-					if force:  # ha már van y akkor kitörli és mindenképen megcsinálja
-						ndf.remove_columns(symbol, [y_field])
-					if y_field in nddf[symbol].columns:
-						log(y_field + " already exist.")
-					else:
-						log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
-						self.sig_to_y(symbol, sig_field, y_field, overlay_steps)
-					
-					log("Creating dataset.")
-					# image fej megcsinálása, minden image nél ugyan az
-					nd_dset = n_dataset(log)
-					nd_dset.set_symbol(symbol)
-
-					nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int")
-					nd_dset.set_name("nDot_DATASET_" + project_name)
-					nd_dset.set_project_name(project_name)
-					
-					nd_dset.set_description(description)
-					
-					y_names = {'0=under limit; 1=good long; 2=good short'}
-					# itt nem négy kategóriát(cimkét tanítok hanem 100 cimkét) jel erősségét fogom tnítani
-					nd_dset.add_y_names(y_names)
-					#  beteszem a 'good' signálokat -----------------------------------------
-					first_cut = 1000
-					i_indexes = {}
-
-					for ix in range(3):
-						i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
-						# i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
-
-					# i_indexes[1] = i_indexes[1][0:2000]
-					# i_indexes[2] = i_indexes[2][0:2000]
-
-					len1 = len(i_indexes[1])
-					len2 = len(i_indexes[2])
-					max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
-					# i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
-					# i_indexes[0] = i_indexes[0][0: max_elemet]
-					i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
-					s2(True, len1 + len2 + max_elemet)
-					for ix in range(3):
-						log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
-					# i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 0].index)
-					# i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + first_cut)]
-					# i_index_good_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 1].index)
-					# i_index_good_short = i_index_good_short[(i_index_good_short > time_window_size + first_cut)]
-					# s2()
-					# i_index_bad_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 2].index)
-					# i_index_bad_long = i_index_bad_long[(i_index_bad_long > time_window_size + first_cut)]
-					# i_index_bad_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 3].index)
-					# i_index_bad_short = i_index_bad_short[(i_index_bad_short > time_window_size + first_cut)]
-					
-					# ha egy érték y (0,1,2,3) hinyzik akkor az nem számít bele a minimumna
-					# min_array = np.array([len(i_index_good_long),
-					# 					  len(i_index_good_short),
-					# 					  len(i_index_bad_long),
-					# 					  len(i_index_bad_short)])
-					# min_array = np.ma.masked_equal(min_array, 0, copy=False)
-					#
-					# max_signals = min_array.min()
-					# max_signals = int(max_signals * dataset_config['bad_overweight'])
-					#
-					# i_index_good_long = i_index_good_long[0:max_signals]
-					# i_index_good_short = i_index_good_short[0:max_signals]
-					# i_index_bad_long = i_index_bad_long[0:max_signals]
-					# i_index_bad_short = i_index_bad_short[0:max_signals]
-					
-					nd_dset.set_window_size(time_window_size)
-					used_cores = cpu_count()
-					runing_processes = np.array([None] * used_cores)
-					contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
-					prc_count = 0
-					for ix in range(6):
-						x_from = get_slice_index(i_indexes[0].shape[0], 6, ix)[0]
-						x_to = get_slice_index(i_indexes[0].shape[0], 6, ix)[1]
-						# print(ix)
-						# dataset_constructor(symbol=symbol,
-						# 					indexes=i_indexes[ix],
-						# 					time_window_size=time_window_size,
-						# 					y=ix,
-						# 					original_fields=original_fields,
-						# 					contras=contras,
-						# 					back_shift=back_shift,
-						# 					nd_dset=nd_dset)
-
-						params = {'cores': used_cores,
-								  'process': ix,
-								  'symbol': symbol,
-								  'indexes': i_indexes[0][x_from:x_to],
-								  'time_window_size': time_window_size,
-								  'y': 0,
-								  'original_fields': original_fields,
-								  'contras': contras,
-								  'back_shift': back_shift,
-								  'contra_copies_dt': contra_copies_dt,
-								  'nddf': nddf,
-								  'gap_manager': 'drop'
-								  }
-						
-						runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
-						prc_count += 1
-					
-					params = {'cores': used_cores,
-							  'process': 6,
-							  'symbol': symbol,
-							  'indexes': i_indexes[1],
-							  'time_window_size': time_window_size,
-							  'y': 1,
-							  'original_fields': original_fields,
-							  'contras': contras,
-							  'back_shift': back_shift,
-							  'contra_copies_dt': contra_copies_dt,
-							  'nddf': nddf,
-							  'gap_manager': 'drop'
-							  }
-					
-					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
-					prc_count += 1
-					
-					params = {'cores': used_cores,
-							  'process': 7,
-							  'symbol': symbol,
-							  'indexes': i_indexes[2],
-							  'time_window_size': time_window_size,
-							  'y': 2,
-							  'original_fields': original_fields,
-							  'contras': contras,
-							  'back_shift': back_shift,
-							  'contra_copies_dt': contra_copies_dt,
-							  'nddf': nddf,
-							  'gap_manager': 'drop'
-							  }
-					
-					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
-					prc_count += 1
-
-					for x, prc in enumerate(runing_processes):
-						prc.start()
-						time.sleep(.25)
-					
-					for prc in runing_processes:
-						prc.join()
-					
-					X_arra = []
-	
-
-					for ic in range(used_cores):
-						file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(ic) + '.npy'
-						X_arra.append(np.load(file_name))
-					X_arra = np.concatenate(X_arra)
-					
-					nd_dset.add_X(X_arra)
-					
-					y_arra = []
-					for ic in range(used_cores):
-						file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_y_RESULTS' + str(ic) + '.npy'
-						y_arra.append(np.load(file_name))
-					y_arra = np.concatenate(y_arra)
-					nd_dset.add_y(y_arra)
-					
-					# historic max and min ---------------------------------
-					
-					i_historic_max = np.array([])
-					i_historic_min = np.array([])
-					if len(original_fields) > 0:
-						for i_of in original_fields:
-							nd_dset.add_field(i_of)
-							i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
-							i_conc = np.full(time_window_size, i_conc)
-							i_historic_max = np.concatenate((i_historic_max, i_conc))
-							
-							i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
-							i_conc = np.full(time_window_size, i_conc)
-							i_historic_min = np.concatenate((i_historic_min, i_conc))
-					
-					for i_con in contras:
-						nd_dset.add_field(i_con)
-						contra_sep_pre = i_con.split('_')
-						con_sep = []
-						if len(contra_sep_pre) > 2:
-							con_sep.append(contra_sep_pre[0])
-							s = "_"
-							con_sep.append(s.join(contra_sep_pre[1:]))
-						else:
-							con_sep = contra_sep_pre
-						
-						con_symbol = con_sep[0]
-						con_field = con_sep[1]
-						i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
-						i_conc = np.full(time_window_size, i_conc)
-						i_historic_max = np.concatenate((i_historic_max, i_conc))
-						
-						i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
-						i_conc = np.full(time_window_size, i_conc)
-						i_historic_min = np.concatenate((i_historic_min, i_conc))
-					s2()
-					nd_dset.set_historic_max(i_historic_max)
-					nd_dset.set_historic_min(i_historic_min)
-					s2()
-					nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
-					s2()
-					nd_dset.save()
-					s2()
-					del nd_dset
-				else:
-					if not field_ok_basic:
-						log("Config file, basic parameter(s) is missing.")
-					if not field_ok_original_fields:
-						log("Config file, Orifinal field(s) is missing.")
-					if not field_ok_contras:
-						log("Config file, Contra field(s) is missing.")
+		for i_con in contras:
+			nd_dset.add_field(i_con)
+			contra_sep_pre = i_con.split('_')
+			con_sep = []
+			if len(contra_sep_pre) > 2:
+				con_sep.append(contra_sep_pre[0])
+				s = "_"
+				con_sep.append(s.join(contra_sep_pre[1:]))
 			else:
-				log("config file conversion error. (,) is missing ? :)")
-		
-		else:
-			log("config file is missing:" + str(config_file_path))
+				con_sep = contra_sep_pre
 
-		nddf[symbol] = i_save
+			con_symbol = con_sep[0]
+			con_field = con_sep[1]
+			i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
+			i_conc = np.full(time_window_size, i_conc)
+			i_historic_max = np.concatenate((i_historic_max, i_conc))
+
+			i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
+			i_conc = np.full(time_window_size, i_conc)
+			i_historic_min = np.concatenate((i_historic_min, i_conc))
+		s2()
+		nd_dset.set_historic_max(i_historic_max)
+		nd_dset.set_historic_min(i_historic_min)
+		s2()
+		nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
+		s2()
+		nd_dset.save()
+		s2()
+		del nd_dset
+
+
+	# def create_dataset_int(self, symbol, project_name, force=False, overlay_manager="rnd_choice"):
+	#
+	# 	def get_slice_index(xlen, parts, slice_no):
+	# 		slices = np.array_split(list(np.arange(0, xlen)), parts)
+	# 		start = slices[slice_no][0]
+	# 		end = slices[slice_no][-1:][0]
+	# 		end += 1
+	# 		end = min(end, xlen)
+	# 		return start, end
+	#
+	# 	# def dataset_constructor(symbol, indexes, time_window_size, y, original_fields, contras, nd_dset, back_shift=0):
+	# 	# def dataset_constructor(params):
+	# 	# 	print("start")
+	# 	# 	task = params['task']
+	# 	# 	symbol = params['symbol']
+	# 	# 	indexes = params['indexes']
+	# 	# 	time_window_size = params['time_window_size']
+	# 	# 	y = params['y']
+	# 	# 	original_fields = params['original_fields']
+	# 	# 	contras = params['contras']
+	# 	# 	nd_dset = params['nd_dset']
+	# 	# 	back_shift = params['back_shift']
+	# 	#
+	# 	# 	array_len = time_window_size * (len(original_fields) + len(contras))
+	# 	#
+	# 	# 	# contra_copies = self.get_contra_copies(contras)
+	# 	# 	contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+	# 	# 	asked = 0
+	# 	# 	recieved = 0
+	# 	# 	for nx, i_il in enumerate(indexes):
+	# 	# 		asked += 1
+	# 	#
+	# 	# 		i_data_array = self.get_dataset_by_index(symbol=symbol,
+	# 	# 												 index=i_il + back_shift,
+	# 	# 												 # :) predict in the present, but trade in the future
+	# 	# 												 time_window_size=time_window_size,
+	# 	# 												 original_fields=original_fields,
+	# 	# 												 contras=contras,
+	# 	# 												 contra_copies=contra_copies,
+	# 	# 												 contra_copies_dt=contra_copies_dt)
+	# 	#
+	# 	# 		if not np.isnan(i_data_array).any() and array_len == len(i_data_array):
+	# 	# 			recieved += 1
+	# 	# 			nd_dset.add_X(i_data_array)
+	# 	# 			nd_dset.add_y(y)
+	# 	#
+	# 	# 		# s2()
+	# 	# 		if nx % 1000 == 0:
+	# 	# 			print("task ->",task, nx)
+	# 	# 	log("  Get dataset from ndf: (asked, recieved) by y" + str(y) + ": " + str(asked)+" , "+str(recieved))
+	# 	# 	del contra_copies
+	#
+	# 	i_save = nddf[symbol].copy()
+	# 	log("  Set locked part of the ndf:")
+	# 	log("  Orig size:" + str(nddf[symbol].shape))
+	# 	nddf[symbol] = nddf[symbol][0:-200000].copy()
+	# 	log("  New size:" + str(nddf[symbol].shape))
+	#
+	# 	config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
+	# 	file = pathlib.Path(config_file_path)
+	# 	if file.exists():
+	# 		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_dataset_config(
+	# 			config_file_path)
+	# 		if gdc_ok:
+	# 			sig_field = "SIG_" + dataset_config['sig_suffix']
+	# 			field_ok_basic = ndf.is_field_exist(symbol, sig_field)
+	#
+	# 			if not force:
+	# 				field_ok_basic = True  # ha force akkor nincs szükség sigre sem
+	#
+	# 			field_ok_original_fields = True
+	# 			for o_f in original_fields:
+	# 				field_ok_original_fields = field_ok_original_fields and ndf.is_field_exist(symbol, o_f)
+	#
+	# 			field_ok_contras = True
+	# 			for c in contras:
+	# 				field_ok_contras = field_ok_contras and ndf.is_contra(c)
+	#
+	# 			if field_ok_basic and field_ok_original_fields and field_ok_contras:
+	# 				time_window_size = dataset_config["time_window_size"]
+	# 				back_shift = dataset_config["data_window_back_shift"]
+	# 				overlay_steps = dataset_config["overlay_steps"]
+	# 				y_field = "y_" + dataset_config["sig_suffix"]
+	# 				if force:  # ha már van y akkor kitörli és mindenképen megcsinálja
+	# 					ndf.remove_columns(symbol, [y_field])
+	# 				if y_field in nddf[symbol].columns:
+	# 					log(y_field + " already exist.")
+	# 				else:
+	# 					log("Creating y from SIG. with overlay manager: " + sig_field + "->" + y_field)
+	# 					self.sig_to_y(symbol, sig_field, y_field, overlay_steps)
+	#
+	# 				log("Creating dataset.")
+	# 				# image fej megcsinálása, minden image nél ugyan az
+	# 				nd_dset = n_dataset(log)
+	# 				nd_dset.set_symbol(symbol)
+	#
+	# 				nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int")
+	# 				nd_dset.set_name("nDot_DATASET_" + project_name)
+	# 				nd_dset.set_project_name(project_name)
+	#
+	# 				nd_dset.set_description(description)
+	#
+	# 				y_names = {'0=under limit; 1=good long; 2=good short'}
+	# 				# itt nem négy kategóriát(cimkét tanítok hanem 100 cimkét) jel erősségét fogom tnítani
+	# 				nd_dset.add_y_names(y_names)
+	# 				#  beteszem a 'good' signálokat -----------------------------------------
+	# 				first_cut = 1000
+	# 				i_indexes = {}
+	#
+	# 				for ix in range(3):
+	# 					i_indexes[ix] = np.array(nddf[symbol].loc[nddf[symbol][y_field] == ix].index)
+	# 					fr = np.where(nddf[symbol][y_field].to_numpy() == ix)[0]
+	# 					print(i_indexes[ix])
+	# 					print(fr)
+	# 					# i_indexes[ix] = i_indexes[ix][(i_indexes[ix] > time_window_size + first_cut)]
+	#
+	# 				# i_indexes[1] = i_indexes[1][0:2000]
+	# 				# i_indexes[2] = i_indexes[2][0:2000]
+	#
+	# 				len1 = len(i_indexes[1])
+	# 				len2 = len(i_indexes[2])
+	# 				max_elemet = max(len1, len2) * int(dataset_config['bad_overweight'])
+	# 				# i_indexes[0] = i_indexes[0][0+600000: max_elemet+600000]
+	# 				# i_indexes[0] = i_indexes[0][0: max_elemet]
+	# 				i_indexes[0] = np.random.choice(i_indexes[0], min(i_indexes[0].shape[0], max_elemet), replace=False)
+	# 				s2(True, len1 + len2 + max_elemet)
+	# 				for ix in range(3):
+	# 					log("  Number of selectd y: " + str(ix) + " " + str(len(i_indexes[ix])))
+	# 				# i_index_good_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 0].index)
+	# 				# i_index_good_long = i_index_good_long[(i_index_good_long > time_window_size + first_cut)]
+	# 				# i_index_good_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 1].index)
+	# 				# i_index_good_short = i_index_good_short[(i_index_good_short > time_window_size + first_cut)]
+	# 				# s2()
+	# 				# i_index_bad_long = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 2].index)
+	# 				# i_index_bad_long = i_index_bad_long[(i_index_bad_long > time_window_size + first_cut)]
+	# 				# i_index_bad_short = np.array(nddf[symbol].loc[nddf[symbol][y_field] == 3].index)
+	# 				# i_index_bad_short = i_index_bad_short[(i_index_bad_short > time_window_size + first_cut)]
+	#
+	# 				# ha egy érték y (0,1,2,3) hinyzik akkor az nem számít bele a minimumna
+	# 				# min_array = np.array([len(i_index_good_long),
+	# 				# 					  len(i_index_good_short),
+	# 				# 					  len(i_index_bad_long),
+	# 				# 					  len(i_index_bad_short)])
+	# 				# min_array = np.ma.masked_equal(min_array, 0, copy=False)
+	# 				#
+	# 				# max_signals = min_array.min()
+	# 				# max_signals = int(max_signals * dataset_config['bad_overweight'])
+	# 				#
+	# 				# i_index_good_long = i_index_good_long[0:max_signals]
+	# 				# i_index_good_short = i_index_good_short[0:max_signals]
+	# 				# i_index_bad_long = i_index_bad_long[0:max_signals]
+	# 				# i_index_bad_short = i_index_bad_short[0:max_signals]
+	#
+	# 				nd_dset.set_window_size(time_window_size)
+	# 				used_cores = cpu_count()
+	# 				runing_processes = np.array([None] * used_cores)
+	# 				contra_copies, contra_copies_dt = ndf.get_contra_copies(contras)
+	# 				prc_count = 0
+	# 				for ix in range(6):
+	# 					x_from = get_slice_index(i_indexes[0].shape[0], 6, ix)[0]
+	# 					x_to = get_slice_index(i_indexes[0].shape[0], 6, ix)[1]
+	# 					# print(ix)
+	# 					# dataset_constructor(symbol=symbol,
+	# 					# 					indexes=i_indexes[ix],
+	# 					# 					time_window_size=time_window_size,
+	# 					# 					y=ix,
+	# 					# 					original_fields=original_fields,
+	# 					# 					contras=contras,
+	# 					# 					back_shift=back_shift,
+	# 					# 					nd_dset=nd_dset)
+	#
+	# 					params = {'cores': used_cores,
+	# 							  'process': ix,
+	# 							  'symbol': symbol,
+	# 							  'indexes': i_indexes[0][x_from:x_to],
+	# 							  'time_window_size': time_window_size,
+	# 							  'y': 0,
+	# 							  'original_fields': original_fields,
+	# 							  'contras': contras,
+	# 							  'back_shift': back_shift,
+	# 							  'contra_copies_dt': contra_copies_dt,
+	# 							  'nddf': nddf,
+	# 							  'gap_manager': 'drop'
+	# 							  }
+	#
+	# 					runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+	# 					prc_count += 1
+	#
+	# 				params = {'cores': used_cores,
+	# 						  'process': 6,
+	# 						  'symbol': symbol,
+	# 						  'indexes': i_indexes[1],
+	# 						  'time_window_size': time_window_size,
+	# 						  'y': 1,
+	# 						  'original_fields': original_fields,
+	# 						  'contras': contras,
+	# 						  'back_shift': back_shift,
+	# 						  'contra_copies_dt': contra_copies_dt,
+	# 						  'nddf': nddf,
+	# 						  'gap_manager': 'drop'
+	# 						  }
+	#
+	# 				runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+	# 				prc_count += 1
+	#
+	# 				params = {'cores': used_cores,
+	# 						  'process': 7,
+	# 						  'symbol': symbol,
+	# 						  'indexes': i_indexes[2],
+	# 						  'time_window_size': time_window_size,
+	# 						  'y': 2,
+	# 						  'original_fields': original_fields,
+	# 						  'contras': contras,
+	# 						  'back_shift': back_shift,
+	# 						  'contra_copies_dt': contra_copies_dt,
+	# 						  'nddf': nddf,
+	# 						  'gap_manager': 'drop'
+	# 						  }
+	#
+	# 				runing_processes[prc_count] = Process(target=mp_dataset_constructor, args=(params,))
+	# 				prc_count += 1
+	#
+	# 				for x, prc in enumerate(runing_processes):
+	# 					prc.start()
+	# 					time.sleep(.25)
+	#
+	# 				for prc in runing_processes:
+	# 					prc.join()
+	#
+	# 				X_arra = []
+	#
+	#
+	# 				for ic in range(used_cores):
+	# 					file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_X_RESULTS' + str(ic) + '.npy'
+	# 					X_arra.append(np.load(file_name))
+	# 				X_arra = np.concatenate(X_arra)
+	#
+	# 				nd_dset.add_X(X_arra)
+	#
+	# 				y_arra = []
+	# 				for ic in range(used_cores):
+	# 					file_name = self.temp_path + 'DATASET_DATACONSTRUCTOR_y_RESULTS' + str(ic) + '.npy'
+	# 					y_arra.append(np.load(file_name))
+	# 				y_arra = np.concatenate(y_arra)
+	# 				nd_dset.add_y(y_arra)
+	#
+	# 				# historic max and min ---------------------------------
+	#
+	# 				i_historic_max = np.array([])
+	# 				i_historic_min = np.array([])
+	# 				if len(original_fields) > 0:
+	# 					for i_of in original_fields:
+	# 						nd_dset.add_field(i_of)
+	# 						i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
+	# 						i_conc = np.full(time_window_size, i_conc)
+	# 						i_historic_max = np.concatenate((i_historic_max, i_conc))
+	#
+	# 						i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
+	# 						i_conc = np.full(time_window_size, i_conc)
+	# 						i_historic_min = np.concatenate((i_historic_min, i_conc))
+	#
+	# 				for i_con in contras:
+	# 					nd_dset.add_field(i_con)
+	# 					contra_sep_pre = i_con.split('_')
+	# 					con_sep = []
+	# 					if len(contra_sep_pre) > 2:
+	# 						con_sep.append(contra_sep_pre[0])
+	# 						s = "_"
+	# 						con_sep.append(s.join(contra_sep_pre[1:]))
+	# 					else:
+	# 						con_sep = contra_sep_pre
+	#
+	# 					con_symbol = con_sep[0]
+	# 					con_field = con_sep[1]
+	# 					i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
+	# 					i_conc = np.full(time_window_size, i_conc)
+	# 					i_historic_max = np.concatenate((i_historic_max, i_conc))
+	#
+	# 					i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
+	# 					i_conc = np.full(time_window_size, i_conc)
+	# 					i_historic_min = np.concatenate((i_historic_min, i_conc))
+	# 				s2()
+	# 				nd_dset.set_historic_max(i_historic_max)
+	# 				nd_dset.set_historic_min(i_historic_min)
+	# 				s2()
+	# 				nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
+	# 				s2()
+	# 				nd_dset.save()
+	# 				s2()
+	# 				del nd_dset
+	# 			else:
+	# 				if not field_ok_basic:
+	# 					log("Config file, basic parameter(s) is missing.")
+	# 				if not field_ok_original_fields:
+	# 					log("Config file, Orifinal field(s) is missing.")
+	# 				if not field_ok_contras:
+	# 					log("Config file, Contra field(s) is missing.")
+	# 		else:
+	# 			log("config file conversion error. (,) is missing ? :)")
+	#
+	# 	else:
+	# 		log("config file is missing:" + str(config_file_path))
+	#
+	# 	nddf[symbol] = i_save
 	
 	def get_first_signal(self, symbol, long_field, short_field, long_field_first, short_field_first):
 		nddf[symbol][long_field_first] = ~(nddf[symbol][long_field] == nddf[symbol][long_field].shift(1)) & \
@@ -2587,7 +2667,15 @@ class n_date_frame2:
 		nddb.write(symbol, log_visible=log_vissible)
 		if i_rows - nddf[symbol].shape[0] != 0:
 			log("ndf-> tech_refresh error, row count not equal after refresh")
-		
+
+	def inf_to_max(self, symbol, field):
+		vd = np.array(nddf[symbol][field])
+		vdx = np.where(vd == np.inf)[0]
+		vd[vdx] = 0
+		vd_max = np.nanmax(vd)
+		vd[vdx] = vd_max
+		nddf[symbol][field] = vd
+
 	def add_tech(self, symbol, tech_indicator="SMA60", params=[], log_visible=True):
 		
 		log("ndf-> add_tech " + symbol + " - " + str(tech_indicator), visible=log_visible)
@@ -2596,15 +2684,28 @@ class n_date_frame2:
 			
 			if tech_indicator == "PRICE_DIFF":
 				self.case_set_back(symbol)
-				nddf[symbol]["LOW_DIFF"] = (nddf[symbol]["Low"] / nddf[symbol]["Low"].shift(1)) - 1
-				nddf[symbol]["HIGH_DIFF"] = (nddf[symbol]["High"] / nddf[symbol]["High"].shift(1)) - 1
-				nddf[symbol]["OPEN_DIFF"] = (nddf[symbol]["Open"] / nddf[symbol]["Open"].shift(1)) - 1
-				nddf[symbol]["CLOSE_DIFF"] = (nddf[symbol]["Close"] / nddf[symbol]["Close"].shift(1)) - 1
-				nddf[symbol]["OHLC4_DIFF"] = (nddf[symbol]["ohlc4"] / nddf[symbol]["ohlc4"].shift(1)) - 1
-				nddf[symbol]["VOLUME_DIFF"] = (nddf[symbol]["Volume"] / nddf[symbol]["Volume"].shift(1)) - 1
-				
-				nddf[symbol]["LOW_R_OHLC4"] = nddf[symbol]["Low"] / nddf[symbol]["ohlc4"]
-				nddf[symbol]["HIGH_R_OHLC4"] = nddf[symbol]["High"] / nddf[symbol]["ohlc4"]
+				nddf[symbol]["Low_DIFF"] = (nddf[symbol]["Low"] / nddf[symbol]["Low"].shift(1)) - 1
+				nddf[symbol]["High_DIFF"] = (nddf[symbol]["High"] / nddf[symbol]["High"].shift(1)) - 1
+				nddf[symbol]["Open_DIFF"] = (nddf[symbol]["Open"] / nddf[symbol]["Open"].shift(1)) - 1
+				nddf[symbol]["Close_DIFF"] = (nddf[symbol]["Close"] / nddf[symbol]["Close"].shift(1)) - 1
+				nddf[symbol]["ohlc4_DIFF"] = (nddf[symbol]["ohlc4"] / nddf[symbol]["ohlc4"].shift(1)) - 1
+				nddf[symbol]["Volume_DIFF"] = (nddf[symbol]["Volume"] / nddf[symbol]["Volume"].shift(1)) - 1
+
+				nddf[symbol]["Quote_asset_volume_DIFF"] = (nddf[symbol]["Quote_asset_volume"] / nddf[symbol]["Quote_asset_volume"].shift(1)) - 1
+				nddf[symbol]["Number_of_trades_DIFF"] = (nddf[symbol]["Number_of_trades"] / nddf[symbol]["Number_of_trades"].shift(1)) - 1
+				nddf[symbol]["Taker_buy_base_asset_volume_DIFF"] = (nddf[symbol]["Taker_buy_base_asset_volume"] / nddf[symbol]["Taker_buy_base_asset_volume"].shift(1)) - 1
+				nddf[symbol]["Taker_buy_quote_asset_volume_DIFF"] = (nddf[symbol]["Taker_buy_quote_asset_volume"] / nddf[symbol]["Taker_buy_quote_asset_volume"].shift(1)) - 1
+
+				# vol diff esetén előjön hogy np.inf készül amikor 0 forgaromlór 100000 ra ugrik, ezeket kicserélem
+				# a legnagyobb hisztorikus számra
+				self.inf_to_max(symbol, "Volume_DIFF")
+				self.inf_to_max(symbol, "Quote_asset_volume_DIFF")
+				self.inf_to_max(symbol, "Number_of_trades_DIFF")
+				self.inf_to_max(symbol, "Taker_buy_base_asset_volume_DIFF")
+				self.inf_to_max(symbol, "Taker_buy_quote_asset_volume_DIFF")
+
+				nddf[symbol]["Low_R_OHLC4"] = nddf[symbol]["Low"] / nddf[symbol]["ohlc4"]
+				nddf[symbol]["High_R_OHLC4"] = nddf[symbol]["High"] / nddf[symbol]["ohlc4"]
 				
 				ndf.set_dt_order(symbol)
 				nddb.write(symbol)
@@ -2723,18 +2824,17 @@ class n_date_frame2:
 				nddb.write(symbol)
 
 			elif tech_indicator == "MA_X":
-				nddf[symbol].ta.sma(length=5, append=True)
-				nddf[symbol].ta.sma(length=8, append=True)
-				nddf[symbol].ta.sma(length=13, append=True)
-				nddf[symbol].ta.sma(length=26, append=True)
-				nddf[symbol].ta.sma(length=52, append=True)
+				nddf[symbol].ta.sma(close=nddf[symbol].ta.ohlc4(), length=5, append=True)
+				nddf[symbol].ta.sma(close=nddf[symbol].ta.ohlc4(), length=8, append=True)
+				nddf[symbol].ta.sma(close=nddf[symbol].ta.ohlc4(), length=13, append=True)
+				nddf[symbol].ta.sma(close=nddf[symbol].ta.ohlc4(), length=26, append=True)
+				nddf[symbol].ta.sma(close=nddf[symbol].ta.ohlc4(), length=52, append=True)
 
-
-				nddf[symbol].ta.ema(length=5, append=True)
-				nddf[symbol].ta.ema(length=8, append=True)
-				nddf[symbol].ta.ema(length=13, append=True)
-				nddf[symbol].ta.ema(length=26, append=True)
-				nddf[symbol].ta.ema(length=52, append=True)
+				nddf[symbol].ta.ema(close=nddf[symbol].ta.ohlc4(), length=5, append=True)
+				nddf[symbol].ta.ema(close=nddf[symbol].ta.ohlc4(), length=8, append=True)
+				nddf[symbol].ta.ema(close=nddf[symbol].ta.ohlc4(), length=13, append=True)
+				nddf[symbol].ta.ema(close=nddf[symbol].ta.ohlc4(), length=26, append=True)
+				nddf[symbol].ta.ema(close=nddf[symbol].ta.ohlc4(), length=52, append=True)
 
 				nddf[symbol]["SMA_5_DIFF"] = (nddf[symbol]["SMA_5"] / nddf[symbol]["SMA_5"].shift(1)) - 1
 				nddf[symbol]["SMA_8_DIFF"] = (nddf[symbol]["SMA_8"] / nddf[symbol]["SMA_8"].shift(1)) - 1
@@ -3155,6 +3255,18 @@ class n_date_frame2:
 					file_name = self.temp_path + 'P10INT_MP_RESULT' + str(ic) + '.npy'
 					res_arra.append(np.load(file_name))
 				afr = np.concatenate(res_arra)
+
+				## megszüntetem a GAPOKAT amelyek a szétszeletelés miatt keletkeznek
+				afr_index = np.where(afr[:-(time_frame + 1)] == 9)[0]
+
+				low_g = np.array(nddf[symbol]["Low"])
+				high_g = np.array(nddf[symbol]["High"])
+				for g in afr_index:
+					low_np = low_g[g: g + time_frame]
+					high_np = high_g[g: g + time_frame]
+					pr = mp_tech.prob_profit(low_np, high_np, price_slices, profit_limit, prob_limit)
+					afr[g] = pr
+
 				# print(len(afr), nddf[symbol].shape[0])
 
 				log("Result: ")
@@ -3162,6 +3274,7 @@ class n_date_frame2:
 				log("  1 = Long over limit: " + str(np.count_nonzero(afr == 1)))
 				log("  2 = Shor over limit: " + str(np.count_nonzero(afr == 2)))
 				log("  9 = GAP: " + str(np.count_nonzero(afr == 9)))
+				log("  10 = dataset contains nan: " + str(np.count_nonzero(afr == 11)))
 
 				nddf[symbol]["SIG_P10INT"] = afr
 				nddf[symbol]['SIG_P10INT'] = nddf[symbol]['SIG_P10INT'].astype(int)
@@ -3656,19 +3769,13 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-	symbol = "BRCUSDT"
+
+	symbol = "BTCUSDT"
 	project = "BTCUSDT_P10INT"
-	x_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="leave")
-	print(x_array.shape)
-	print(bug_index)
 
-	x_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="empty")
-	print(x_array.shape)
-	print(bug_index)
+	a = nddf[symbol]["Open"].to_numpy()
+	print(np.where(a == np.NaN)[0])
 
-	x_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="drop")
-	print(x_array.shape)
-	print(bug_index)
 
 
 def do2(symbol="", p2="", p3=""):
@@ -3942,17 +4049,28 @@ def ai_download(project_name, rename=""):
 def ai_confusion(symbol, project):
 
 	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
-	cX_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="empty")
+	cX_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="drop")
+	y_field = "y_" + dataset_config["sig_suffix"]
+	y_np = np.array(nddf[symbol][y_field].values)
+	y_np = np.delete(y_np, bug_index, 0)
+
+	i_indexes_9 = np.where(y_np == 9)[0]
+	y_np = np.delete(y_np, i_indexes_9, 0)
+	cX_array = np.delete(cX_array, i_indexes_9, 0)
+	i_indexes_10 = np.where(y_np == 10)[0]
+	y_np = np.delete(y_np, i_indexes_10, 0)
+	cX_array = np.delete(cX_array, i_indexes_10, 0)
+
 	ai.build()
 	log(f" Predicting y, full dataset: {nddf[symbol].shape[0]}")
 	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, cX_array)
-	y_filed = "y_" + dataset_config['sig_suffix']
-	y_np = np.array(nddf[symbol][y_filed])
-	y_np[bug_index] = 3
 
 	ai.confusion(y_predict_sig, y_predict_strength, y_np)
 
 def ai_backtest(symbol, run_time_window, project, start_position=0):
+	if int(start_position) + int(run_time_window) > nddf[symbol].shape[0]:
+		log(" Time window out of range.")
+		return
 	def summary(obj, run_time_window):
 		log("  ")
 		log(f"{obj.name}")
@@ -4030,17 +4148,18 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 							 "id": 1,
 							 "value_limit": value_limit,
 							 "stock_size": stock_size,
-							 "stop_loss_limit": -stock_size * (.25 / 100),
+							 "stop_loss_limit": -stock_size * (.15 / 100),
 							 "profit_take_limit": -1,  # -1 nincs bekapcsolva, amúgy nominálisan mondja usd ben
-							 "trailer_stop": .55,  #.15 = 15% ennyivel eshet vissz a aktuális profit a legmagasabb trailer profithoz képest
+							 "trailer_stop": .35,  #.15 = 15% ennyivel eshet vissz a aktuális profit a legmagasabb trailer profithoz képest
 							 "trailer_min_profit": 10, # nominal in usd
 							 "value_limit_profit_reinvest": False,
-							 "steps_limit": 60,
+							 "steps_limit": 25,
 							 "strategy": 68,
 							 "trade_time_start": (0, 1),
 							 "trade_time_stop": (23, 59),
 							 "next_price_random": True,
-							 "enter_limit_order": False  # limit = actual_ohlc4
+							 "enter_limit_order": False, # limit = actual_ohlc4
+					  		 "strength_filter":0
 							 })
 
 	if parallel_backtest:
@@ -4302,6 +4421,9 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 			# algo_sig_filter.transaction(sig[ix], mod_y_pedict_sig, mod_y_predict_strength, price_dict, pre_date[ix])
 		s2()
 
+		if ix % 25000 == 0 and ix != 0:
+			summary(algo_main, ix)
+
 	if parallel_backtest:
 		summary(algo_sig, run_time_window)
 		# summary(algo_rnd, run_time_window)
@@ -4324,7 +4446,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		# algo_rnd.show_history()
 		algo_over_x.show_history()
 		# algo_sig_filter.show_history()
-	algo_main.show_history()
+	# algo_main.show_history()
 
 	# algo_ai_override.history.to_excel('algo_ai_override.xlsx', engine='xlsxwriter')
 	# algo_ai_rnd.history.to_excel('algo_ai_rnd.xlsx', engine='xlsxwriter')
@@ -4351,7 +4473,7 @@ def ndf_add(symbol="", years=1):
 	ndf.add(symbol, years)
 
 def ndf_add_crypto(symbol="", years=1):
-	ndf.add_crypto_multi(symbol, years)
+	ndf.add_crypto_multi2(symbol, years)
 
 def ndf_tech(symbol, tech_indicator, params=[]):
 	ndf.add_tech(symbol, tech_indicator, params)
@@ -4482,14 +4604,12 @@ def ndf_dataset_full(symbol="", project=""):
 	ndf.create_dataset_full_stack(symbol, project)
 
 
-def ndf_dataset_int(symbol="", config_file="", force="FORCE", overlay_manager="rnd_choice"):
-	if force.lower() == "force":
-		force = True
+def ndf_dataset_int(symbol="", config_file="", full="NOFULL"):
+	if full == "FULL":
+		ifull = True
 	else:
-		force = False
-
-	# ndf.create_dataset_int(symbol, config_file, force, overlay_manager.lower())
-	ndf.create_dataset_int_stack(symbol, config_file, force, overlay_manager.lower())
+		ifull = False
+	ndf.create_dataset_int_stack(symbol, config_file, ifull)
 
 
 def ndf_remove(symbol=""):

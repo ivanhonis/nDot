@@ -918,36 +918,36 @@ class n_chart:
         p.line('index', 'SMA_8', color=self.orange, legend_label="SMA_8", line_width=2, source=stock)
         p.line('index', 'SMA_13', color=self.red, legend_label="SMA_13", line_width=3, source=stock)
 
-        df['SIG_SMA5813_LONG_ALL_FIRST'] = df['SIG_SMA5813'] == 0
-        sig = tuple(df['SIG_SMA5813_LONG_ALL_FIRST'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
-
-        df['SIG_SMA5813_SHORT_ALL_FIRST'] = df['SIG_SMA5813'] == 1
-        sig = tuple(df['SIG_SMA5813_SHORT_ALL_FIRST'])
-        view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-        p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
-
-        if "y_SMA5813" in df.columns:
-            df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_SMA5813'] == 0
-            sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
-            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-            p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.green, size=15, source=stock, view=view_sig)
-    
-            df['SIG_QFY_SMA5813_GOOD_SHORT'] = df['y_SMA5813'] == 1
-            sig = tuple(df['SIG_QFY_SMA5813_GOOD_SHORT'])
-            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-            p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.red, size=15, source=stock, view=view_sig)
-    
-            df['SIG_QFY_SMA5813_BAD_LONG'] = df['y_SMA5813'] == 2
-            sig = tuple(df['SIG_QFY_SMA5813_BAD_LONG'])
-            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-            p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
-    
-            df['SIG_QFY_SMA5813_BAD_SHORT'] = df['y_SMA5813'] == 3
-            sig = tuple(df['SIG_QFY_SMA5813_BAD_SHORT'])
-            view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
-            p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
+        # df['SIG_SMA5813_LONG_ALL_FIRST'] = df['SIG_SMA5813'] == 0
+        # sig = tuple(df['SIG_SMA5813_LONG_ALL_FIRST'])
+        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        # p.circle('index', 'ohlc4', color=self.green, size=5, source=stock, view=view_sig)
+        #
+        # df['SIG_SMA5813_SHORT_ALL_FIRST'] = df['SIG_SMA5813'] == 1
+        # sig = tuple(df['SIG_SMA5813_SHORT_ALL_FIRST'])
+        # view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        # p.circle('index', 'ohlc4', color=self.red, size=5, source=stock, view=view_sig)
+        #
+        # if "y_SMA5813" in df.columns:
+        #     df['SIG_QFY_BREAKOUT_GOOD_LONG'] = df['y_SMA5813'] == 0
+        #     sig = tuple(df['SIG_QFY_BREAKOUT_GOOD_LONG'])
+        #     view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        #     p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.green, size=15, source=stock, view=view_sig)
+        #
+        #     df['SIG_QFY_SMA5813_GOOD_SHORT'] = df['y_SMA5813'] == 1
+        #     sig = tuple(df['SIG_QFY_SMA5813_GOOD_SHORT'])
+        #     view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        #     p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.red, size=15, source=stock, view=view_sig)
+        #
+        #     df['SIG_QFY_SMA5813_BAD_LONG'] = df['y_SMA5813'] == 2
+        #     sig = tuple(df['SIG_QFY_SMA5813_BAD_LONG'])
+        #     view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        #     p.triangle('index', 'ohlc4_up', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
+        #
+        #     df['SIG_QFY_SMA5813_BAD_SHORT'] = df['y_SMA5813'] == 3
+        #     sig = tuple(df['SIG_QFY_SMA5813_BAD_SHORT'])
+        #     view_sig = CDSView(source=stock, filters=[BooleanFilter(sig)])
+        #     p.inverted_triangle('index', 'ohlc4_down', line_width=0, fill_color=self.gray2, size=15, source=stock, view=view_sig)
 
         p.legend.visible = False
 
