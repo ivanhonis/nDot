@@ -68,10 +68,18 @@ class n_algo_trade:
         self.y_predict = 0
         self.h_actual_realised_pnl = 0
         self.turnover = 0
+        self.history_on = False
+        self.ddown = 1000000000
         # decision helper ---------------------------------------
         self.enter_count = 1
         self.monitor_ohlc4 = 0
         self.monitor = 0
+        self.ohlc4_stack = []
+        self.ohlc4_stack_size = 15
+        self.monitor_window_size = 5
+        self.monitor_profit = -0.25
+        self.monitor_std = 20
+
         # silent investor -------------------------------
         self.silent_investor_orig_amount = 0
         self.silent_investor_actual_amount = 0
@@ -98,6 +106,9 @@ class n_algo_trade:
         self.id = int(conf_dict["id"])
         self.enter_limit_order = conf_dict["enter_limit_order"]
         self.strength_filter = conf_dict["strength_filter"]
+        self.monitor_window_size = conf_dict["monitor_window_size"]
+        self.monitor_profit = conf_dict["monitor_profit"]
+        self.monitor_std = conf_dict["monitor_std"]
 
     # def get_sig_way(self, sig):
     #
@@ -336,13 +347,33 @@ class n_algo_trade:
         else:
             return self.price_dict['actual_ohlc4']
 
-    def transaction(self, sig, y_predict, y_predict_strength, price_dict, date_time):
+    def slice_nom_ret(self, array, len_limit):
+        if len(array) == len_limit:
+            a = np.array(array)
+            b = np.roll(a, 1)
+            last = a[-1]
+            first = a[0]
+
+            a = a[1:]
+            b = b[1:]
+            ab_diff = a - b
+
+            nom_ret = ((last / first) - 1) * 100
+            std = np.std(ab_diff)
+            return nom_ret, std
+        else:
+            return 0, 0
+
+    def transaction(self, sig, y_predict, y_predict_strength, price_dict, date_time, pos=0):
         # self.sig_way = self.get_sig_way(y_predict)
         self.sig = sig
         self.y_predict = y_predict
         self.price_dict = price_dict.copy()
         self.y_predict_strength = y_predict_strength
         self.actual_ohlc4 = self.price_dict['actual_ohlc4']
+        self.ohlc4_stack.append(self.actual_ohlc4)
+        self.ohlc4_stack = self.ohlc4_stack[-self.ohlc4_stack_size:]
+
         self.actual_date_time = date_time
         decision1, qt1 = self.decision(sig=sig, y_predict=y_predict,
                                        y_predict_strength=y_predict_strength,
@@ -385,42 +416,7 @@ class n_algo_trade:
                     decision = "None"
                     decision_qt = 0
                 # print(decision_qt)
-            elif y_predict == 2 and y_predict_strength > .8:
-                decision = "SELL"
-                decision_qt = 0
-            else:
-                decision = "NONE"
-                decision_qt = 0
-            self.last_ohlc4 = self.price_dict['actual_ohlc4']
-            return decision, decision_qt
-
-        if self.strategy == 67:  # signal drived
-            # if self.steps == 12 and self.act_profit <= 0:
-            #     decision = "STOP"
-            #     decision_qt = 0
-            #     return decision, decision_qt
-
-            if y_predict == 1:  # and 1.2 >= y_last_mean >= 0:  # and price_dict["actual_macdh"] > 0:
-
-                # if self.enter_count > 1 and self.name == "BTCUSDT" + " Ai decisions drived":
-                #     print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
-                #     if self.price_dict['actual_ohlc4'] > self.last_ohlc4:
-                #         time.sleep(5)
-
-                if self.enter_count == 1 and y_predict_strength > .965:
-                    decision = "BUY"
-                    decision_qt = self.get_stock_qt() ## / 50
-                # elif self.enter_count == 2 and self.trailer_profit > 0 and self.steps < 10:  # and self.price_dict['actual_ohlc4'] > self.last_ohlc4:
-                #     decision = "BUY"
-                #     decision_qt = (self.get_stock_qt() / 50) * 49
-                #     if self.id == 1:
-                #         print("----------------")
-                #         print(self.enter_count, self.price_dict['actual_ohlc4'], self.last_ohlc4, date_time)
-                else:
-                    decision = "None"
-                    decision_qt = 0
-                # print(decision_qt)
-            elif y_predict == 2 and y_predict_strength > .8:
+            elif y_predict == 2 and y_predict_strength > self.strength_filter:
                 decision = "SELL"
                 decision_qt = 0
             else:
@@ -435,7 +431,7 @@ class n_algo_trade:
                 self.monitor_ohlc4 = 0
 
             if y_predict == 1 and y_predict_strength > self.strength_filter:
-                if self.monitor > 2 and (self.monitor_ohlc4 / self.actual_ohlc4) - 1 > (.28 / 100) and self.actual_qt == 0:
+                if self.monitor > 2 and (self.monitor_ohlc4 / self.actual_ohlc4) - 1 > (.2 / 100) and self.actual_qt == 0:
                     decision = "BUY"
                     decision_qt = self.get_stock_qt() ## / 50
                 else:
@@ -454,101 +450,127 @@ class n_algo_trade:
             self.last_ohlc4 = self.price_dict['actual_ohlc4']
             return decision, decision_qt
 
+        if self.strategy == 69:  # inverted startegi enter after 2
+            nom_ret, std = self.slice_nom_ret(self.ohlc4_stack, self.ohlc4_stack_size)
+            if nom_ret <= self.monitor_profit and std < self.monitor_std and self.monitor == 0:
+                self.monitor = 1
+            if self.monitor > self.monitor_window_size:
+                self.monitor = 0
 
+            # if self.monitor > 0 and:
+            #     print(self.monitor, y_predict, y_predict_strength, self.actual_qt)
 
-        elif self.strategy == 1:  # signal drived
-            if sig == 0 and y_predict_strength > .9:
+            if y_predict == 1 and y_predict_strength > self.strength_filter and \
+                    self.monitor > 0 and self.actual_qt == 0:
+            # if y_predict == 1 and y_predict_strength > self.strength_filter and self.actual_qt == 0:
+            # if self.monitor > 0 and self.actual_qt == 0:
+            #     print("Trade")
                 decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif sig == 1 and y_predict_strength > .9:
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
+                decision_qt = self.get_stock_qt() ## / 50
             else:
                 decision = "NONE"
                 decision_qt = 0
+            if self.monitor > 0:
+                self.monitor += 1
+            self.last_ohlc4 = self.price_dict['actual_ohlc4']
             return decision, decision_qt
 
 
-        elif self.strategy == 2:  # ai decision if agree
-            if sig == 0 and y_predict == 0 and y_predict_strength > .95:
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif sig == 1 and y_predict == 1 and y_predict_strength > .95:
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
-            else:
-                decision = "NONE"
-                decision_qt = 0
-            return decision, decision_qt
 
-        elif self.strategy == 21:  # ai decision override
-            if y_predict == 0:
-                self.stock_size = self.stock_size_orig
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif y_predict == 1:
-                self.stock_size = self.stock_size_orig
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
-            else:
-                self.stock_size = 0
-                decision = "NONE"
-                decision_qt = 0
-            return decision, decision_qt
 
-        elif self.strategy == 22:  # ai decision override
-            if y_predict == 0:
-                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif y_predict == 1:
-                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
-            else:
-                self.stock_size = 0
-                decision = "NONE"
-                decision_qt = 0
-            # print(y_predict, decision, decision_qt)
-            return decision, decision_qt
-        
-        elif self.strategy == 23:  # ai decision override
-            if y_predict == 0 and y_predict_strength > .95:
-                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif y_predict == 1 and y_predict_strength > .95:
-                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
-            else:
-                self.stock_size = 0
-                decision = "NONE"
-                decision_qt = 0
-            # print(y_predict, decision, decision_qt)
-            return decision, decision_qt
-
-        elif self.strategy == 3:  # ai limitter
-
-            if y_predict == sig:
-                self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
-            else:
-                self.stock_size = self.stock_size_orig * .33
-            if sig == 0:
-                decision = "BUY"
-                decision_qt = self.get_stock_qt()
-            elif sig == 1:
-                decision = "SELL"
-                decision_qt = self.get_stock_qt()
-            else:
-                decision = "NONE"
-                decision_qt = 0
-            return decision, decision_qt
-
-        else:
-            decision = "NONE"
-            decision_qt = 0
-            return decision, decision_qt
+        # elif self.strategy == 1:  # signal drived
+        #     if sig == 0 and y_predict_strength > .9:
+        #         decision = "BUY"
+        #         decision_qt = self.get_stock_qt()
+        #     elif sig == 1 and y_predict_strength > .9:
+        #         decision = "SELL"
+        #         decision_qt = self.get_stock_qt()
+        #     else:
+        #         decision = "NONE"
+        #         decision_qt = 0
+        #     return decision, decision_qt
+        #
+        #
+        # elif self.strategy == 2:  # ai decision if agree
+        #     if sig == 0 and y_predict == 0 and y_predict_strength > .95:
+        #         decision = "BUY"
+        #         decision_qt = self.get_stock_qt()
+        #     elif sig == 1 and y_predict == 1 and y_predict_strength > .95:
+        #         decision = "SELL"
+        #         decision_qt = self.get_stock_qt()
+        #     else:
+        #         decision = "NONE"
+        #         decision_qt = 0
+        #     return decision, decision_qt
+        #
+        # elif self.strategy == 21:  # ai decision override
+        #     if y_predict == 0:
+        #         self.stock_size = self.stock_size_orig
+        #         decision = "BUY"
+        #         decision_qt = self.get_stock_qt()
+        #     elif y_predict == 1:
+        #         self.stock_size = self.stock_size_orig
+        #         decision = "SELL"
+        #         decision_qt = self.get_stock_qt()
+        #     else:
+        #         self.stock_size = 0
+        #         decision = "NONE"
+        #         decision_qt = 0
+        #     return decision, decision_qt
+        #
+        # elif self.strategy == 22:  # ai decision override
+        #     if y_predict == 0:
+        #         self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+        #         decision = "BUY"
+        #         decision_qt = self.get_stock_qt()
+        #     elif y_predict == 1:
+        #         self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+        #         decision = "SELL"
+        #         decision_qt = self.get_stock_qt()
+        #     else:
+        #         self.stock_size = 0
+        #         decision = "NONE"
+        #         decision_qt = 0
+        #     # print(y_predict, decision, decision_qt)
+        #     return decision, decision_qt
+        #
+        # elif self.strategy == 23:  # ai decision override
+        #     if y_predict == 0 and y_predict_strength > .95:
+        #         self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+        #         decision = "BUY"
+        #         decision_qt = self.get_stock_qt()
+        #     elif y_predict == 1 and y_predict_strength > .95:
+        #         self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+        #         decision = "SELL"
+        #         decision_qt = self.get_stock_qt()
+        #     else:
+        #         self.stock_size = 0
+        #         decision = "NONE"
+        #         decision_qt = 0
+        #     # print(y_predict, decision, decision_qt)
+        #     return decision, decision_qt
+        #
+        # elif self.strategy == 3:  # ai limitter
+        #
+        #     if y_predict == sig:
+        #         self.stock_size = self.stock_size_orig * (1 + y_predict_strength)
+        #     else:
+        #         self.stock_size = self.stock_size_orig * .33
+        #     if sig == 0:
+        #         decision = "BUY"
+        #         decision_qt = self.get_stock_qt()
+        #     elif sig == 1:
+        #         decision = "SELL"
+        #         decision_qt = self.get_stock_qt()
+        #     else:
+        #         decision = "NONE"
+        #         decision_qt = 0
+        #     return decision, decision_qt
+        #
+        # else:
+        #     decision = "NONE"
+        #     decision_qt = 0
+        #     return decision, decision_qt
 
     def limit(self, decision, decision_qt):
         # beszerzési értékhez képest még belefér az aktuális vétel?
@@ -625,55 +647,61 @@ class n_algo_trade:
         self.add_history()
 
     def add_history(self):
-        if self.silent_investor_qt == 0:
-            # ha még nics semmije akkor ohc4en megkapja amennyiséget
-            self.silent_investor_qt = round(self.silent_investor_actual_amount / self.actual_ohlc4, 8)
-            self.silent_investor_profit = 0
-        else:
-            # ha már van akkor kiszámolom az értékét és a profitját
-            self.silent_investor_actual_amount = self.silent_investor_qt * self.actual_ohlc4
-            self.silent_investor_profit = self.silent_investor_actual_amount - self.silent_investor_orig_amount
 
-        add = {"steps": self.steps,
-               "actual_qt": self.actual_qt,
-               "avg_income_price": self.avg_income_price_h,
-               "income_value": self.income_value,
-               "actual_price": self.actual_ohlc4,
-               "next_low_price": self.price_dict['next_low'],
-               "next_high_price": self.price_dict['next_high'],
-               "actual_date_time": self.actual_date_time,
-               "trailer_profit": self.trailer_profit,
-               "realised_profit": self.realised_profit,
-               "act_profit": self.act_profit,
-               "value_limit_actual": self.value_limit_actual,
-               "actual_value": self.actual_value,
-               "buy": self.h_buy,
-               "sell": self.h_sell,
-               "stop": self.h_stop,
-               "stop_type": self.h_stop_type,
-               "stock_size": self.stock_size,
-               "y_predict_strength": self.y_predict_strength,
-               "h_actual_realised_pnl": self.h_actual_realised_pnl,
-               "h_stop_price": self.h_stop_price,
-               "y_predict": self.y_predict,
-               "sig_way": self.sig_way,
-               "sig": self.sig,
-               "silent_investor_profit": self.silent_investor_profit
-               }
+        if self.history_on:
+            if self.silent_investor_qt == 0:
+                # ha még nics semmije akkor ohc4en megkapja amennyiséget
+                self.silent_investor_qt = round(self.silent_investor_actual_amount / self.actual_ohlc4, 8)
+                self.silent_investor_profit = 0
+            else:
+                # ha már van akkor kiszámolom az értékét és a profitját
+                self.silent_investor_actual_amount = self.silent_investor_qt * self.actual_ohlc4
+                self.silent_investor_profit = self.silent_investor_actual_amount - self.silent_investor_orig_amount
 
-        x = pd.DataFrame.from_dict(add, orient='index').T
-        self.history = pd.concat([self.history, x])
-        self.history['buy'] = self.history['buy'].astype('bool')
-        self.history['sell'] = self.history['sell'].astype('bool')
-        self.history['stop'] = self.history['stop'].astype('bool')
+            add = {"steps": self.steps,
+                   "actual_qt": self.actual_qt,
+                   "avg_income_price": self.avg_income_price_h,
+                   "income_value": self.income_value,
+                   "actual_price": self.actual_ohlc4,
+                   "next_low_price": self.price_dict['next_low'],
+                   "next_high_price": self.price_dict['next_high'],
+                   "actual_date_time": self.actual_date_time,
+                   "trailer_profit": self.trailer_profit,
+                   "realised_profit": self.realised_profit,
+                   "act_profit": self.act_profit,
+                   "value_limit_actual": self.value_limit_actual,
+                   "actual_value": self.actual_value,
+                   "buy": self.h_buy,
+                   "sell": self.h_sell,
+                   "stop": self.h_stop,
+                   "stop_type": self.h_stop_type,
+                   "stock_size": self.stock_size,
+                   "y_predict_strength": self.y_predict_strength,
+                   "h_actual_realised_pnl": self.h_actual_realised_pnl,
+                   "h_stop_price": self.h_stop_price,
+                   "y_predict": self.y_predict,
+                   "sig_way": self.sig_way,
+                   "sig": self.sig,
+                   "silent_investor_profit": self.silent_investor_profit
+                   }
+
+            x = pd.DataFrame.from_dict(add, orient='index').T
+            self.history = pd.concat([self.history, x])
+            self.history['buy'] = self.history['buy'].astype('bool')
+            self.history['sell'] = self.history['sell'].astype('bool')
+            self.history['stop'] = self.history['stop'].astype('bool')
+
         # print(self.history)
         # time.sleep(2)
         #vissza állítom
         self.h_buy = False
         self.h_sell = False
         self.h_stop = False
+        self.ddown = min([self.ddown, self.realised_profit, self.trailer_profit])
 
     def show_history(self, last_n=10000000):
+        if not self.history_on:
+            return
         output_file("bokeh_html/" + self.name + "_algo_history.html")
         hdf = self.history.copy()
         hdf = hdf.reset_index(drop=True)

@@ -9,7 +9,7 @@ class n_dataset:
 
     def __init__(self, log):
         self.log = log
-        self.gdrive_path = "X:/Apa/cloud/GoogleDrive/Saját meghajtó/nDot_Colabs/"
+        self.gdrive_path = "X:/Apa/cloud/GoogleDriveSync/nDot_Colabs/"
         self.project_path = ""
         self.fields_dict = {}
         self.data = {

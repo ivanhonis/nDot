@@ -95,9 +95,9 @@ background: #ff9100;
   <widget class="QLabel" name="Command_Hint">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>115</x>
      <y>47</y>
-     <width>536</width>
+     <width>575</width>
      <height>25</height>
     </rect>
    </property>
@@ -112,12 +112,12 @@ background: #ff9100;
     <string notr="true">background-color: #ffffff;
 border-top-left-radius: 0px;
 border-top-right-radius: 0px;
-border-bottom-right-radius: 0px;
-border-bottom-left-radius: 15px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
 padding-left: 10px;
 color: #888888;
-border-bottom: 1px solid #000000;
-border-left: 1px solid #000000;
+border-bottom: 1px solid #888888;
+border-left: 1px solid #888888;
 </string>
    </property>
    <property name="text">
@@ -127,29 +127,29 @@ border-left: 1px solid #000000;
   <widget class="QLineEdit" name="Command_Line">
    <property name="geometry">
     <rect>
-     <x>130</x>
+     <x>115</x>
      <y>16</y>
-     <width>536</width>
+     <width>575</width>
      <height>31</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>12</pointsize>
+     <pointsize>10</pointsize>
      <bold>false</bold>
      <kerning>true</kerning>
     </font>
    </property>
    <property name="styleSheet">
     <string notr="true">background-color: #ffffff;
-border-top-left-radius: 15px;
-border-top-right-radius: 0px;
+border-top-left-radius: 5px;
+border-top-right-radius: 5px;
 border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;
 border-bottom: 1px solid #eeeeee;
 padding-left: 10px;
 border-top: 1px solid #ffffff;
-border-left: 1px solid #000000;
+border-left: 1px solid #888888;
 
 
 </string>
@@ -159,53 +159,6 @@ border-left: 1px solid #000000;
    </property>
    <property name="placeholderText">
     <string>Add command</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="Run_Button">
-   <property name="geometry">
-    <rect>
-     <x>640</x>
-     <y>16</y>
-     <width>56</width>
-     <height>56</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>-1</pointsize>
-     <bold>true</bold>
-     <kerning>true</kerning>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QPushButton {
-	color: #ffffff;
-	border-top-left-radius: 28px;
-	border-top-right-radius:28px;
-	border-bottom-right-radius: 28px;
-	border-bottom-left-radius: 28px;
-	border-top:1px solid #ffffff;
-	border-left:1px solid #000000;
-	border-bottom:1px solid #000000;
-	border-right:1px solid #000000;
-	color:#ffffff;
-	font-family:Arial;
-	font-size:13px;
-	font-weight:bold;
-	background: qradialgradient(cx:0.5, cy:0.5, radius: 2.5,
-              fx:0.5, fy:0.5, stop:0 #000000, stop:1 #eeeeee);
-}
-QPushButton:pressed {
-    background-color: #ffffff;
-	color: #000000;
-	border-top-left-radius: 28px;
-	border-top-right-radius:28px;
-	border-bottom-right-radius: 28px;
-	border-bottom-left-radius: 28px;
-}</string>
-   </property>
-   <property name="text">
-    <string>RUN</string>
    </property>
   </widget>
   <widget class="Line" name="line">
@@ -2200,7 +2153,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -2229,7 +2181,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -2613,7 +2564,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -2642,7 +2592,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -3015,7 +2964,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -3044,7 +2992,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -3417,7 +3364,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -3446,7 +3392,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -3819,7 +3764,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -3848,7 +3792,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -4221,7 +4164,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -4250,7 +4192,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -4623,7 +4564,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -4652,7 +4592,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -5025,7 +4964,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -5054,7 +4992,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -5427,7 +5364,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -5456,7 +5392,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -5829,7 +5764,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -5858,7 +5792,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -6231,7 +6164,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -6260,7 +6192,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -6633,7 +6564,6 @@ border-bottom-left-radius: 0px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>7</pointsize>
       <bold>true</bold>
      </font>
@@ -6662,7 +6592,6 @@ border-bottom-left-radius: 5px;
     </property>
     <property name="font">
      <font>
-      <family>Arial Narrow</family>
       <pointsize>6</pointsize>
       <italic>false</italic>
       <bold>false</bold>
@@ -6820,7 +6749,6 @@ background:none;</string>
   <zorder>Status</zorder>
   <zorder>Command_Hint</zorder>
   <zorder>Command_Line</zorder>
-  <zorder>Run_Button</zorder>
   <zorder>line_3</zorder>
   <zorder>line_2</zorder>
   <zorder>label_4</zorder>

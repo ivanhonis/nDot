@@ -105,7 +105,7 @@ class n_tech_mp:
             # print(self.mpi, g)
             r_array[g] = pr
             if g % 1000 == 0 and self.process == 7:
-                print("\r" + str(100 * round(g / (len(self.s['low_s_slice']) - self.s['time_frame'] - 1), 2)) + " % ", end="")
+                print("\r" + str(100 * round(g / (len(self.s['low_s_slice']) - self.s['time_frame'] - 1), 2))[:5] + " % ", end="")
             #     r0 = str(np.count_nonzero(r_array == 0))
             #     r1 = str(np.count_nonzero(r_array == 1))
             #     r2 = str(np.count_nonzero(r_array == 2))

@@ -16,6 +16,84 @@ from focal_loss import SparseCategoricalFocalLoss
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
+from multiprocessing import Pool, Process
+
+from keras.models import Model
+from keras.layers import Input, Conv1D, LeakyReLU, MaxPool1D, CuDNNLSTM, Bidirectional, TimeDistributed, Dense, Reshape
+from keras.layers import UpSampling2D, Conv2DTranspose
+
+from tensorflow.keras.layers import Layer, InputSpec
+import keras.backend as K
+
+class TSClusteringLayer(Layer):
+    """
+    Clustering layer converts input sample (feature) to soft label, i.e. a vector that represents the probability of the
+    sample belonging to each cluster. The probability is calculated with student's t-distribution.
+    # Arguments
+        n_clusters: number of clusters.
+        weights: list of Numpy array with shape `(n_clusters, timesteps, n_features)` witch represents the initial cluster centers.
+        alpha: parameter in Student's t-distribution. Default to 1.0.
+        dist_metric: distance metric between sequences used in similarity kernel ('eucl', 'cir', 'cor' or 'acf').
+    # Input shape
+        3D tensor with shape: `(n_samples, timesteps, n_features)`.
+    # Output shape
+        2D tensor with shape: `(n_samples, n_clusters)`.
+    """
+
+    def __init__(self, n_clusters, weights=None, alpha=1.0, dist_metric='eucl', **kwargs):
+        if 'input_shape' not in kwargs and 'input_dim' in kwargs:
+            kwargs['input_shape'] = (kwargs.pop('input_dim'),)
+        super(TSClusteringLayer, self).__init__(**kwargs)
+        self.n_clusters = n_clusters
+        self.alpha = alpha
+        self.dist_metric = dist_metric
+        self.initial_weights = weights
+        self.input_spec = InputSpec(ndim=3)
+        self.clusters = None
+        self.built = False
+
+    def build(self, input_shape):
+        assert len(input_shape) == 3
+        input_dim = input_shape[2]
+        input_steps = input_shape[1]
+        self.input_spec = InputSpec(dtype=K.floatx(), shape=(None, input_steps, input_dim))
+        self.clusters = self.add_weight(shape=(self.n_clusters, input_steps, input_dim), initializer='glorot_uniform', name='cluster_centers')
+        if self.initial_weights is not None:
+            self.set_weights(self.initial_weights)
+            del self.initial_weights
+        self.built = True
+
+    def call(self, inputs, **kwargs):
+        """
+        Student t-distribution kernel, probability of assigning encoded sequence i to cluster k.
+            q_{ik} = (1 + dist(z_i, m_k)^2)^{-1} / normalization.
+        Arguments:
+            inputs: encoded input sequences, shape=(n_samples, timesteps, n_features)
+        Return:
+            q: soft labels for each sample. shape=(n_samples, n_clusters)
+        """
+        if self.dist_metric == 'eucl':
+            distance = K.sum(K.sqrt(K.sum(K.square(K.expand_dims(inputs, axis=1) - self.clusters), axis=2)), axis=-1)
+        elif self.dist_metric == 'cid':
+            ce_x = K.sqrt(K.sum(K.square(inputs[:, 1:, :] - inputs[:, :-1, :]), axis=1))  # shape (n_samples, n_features)
+            ce_w = K.sqrt(K.sum(K.square(self.clusters[:, 1:, :] - self.clusters[:, :-1, :]), axis=1))  # shape (n_clusters, n_features)
+            ce = K.maximum(K.expand_dims(ce_x, axis=1), ce_w) / K.minimum(K.expand_dims(ce_x, axis=1), ce_w)  # shape (n_samples, n_clusters, n_features)
+            ed = K.sqrt(K.sum(K.square(K.expand_dims(inputs, axis=1) - self.clusters), axis=2))  # shape (n_samples, n_clusters, n_features)
+            distance = K.sum(ed * ce, axis=-1)  # shape (n_samples, n_clusters)
+        elif self.dist_metric == 'cor':
+            inputs_norm = (inputs - K.expand_dims(K.mean(inputs, axis=1), axis=1)) / K.expand_dims(K.std(inputs, axis=1), axis=1)  # shape (n_samples, timesteps, n_features)
+            clusters_norm = (self.clusters - K.expand_dims(K.mean(self.clusters, axis=1), axis=1)) / K.expand_dims(K.std(self.clusters, axis=1), axis=1)  # shape (n_clusters, timesteps, n_features)
+            pcc = K.mean(K.expand_dims(inputs_norm, axis=1) * clusters_norm, axis=2)  # Pearson correlation coefficients
+            distance = K.sum(K.sqrt(2.0 * (1.0 - pcc)), axis=-1)  # correlation-based similarities, shape (n_samples, n_clusters)
+        elif self.dist_metric == 'acf':
+            raise NotImplementedError
+        else:
+            raise ValueError('Available distances are eucl, cid, cor and acf!')
+        q = 1.0 / (1.0 + K.square(distance) / self.alpha)
+        q **= (self.alpha + 1.0) / 2.0
+        q = K.transpose(K.transpose(q) / K.sum(q, axis=1))
+        return q
+
 
 
 class n_ai:
@@ -31,7 +109,7 @@ class n_ai:
         self.projects_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\projects\\"
         # self.projects_path = "C:\\Users\\honis.ivan\\PycharmProjects\\nDot\\projects\\"
 
-        self.gdrive_path = "X:\\Apa\\cloud\\GoogleDrive\\Saját meghajtó\\nDot_Colabs\\"
+        self.gdrive_path = "X:\\Apa\\cloud\\GoogleDriveSync\\nDot_Colabs\\"
         self.model_dict = {
             "MinMaxScaler": "-",
             "MinMaxScaler_last_update": 0,
@@ -79,6 +157,7 @@ class n_ai:
         if use == 1:
             x_np_mod = np.array(x)
             x_np_mod_reshaped = np.reshape(x_np_mod, (x_np_mod.shape[0], kwargs['time_window_size'], kwargs['number_of_fields']))
+            x_np_mod_reshaped = np.transpose(x_np_mod_reshaped, axes=(0, 2, 1))
             return x_np_mod_reshaped
         elif use == 2:
             pass
@@ -92,7 +171,7 @@ class n_ai:
         else:
             return False
 
-    def confusion(self, predict, predict_strength,  sig):
+    def confusion(self, predict, predict_strength,  sig, name=""):
         self.ai_log(f" ai.confusion martix", line=True)
         sig = np.array(sig)
         # predict_strength = np.array(predict_strength)
@@ -105,43 +184,11 @@ class n_ai:
                     annot=True, fmt='g', cbar=False)
         plt.xlabel('Prediction')
         plt.ylabel('Label')
-        plt.title('Confusion Matrix - not filtered')
+        plt.title(f'Confusion Matrix - {name} - not filtered')
         plt.show()
 
-        # filters = [.1, .15, .2, .25, .3, .35, .4, .45, .46]
-        # # filters = filters / 100
-        # # print(filters)
-        #
-        # self.ai_log(f" Filtering y. filters: {filters}")
-        # poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
-        #
-        # fig2 = plt.figure(figsize=(13, 6))
-        # fig2.canvas.manager.window.move(600, 100)
-        # for pos, filter in enumerate(filters):
-        #     y_filtered = []
-        #     for xy, ys in enumerate(predict_strength):
-        #         if ys > filter:
-        #             y_filtered.append(predict[xy])
-        #         else:
-        #             y_filtered.append(3)
-        #
-        #     confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
-        #     # print(int(confusion_mtx[1][1]))
-        #     plt.subplot(poses[pos])
-        #
-        #     sns.set(font_scale=.8)
-        #     sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
-        #                 annot=True, fmt='g', cbar=False)
-        #     plt.xlabel('Prediction')
-        #     plt.ylabel('Label')
-        #     plt.title('Conf. Mtrx.:' + str(filter))
-        # plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
-        # plt.show()
-
-
-        startplt = 30
-        filters = np.array(range(startplt, startplt + 9))
-        filters = filters / 100
+        filters = [.3, .4, .5, .55, .6, .7, .8, .9, .99]
+        # filters = filters / 100
         # print(filters)
 
         self.ai_log(f" Filtering y. filters: {filters}")
@@ -170,7 +217,39 @@ class n_ai:
         plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
         plt.show()
 
-        # startplt = 51
+
+        # startplt = 30
+        # filters = np.array(range(startplt, startplt + 9))
+        # filters = filters / 100
+        # # print(filters)
+        #
+        # self.ai_log(f" Filtering y. filters: {filters}")
+        # poses = (331, 332, 333, 334, 335, 336, 337, 338, 339)
+        #
+        # fig2 = plt.figure(figsize=(13, 6))
+        # fig2.canvas.manager.window.move(600, 100)
+        # for pos, filter in enumerate(filters):
+        #     y_filtered = []
+        #     for xy, ys in enumerate(predict_strength):
+        #         if ys > filter:
+        #             y_filtered.append(predict[xy])
+        #         else:
+        #             y_filtered.append(3)
+        #
+        #     confusion_mtx = tf.math.confusion_matrix(sig[0:len(predict)], y_filtered)
+        #     # print(int(confusion_mtx[1][1]))
+        #     plt.subplot(poses[pos])
+        #
+        #     sns.set(font_scale=.8)
+        #     sns.heatmap(confusion_mtx, xticklabels=[0, 1, 2, "off"], yticklabels=[0, 1, 2, "off"],
+        #                 annot=True, fmt='g', cbar=False)
+        #     plt.xlabel('Prediction')
+        #     plt.ylabel('Label')
+        #     plt.title('Conf. Mtrx.:' + str(filter))
+        # plt.tight_layout(pad=2, w_pad=0.5, h_pad=1.0)
+        # plt.show()
+        #
+        # startplt = 69
         # filters = np.array(range(startplt, startplt + 9))
         # filters = filters / 100
         # # print(filters)
@@ -264,7 +343,7 @@ class n_ai:
                 pass
         
         self.save()
-    
+
     def predict_multi(self, symbol, project, x):
         x_norm = self.ai_models[project]['MinMaxScaler'].transform(x)
 
@@ -273,7 +352,11 @@ class n_ai:
                                            time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
                                            number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
                                            )
-        y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped, verbose=0)
+        y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped, verbose=0, batch_size=500000)
+
+        # DTC
+        # y_predict = y_predict[1]
+
         y_predict_sig = np.argmax(y_predict, axis=1)
         y_predict_perc = np.take_along_axis(y_predict, np.expand_dims(y_predict_sig, axis=-1), axis=-1).squeeze(axis=-1)
         return y_predict, y_predict_sig, y_predict_perc
@@ -291,7 +374,7 @@ class n_ai:
                                                time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
                                                number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
                                                )
-            
+
             y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped)
             y_predict_sig = np.argmax(y_predict, axis=1)[0]
             y_predict_perc = y_predict[0][y_predict_sig]
@@ -343,7 +426,9 @@ class n_ai:
                 # print('TFLMUP: ',self.ai_models[i_project]["tf_model_last_update"], os_path.getmtime(local_path))
                 if self.ai_models[i_project]["tf_model_last_update"] != os_path.getmtime(local_path):
                     self.ai_log(f"tf_model has been set: {i_project}")
+                    # self.ai_models[i_project]["tf_model"] = load_model(local_path, custom_objects={'TSClusteringLayer': TSClusteringLayer})
                     self.ai_models[i_project]["tf_model"] = load_model(local_path)
+                    # 'TSClusteringLayer'
                     self.ai_models[i_project]["tf_model_last_update"] = os_path.getmtime(local_path)
                 
                 used_projects.append(i_project)
