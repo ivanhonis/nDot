@@ -19,6 +19,8 @@ from functools import partial  # a kattintás hozzá rendeléséhez használom
 
 # other checked ----------------------------------------------------
 import pandas as pd
+from pandastable import Table, config  # , TableModel
+
 from xlsxwriter import Workbook
 import numpy as np
 import os  # for test command
@@ -714,8 +716,8 @@ class n_date_frame2:
 	def __init__(self):
 		self.indicators = pd.DataFrame(None)
 		self.load_indicators()
-		self.temp_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\temp\\"
-		self.cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
+		self.temp_path = "X:\\Apa\\coder\\nDot\\temp\\"
+		self.cache_path = "X:\\Apa\\coder\\nDot\\backtest_cache\\"
 
 	# def get_dataset_config(self, file_name):
 	#     log("ndf-> get_dataset_config " + file_name )
@@ -4697,7 +4699,7 @@ def ai_backtest(symbol, run_time_window, project, start_position=0):
 		pp3 = round((((p3 / run_time_window) * 60 * 24 * 365) / obj.value_limit) * 100, 2)
 		log(f"  (9) net profit (% year)(.075%, .055%, .025%): {pp1}%, {pp2}% ,{pp3}%")
 
-	cache_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\backtest_cache\\"
+	# cache_path = "X:\\Apa\\coder\\nDot\\backtest_cache\\"
 
 	start_position = int(start_position)
 	log(f"ai_backtest {symbol} {run_time_window} {project}")
@@ -5275,7 +5277,6 @@ def ndf_columns():
 def ndf_show_last(symbol=""):
 	if symbol in nddf:
 
-		from pandastable import Table, config  # , TableModel
 
 		class TestApp(Frame):
 			"""Basic test frame for the table"""
