@@ -1535,7 +1535,7 @@ class n_date_frame2:
 			s2()
 
 	def roll_time_frame(self, iarray, time_window, data_window_back_shift=0):  # rolling time frame
-		a = np.array(iarray)
+		a = np.array(iarray).astype(np.float32)
 		s_array = [0] * time_window
 		for i in range(time_window):
 			nprt = np.roll(a, (time_window - i - 1 + data_window_back_shift))
@@ -1557,7 +1557,7 @@ class n_date_frame2:
 
 		hstack_array = []
 		for field in original_fields:
-			hstack_array.append(self.roll_time_frame(nddf[symbol][field], time_window_size, back_shift))
+			hstack_array.append(self.roll_time_frame(nddf[symbol][field].to_numpy().astype(np.float32), time_window_size, back_shift))
 
 		x_full = np.hstack(hstack_array)
 
@@ -1608,6 +1608,105 @@ class n_date_frame2:
 		elif nan_manager == "drop":
 				x_array = np.delete(x_array, bug_index, 0)
 		return x_array, bug_index
+
+	def create_dataset_full_stack_2d(self, symbol, project_name):
+		log(f"ndf-> create_dataset_full_stack: {symbol} {project_name}")
+		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
+
+		time_window_size = int(dataset_config['time_window_size'])
+		back_shift = dataset_config["data_window_back_shift"]
+		depth = int(dataset_config['depth'])
+
+		# array_len = time_window_size * (len(original_fields) + len(contras))
+
+		hstack_array = []
+		for field in original_fields:
+			hstack_array.append(self.roll_time_frame(nddf[symbol][field].to_numpy().astype(np.float32), time_window_size, back_shift))
+
+		x_full = np.hstack(hstack_array)
+
+		features = len(original_fields)
+		# print(features)
+		# print(time_window_size)
+		ti_fi = (time_window_size * features)
+		_n = np.empty(ti_fi)
+		_n[:] = np.nan
+		s_array = [x_full]
+		# print(depth)
+		for x in range(depth - 1):
+			b = np.roll(x_full, ti_fi * (x + 1))
+			for x2 in range(x + 1):
+				b[x2] = np.array(_n)
+			s_array.insert(0, b)
+
+		# print(len(s_array))
+
+		x_full = np.hstack(s_array)
+		print(nddf[symbol].shape)
+		print(x_full.shape)
+		# print(X_array_all.shape)
+		# le kell vágni az elejét mer abban nan van
+
+		# x_full = x_full[depth:-1]
+		# y_sig_all = y_sig_all[depth:-1]
+		# print(X_array_all.shape)
+		# sys.exit()
+
+		# np.save("test", X_array_all)
+
+
+
+		cstr = "".join(contras)
+		ostr = "".join(original_fields)
+		olen = str(nddf[symbol].shape[0])
+		full_cache_name = str(depth) + str(time_window_size) + cstr + ostr + olen
+		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+		log(f"Len chk: nddf.len: {nddf[symbol].shape[0]} dataset.len:{x_full.shape[0]}")
+
+		np.save(self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name, x_full)
+		log(f"Cache dataset saved: {symbol}_DATASET_FULL_CACHE_2D_{full_cache_name}")
+		return x_full
+
+
+	def get_dataset_full_stack_2d(self, symbol, project_name, nan_manager="leave"):
+		def get_bug_index(array):
+			i_inf = np.where(array == np.inf)[0]
+			i_nan = np.where(np.isnan(array))[0]
+			return np.unique(np.concatenate([i_inf, i_nan]))
+
+		log(f"ndf-> get_dataset_full_stack: {symbol} {project_name}")
+		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
+
+		time_window_size = int(dataset_config['time_window_size'])
+		depth = int(dataset_config['depth'])
+		array_len = time_window_size * (len(original_fields) + len(contras))
+
+		cstr = "".join(contras)
+		ostr = "".join(original_fields)
+		olen = str(nddf[symbol].shape[0])
+
+		full_cache_name = str(depth) + str(time_window_size) + cstr + ostr + olen
+		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
+
+		cache_path = ndf.cache_path
+		f_name = cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + '.npy'
+		if os.path.isfile(f_name):
+			log(f"Dataset loaded from full cache.")
+			x_array = np.load(f_name)
+		else:
+			x_array = self.create_dataset_full_stack_2d(symbol, project_name)
+
+		# bug_index = []
+		log(f"Detect bugs (Nan, Inf) manager:{nan_manager}")
+		bug_index = get_bug_index(x_array)
+		if nan_manager == "leave":
+			pass
+		elif nan_manager == "empty":
+			x_array[bug_index] = np.array([0] * array_len)
+		elif nan_manager == "drop":
+				x_array = np.delete(x_array, bug_index, 0)
+		return x_array, bug_index
+
 
 
 	def create_dataset_full(self, symbol, project_name):
@@ -3754,9 +3853,141 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
+	project_name = "BTCUSDT_P10INT_2D"
+	symbol = "BTCUSDT"
 
-	ai_clibrate_mp("BTCUSDT", 270000, "BTCUSDT_P10INT", 1800000)
+	config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
+	file = pathlib.Path(config_file_path)
+	if not file.exists():
+		log("config file is missing:" + str(config_file_path))
+		return
 
+	gdc_ok, descr, dataset_config, orig_fields, contras, indexes = ai.get_dataset_config(config_file_path)
+	if not gdc_ok:
+		log("config file conversion error. (,) is missing ? :)")
+		return
+
+	sig_field = "SIG_" + dataset_config['sig_suffix']
+	ok_sig = ndf.is_field_exist(symbol, sig_field)
+
+	y_field = "y_" + dataset_config["sig_suffix"]
+	ok_y = ndf.is_field_exist(symbol, y_field)
+
+	ok_orig = True
+	for o_f in orig_fields:
+		ok_orig = ok_orig and ndf.is_field_exist(symbol, o_f)
+
+	ok_contras = True
+	for c in contras:
+		ok_contras = ok_contras and ndf.is_contra(c)
+
+	if not ok_sig or not ok_orig or not ok_contras or not ok_y:
+		if not ok_sig:
+			log("Config file, basic parameter(s) is missing.")
+		if not ok_orig:
+			log("Config file, Orifinal field(s) is missing.")
+		if not ok_contras:
+			log("Config file, Contra field(s) is missing.")
+		if not ok_y:
+			log("Config file, y field(s) is missing.")
+		return
+
+	# create dataset ----------------------------------------------------------------
+
+	time_window_size = int(dataset_config["time_window_size"])
+	depth = int(dataset_config["depth"])
+
+	log("Creating 2D dataset.")
+	slices = 1
+	for dss in range(slices):
+		# image fej megcsinálása, minden image nél ugyan az
+		nd_dset = n_dataset(log)
+		nd_dset.set_symbol(symbol)
+		nd_dset.set_depth(depth)
+
+		nd_dset.set_source("nDot.py->n_data_frame2->create_dataset_int_2D")
+		nd_dset.set_name(f"nDot_DATASET_2D_{project_name}_{slices}_{dss + 1}")
+		nd_dset.set_project_name(project_name)
+		nd_dset.set_description(descr)
+
+		y_names = {'0=under limit; 1=good long; 2=good short'}
+		nd_dset.add_y_names(y_names)
+		nd_dset.set_window_size(time_window_size)
+		X_array_all, bug_index = ndf.get_dataset_full_stack_2d(symbol, project_name, nan_manager="drop")
+
+		y_sig_all = np.array(nddf[symbol][y_field].values)
+		y_sig_all = np.delete(y_sig_all, bug_index, 0)
+
+		if dss == 0:
+			log("  Number of deleted dataset with Nan Inf:" + str(len(bug_index)))
+			log("  Set locked part of the dataset:")
+			log("  Orig size:" + str(X_array_all.shape))
+		# X_array_all = X_array_all[-400000:]
+		# y_sig_all = y_sig_all[-400000:]
+
+		X_array_all = X_array_all[0:-100000]
+		y_sig_all = y_sig_all[0:-100000]
+		if dss == 0:
+			log("  Reduced size:" + str(X_array_all.shape))
+
+		i_indexes_9 = np.where(y_sig_all == 9)[0]
+		y_sig_all = np.delete(y_sig_all, i_indexes_9, 0)
+		X_array_all = np.delete(X_array_all, i_indexes_9, 0)
+		i_indexes_10 = np.where(y_sig_all == 10)[0]
+		y_sig_all = np.delete(y_sig_all, i_indexes_10, 0)
+		X_array_all = np.delete(X_array_all, i_indexes_10, 0)
+		# ---------------------------------------------
+
+		block_size = 50000  # max  700000
+		x_from = slices * block_size
+		x_to = (slices+1) * block_size
+		X_array_all = X_array_all[x_from:x_to]
+		y_sig_all = y_sig_all[x_from:x_to]
+
+		nd_dset.add_X(X_array_all)
+		nd_dset.add_y(y_sig_all)
+
+		# historic max and min ---------------------------------
+
+		i_historic_max = np.array([])
+		i_historic_min = np.array([])
+		if len(orig_fields) > 0:
+			for i_of in orig_fields:
+				nd_dset.add_field(i_of)
+				i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
+				i_conc = np.full(time_window_size, i_conc)
+				i_historic_max = np.concatenate((i_historic_max, i_conc))
+
+				i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
+				i_conc = np.full(time_window_size, i_conc)
+				i_historic_min = np.concatenate((i_historic_min, i_conc))
+
+		for i_con in contras:
+			nd_dset.add_field(i_con)
+			contra_sep_pre = i_con.split('_')
+			con_sep = []
+			if len(contra_sep_pre) > 2:
+				con_sep.append(contra_sep_pre[0])
+				s = "_"
+				con_sep.append(s.join(contra_sep_pre[1:]))
+			else:
+				con_sep = contra_sep_pre
+
+			con_symbol = con_sep[0]
+			con_field = con_sep[1]
+			i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
+			i_conc = np.full(time_window_size, i_conc)
+			i_historic_max = np.concatenate((i_historic_max, i_conc))
+
+			i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
+			i_conc = np.full(time_window_size, i_conc)
+			i_historic_min = np.concatenate((i_historic_min, i_conc))
+		nd_dset.set_historic_max(i_historic_max)
+		nd_dset.set_historic_min(i_historic_min)
+		nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
+		nd_dset.save()
+		del nd_dset, X_array_all, y_sig_all, bug_index, i_indexes_9, i_indexes_10
+		gc.collect()
 
 
 def do2(symbol="", p2="", p3=""):

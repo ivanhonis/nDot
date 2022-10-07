@@ -15,7 +15,7 @@ class n_dataset:
         self.data = {
                 'name': "",  ## ez lesz a file neve
                 'project_name': "",  ## ez lesz a file neve
-                'data_structure_ver': "2.0",  ## ez lesz a file neve
+                'data_structure_ver': "3.0 (2D)",  ## ez lesz a file neve
                 'timestamp': "",  ## mikor készültek az adatok
                 'source': "",  ## melyik eljárás milyen paraméterekkel állította elő
                 'symbol': "",  ## melyik érszvényhez készült
@@ -27,6 +27,7 @@ class n_dataset:
                 'y_unique': {},  # melyik cimkéből hány van az adatszetben
                 'data_fields': [],  ## milyen adatokból készült a dataset
                 'window_size': 0, ## mekkora az abalak mérete
+                'depth': 0,  ## a "video" hosszúsága
                 'meta': "",  ## a good minták milyen beállításokkal keletkeztek
                 'historic_max': np.array([]), ## az adatok egységes normalizálásoh a történelmi maximum értékek
                 'historic_min': np.array([])  ## az adatok egységes normalizálásoh a történelmi maximum értékek
@@ -84,6 +85,9 @@ class n_dataset:
     def set_window_size(self, window_size):
         self.data['window_size'] = window_size
 
+    def set_depth(self, depth):
+        self.data['depth'] = depth
+
     def set_y_unique(self):
         self.data['y_unique'] = {}
         values, counts = np.unique(self.data['y'], return_counts=True)
@@ -124,7 +128,7 @@ class n_dataset:
         self.log('  y unique: ' + str(y_type) + " " + str(y_cases))
         self.log('  Historic max shape: ' + str(self.data['historic_max'].shape))
         self.log('  Historic min shape: ' + str(self.data['historic_min'].shape))
-        self.data['data_fields'] = str(tuple(self.fields_dict.keys()))
+        self.data['data_fields'] = tuple(self.fields_dict.keys())
         pickle.dump(self.data, open(self.gdrive_path+self.data['name']+".pickle", "wb"))
         pickle.dump(self.data, open(self.project_path+self.data['name']+".pickle", "wb"))
         self.log('n_dataset-> saved: ' + str(self.gdrive_path+self.data['name']+".pickle"))
