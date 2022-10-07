@@ -1,0 +1,15 @@
+PyQt5
+psutil
+pandas
+xlsxwriter
+pandas-ta
+alpaca-trade-api
+finnhub-python
+tables
+bokeh
+tensorflow
+focal-loss
+matplotlib
+seaborn
+python-binance
+pandastable
