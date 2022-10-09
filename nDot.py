@@ -38,6 +38,7 @@ import hashlib
 # import json  # dataset config beolvasóhoz kell
 # import re  # dataset config beolvasóhoz kell
 import pathlib  # dataset config beolvasóhoz kell
+from sklearn import preprocessing
 
 from multiprocessing import shared_memory, Lock, Pool, cpu_count, Process
 lock = Lock()
@@ -718,6 +719,7 @@ class n_date_frame2:
 		self.load_indicators()
 		self.temp_path = "X:\\Apa\\coder\\nDot\\temp\\"
 		self.cache_path = "X:\\Apa\\coder\\nDot\\backtest_cache\\"
+		self.ndot_project_path = "X:\\Apa\\coder\\nDot\\projects\\"
 
 	# def get_dataset_config(self, file_name):
 	#     log("ndf-> get_dataset_config " + file_name )
@@ -1626,7 +1628,17 @@ class n_date_frame2:
 			hstack_array.append(self.roll_time_frame(nddf[symbol][field].to_numpy().astype(np.float32), time_window_size, back_shift))
 
 		x_full = np.hstack(hstack_array)
+		del hstack_array
+		gc.collect()
 
+		# NORMALIZER -------------------------------------------------
+		log(f"X RobustScaler")
+		norm_model = preprocessing.RobustScaler()
+		norm_model.fit(x_full)
+		x_full = np.array(norm_model.transform(x_full))
+
+		# 2D Dataset --------------------------------------------------
+		log(f"X 2D-Transform")
 		features = len(original_fields)
 		# print(features)
 		# print(time_window_size)
@@ -1635,28 +1647,70 @@ class n_date_frame2:
 		_n[:] = np.nan
 		s_array = [x_full]
 		# print(depth)
+		s2(True, depth - 1)
 		for x in range(depth - 1):
+			s2()
 			b = np.roll(x_full, ti_fi * (x + 1))
 			for x2 in range(x + 1):
 				b[x2] = np.array(_n)
 			s_array.insert(0, b)
 
-		# print(len(s_array))
+		# adt = nddf[symbol]["Date"].to_numpy()
+		# print("adt[100]", adt[100])
+		# print("adt[99]", adt[99])
+		# print("adt[98]", adt[98])
+		# print("adt[97]", adt[97])
+		# print("adt[0]", adt[0])
+		# print("adt[2000000]", adt[2000000])
+		#
+		# print('x_full[100]', x_full[100][0:5])
+		# print('x_full[99]', x_full[99][0:5])
+		# print('x_full[98]', x_full[98][0:5])
+		# print('x_full[97]', x_full[97][0:5])
+		# print('x_full[96]', x_full[96][0:5])
+		# print('x_full[95]', x_full[95][0:5])
+		# print('x_full[94]', x_full[94][0:5])
+		# print('x_full[93]', x_full[93][0:5])
+		# print('x_full[92]', x_full[92][0:5])
+		# print('x_full[91]', x_full[91][0:5])
+		# print('x_full[90]', x_full[90][0:5])
+		# print('x_full[89]', x_full[89][0:5])
+		# print('x_full[88]', x_full[88][0:5])
+		# print('x_full[87]', x_full[87][0:5])
+		# print('x_full[86]', x_full[86][0:5])
+		#
+		#
+		#
+		#
+		# print("stack array")
+		# print('s_array[14][100]', s_array[14][100][0:5])
+		# print('s_array[13][100]', s_array[13][100][0:5])
+		# print('s_array[12][100]', s_array[12][100][0:5])
+		# print('s_array[11][100]', s_array[11][100][0:5])
+		# print('s_array[10][100]', s_array[10][100][0:5])
+		# print('s_array[9][100]', s_array[9][100][0:5])
+		# print('s_array[8][100]', s_array[8][100][0:5])
+		# print('s_array[7][100]', s_array[7][100][0:5])
+		# print('s_array[6][100]', s_array[6][100][0:5])
+		# print('s_array[5][100]', s_array[5][100][0:5])
+		# print('s_array[4][100]', s_array[4][100][0:5])
+		# print('s_array[3][100]', s_array[3][100][0:5])
+		# print('s_array[2][100]', s_array[2][100][0:5])
+		# print('s_array[1][100]', s_array[1][100][0:5])
+		# print('s_array[0][100]', s_array[0][100][0:5])
+
+
 
 		x_full = np.hstack(s_array)
-		print(nddf[symbol].shape)
-		print(x_full.shape)
-		# print(X_array_all.shape)
-		# le kell vágni az elejét mer abban nan van
+		# print("connected array")
+		# for ix, xf in enumerate(x_full[100]):
+		# 	print(ix, xf)
 
-		# x_full = x_full[depth:-1]
-		# y_sig_all = y_sig_all[depth:-1]
-		# print(X_array_all.shape)
-		# sys.exit()
+		# print(x_full[100])
+		# print(x_full[100])
 
-		# np.save("test", X_array_all)
-
-
+		del s_array
+		gc.collect()
 
 		cstr = "".join(contras)
 		ostr = "".join(original_fields)
@@ -1667,8 +1721,7 @@ class n_date_frame2:
 
 		np.save(self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name, x_full)
 		log(f"Cache dataset saved: {symbol}_DATASET_FULL_CACHE_2D_{full_cache_name}")
-		return x_full
-
+		return x_full, norm_model
 
 	def get_dataset_full_stack_2d(self, symbol, project_name, nan_manager="leave"):
 		def get_bug_index(array):
@@ -1681,7 +1734,6 @@ class n_date_frame2:
 
 		time_window_size = int(dataset_config['time_window_size'])
 		depth = int(dataset_config['depth'])
-		array_len = time_window_size * (len(original_fields) + len(contras))
 
 		cstr = "".join(contras)
 		ostr = "".join(original_fields)
@@ -1693,21 +1745,30 @@ class n_date_frame2:
 		cache_path = ndf.cache_path
 		f_name = cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + '.npy'
 		if os.path.isfile(f_name):
-			log(f"Dataset loaded from full cache.")
 			x_array = np.load(f_name)
+			fname = self.ndot_project_path + project_name + "\\"
+			fname += 'nDot_MinMaxScaler_' + project_name + ".pickle"
+			norm_model = pickle.load(open(fname, "rb"))
+			log(f"2D Dataset loaded from full cache.")
 		else:
-			x_array = self.create_dataset_full_stack_2d(symbol, project_name)
+			x_array, norm_model = self.create_dataset_full_stack_2d(symbol, project_name)
 
 		# bug_index = []
-		log(f"Detect bugs (Nan, Inf) manager:{nan_manager}")
+		log(f"Detect bugs (Nan, Inf) manager: {nan_manager}")
 		bug_index = get_bug_index(x_array)
+
 		if nan_manager == "leave":
 			pass
 		elif nan_manager == "empty":
+			array_len = time_window_size * (len(original_fields) + len(contras)) * depth
 			x_array[bug_index] = np.array([0] * array_len)
 		elif nan_manager == "drop":
-				x_array = np.delete(x_array, bug_index, 0)
-		return x_array, bug_index
+			log(f"Delete bugs (Inf. Nan) from X: ")
+			# ez kevésbé használja a ramot mint a np.delete
+			r_index = np.arange(x_array.shape[0])
+			r_index = np.delete(r_index, bug_index, 0)
+			x_array = x_array[r_index]
+		return x_array, bug_index, norm_model
 
 
 
@@ -3915,39 +3976,47 @@ def do(symbol="", p2="", p3=""):
 		y_names = {'0=under limit; 1=good long; 2=good short'}
 		nd_dset.add_y_names(y_names)
 		nd_dset.set_window_size(time_window_size)
-		X_array_all, bug_index = ndf.get_dataset_full_stack_2d(symbol, project_name, nan_manager="drop")
+		X_array_all, bug_index, norm_model = ndf.get_dataset_full_stack_2d(symbol, project_name, nan_manager="drop")
+		gc.collect()
 
 		y_sig_all = np.array(nddf[symbol][y_field].values)
 		y_sig_all = np.delete(y_sig_all, bug_index, 0)
 
 		if dss == 0:
-			log("  Number of deleted dataset with Nan Inf:" + str(len(bug_index)))
-			log("  Set locked part of the dataset:")
-			log("  Orig size:" + str(X_array_all.shape))
-		# X_array_all = X_array_all[-400000:]
-		# y_sig_all = y_sig_all[-400000:]
+			log("Number of deleted datapont with Nan Inf: " + str(len(bug_index)))
 
-		X_array_all = X_array_all[0:-100000]
-		y_sig_all = y_sig_all[0:-100000]
+		del bug_index
+		gc.collect()
+
+		block_size = 1200000  # max  700000
+		r_indexes = np.arange(X_array_all.shape[0])
+		np.random.seed(100)
+		np.random.shuffle(r_indexes,)
+		r_indexes = r_indexes[0: block_size]
+
+		X_array_all = X_array_all[r_indexes]
+		y_sig_all = y_sig_all[r_indexes]
+
 		if dss == 0:
-			log("  Reduced size:" + str(X_array_all.shape))
+			log("Block slicer: " + str(len(r_indexes)))
 
-		i_indexes_9 = np.where(y_sig_all == 9)[0]
-		y_sig_all = np.delete(y_sig_all, i_indexes_9, 0)
-		X_array_all = np.delete(X_array_all, i_indexes_9, 0)
-		i_indexes_10 = np.where(y_sig_all == 10)[0]
-		y_sig_all = np.delete(y_sig_all, i_indexes_10, 0)
-		X_array_all = np.delete(X_array_all, i_indexes_10, 0)
-		# ---------------------------------------------
+		del r_indexes
+		gc.collect()
 
-		block_size = 50000  # max  700000
-		x_from = slices * block_size
-		x_to = (slices+1) * block_size
-		X_array_all = X_array_all[x_from:x_to]
-		y_sig_all = y_sig_all[x_from:x_to]
+		i_indexes_9_10 = np.where(y_sig_all >= 9)[0]
+		X_array_all = np.delete(X_array_all, i_indexes_9_10, 0)
+		y_sig_all = np.delete(y_sig_all, i_indexes_9_10, 0)
+
+		if dss == 0:
+			log("Number of deleted datapoint with (9,10): " + str(len(i_indexes_9_10)))
+
+		del i_indexes_9_10
+		gc.collect()
 
 		nd_dset.add_X(X_array_all)
 		nd_dset.add_y(y_sig_all)
+		del X_array_all, y_sig_all
+		gc.collect()
 
 		# historic max and min ---------------------------------
 
@@ -3988,7 +4057,9 @@ def do(symbol="", p2="", p3=""):
 		nd_dset.set_historic_min(i_historic_min)
 		nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
 		nd_dset.save()
-		del nd_dset, X_array_all, y_sig_all, bug_index, i_indexes_9, i_indexes_10
+		nd_dset.save_norm_model(norm_model)
+
+		del nd_dset
 		gc.collect()
 
 
@@ -4265,25 +4336,29 @@ def ai_download(project_name, rename=""):
 def ai_confusion(symbol, project):
 
 	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
-	cX_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="drop")
+	cX_array, bug_index, norm_model = ndf.get_dataset_full_stack_2d(symbol, project, nan_manager="drop")
+	gc.collect()
 	y_field = "y_" + dataset_config["sig_suffix"]
 	y_np = np.array(nddf[symbol][y_field].values)
 	y_np = np.delete(y_np, bug_index, 0)
 
-	i_indexes_9 = np.where(y_np == 9)[0]
-	y_np = np.delete(y_np, i_indexes_9, 0)
-	cX_array = np.delete(cX_array, i_indexes_9, 0)
-	i_indexes_10 = np.where(y_np == 10)[0]
-	y_np = np.delete(y_np, i_indexes_10, 0)
-	cX_array = np.delete(cX_array, i_indexes_10, 0)
+	i_indexes_9_10 = np.where(y_np >= 9)[0]
+	y_np = np.delete(y_np, i_indexes_9_10, 0)
+	log(f"del 9_10")
+	cX_array = np.delete(cX_array, i_indexes_9_10, 0)
+	gc.collect()
 
 	ai.build()
 	log(f" Predicting y, full dataset: {nddf[symbol].shape[0]}")
+
+	cX_array = cX_array[-1000000:]
+	y_np = y_np[-1000000:]
+
 	y_predict, y_predict_sig, y_predict_strength = ai.predict_multi(symbol, project, cX_array)
 
 	ai.confusion(y_predict_sig, y_predict_strength, y_np, name="Full")
 
-	ai.confusion(y_predict_sig[-100000:], y_predict_strength[-200000:], y_np[-100000:], name="Last 100k")
+	# ai.confusion(y_predict_sig[-100000:], y_predict_strength[-200000:], y_np[-100000:], name="Last 100k")
 
 
 last_pp1, last_pp2, last_pp3 = 0, 0, 0
@@ -4507,7 +4582,7 @@ def ai_clibrate_mp(symbol, run_time_window, project, start_position=0):
 	pre_low = tuple(pre_load['Low'])
 	pre_high = tuple(pre_load['High'])
 
-	X_array, bug_index = ndf.get_dataset_full_stack(symbol, project, nan_manager="empty")
+	X_array, bug_index, norm_model = ndf.get_dataset_full_stack_2d(symbol, project, nan_manager="empty")
 	X_array = X_array[x_from:x_to]
 	bug_index = bug_index[np.where((bug_index >= x_from) & (bug_index <= x_to))[0]]
 

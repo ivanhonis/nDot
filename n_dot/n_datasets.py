@@ -94,6 +94,11 @@ class n_dataset:
         self.data['y_unique']["values"] = values
         self.data['y_unique']["counts"] = counts
 
+    def save_norm_model(self, norm_model):
+        nn_name = 'nDot_MinMaxScaler_' + self.data['project_name'] + ".pickle"
+        pickle.dump(norm_model, open(self.gdrive_path + nn_name, "wb"))
+        pickle.dump(norm_model, open(self.project_path + nn_name, "wb"))
+
     def save(self):
         self.log('n_datasets-> save')
         self.set_y_unique()

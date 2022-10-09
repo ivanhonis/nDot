@@ -275,17 +275,46 @@ class n_ai:
         self.save()
 
     def predict_multi(self, symbol, project, x):
-        x_norm = self.ai_models[project]['MinMaxScaler'].transform(x)
 
-        x_nomr_reshaped = self.x_transform(use=int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"]),
-                                           x=x_norm,
-                                           time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
-                                           number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
-                                           )
-        y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped, verbose=0, batch_size=500000)
+        def get_slice_index(xlen, parts, slice_no):
+            if parts < 2:
+                start = 0
+                end = xlen
+            else:
+                slices = np.array_split(list(np.arange(0, xlen)), parts)
+                start = slices[slice_no][0]
+                end = slices[slice_no][-1:][0]
+                end += 1
+                end = min(end, xlen)
+            return start, end
 
-        # DTC
-        # y_predict = y_predict[1]
+        # x_norm = self.ai_models[project]['MinMaxScaler'].transform(x)
+
+        # x_nomr_reshaped = self.x_transform(use=int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"]),
+        #                                    x=x_norm,
+        #                                    time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
+        #                                    number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
+        #                                    )
+
+        time_window_size = int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"])
+        features = int(self.ai_settings[symbol][project]["number_of_fields"])
+        depth = int(self.ai_settings[symbol][project]["dataset_config"]["depth"])
+        self.log(f"Reshape, Transpose")
+        x = x.reshape((x.shape[0], depth, features, time_window_size))
+        x = np.transpose(x, axes=(0, 1, 3, 2))
+
+        parts = max(int(x.shape[0] / 250000), 1)
+
+        y_res = []
+        for i in range(parts):
+            xfrom = get_slice_index(x.shape[0], parts, i)[0]
+            xto = get_slice_index(x.shape[0], parts, i)[1]
+            y_res.append(self.ai_models[project]['tf_model'].predict(x[xfrom:xto], verbose=1, batch_size=25000,
+                                                         workers=10, use_multiprocessing=True))
+
+        y_predict = np.vstack(y_res)
+
+        del y_res
 
         y_predict_sig = np.argmax(y_predict, axis=1)
         y_predict_perc = np.take_along_axis(y_predict, np.expand_dims(y_predict_sig, axis=-1), axis=-1).squeeze(axis=-1)
