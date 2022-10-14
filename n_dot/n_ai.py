@@ -16,14 +16,15 @@ from focal_loss import SparseCategoricalFocalLoss
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tensorflow as tf
-from multiprocessing import Pool, Process
+# from multiprocessing import Pool, Process
 
-from keras.models import Model
-from keras.layers import Input, Conv1D, LeakyReLU, MaxPool1D, CuDNNLSTM, Bidirectional, TimeDistributed, Dense, Reshape
-from keras.layers import UpSampling2D, Conv2DTranspose
+# from keras.models import Model
+# from keras.layers import Input, Conv1D, LeakyReLU, MaxPool1D, CuDNNLSTM, Bidirectional, TimeDistributed, Dense, Reshape
+# from keras.layers import UpSampling2D, Conv2DTranspose
+#
+# from tensorflow.keras.layers import Layer, InputSpec
+# import keras.backend as K
 
-from tensorflow.keras.layers import Layer, InputSpec
-import keras.backend as K
 
 class n_ai:
     
@@ -45,8 +46,6 @@ class n_ai:
             "MinMaxScaler_last_update": 0,
             "tf_model": "-",
             "tf_model_last_update": 0,
-            "predict_used_count": 0,
-            "predict_average_runtime": 0,
         }
 
         self.settings_dict = {
@@ -55,20 +54,20 @@ class n_ai:
             "contras": [],
             "tech": [],
             "last_update": 0,
-            "last_y_predict_datetime": 0,
-            "last_y_predict_sig": 4,
-            "last_y_predict_perc": 0
+            # "last_y_predict_datetime": 0,
+            # "last_y_predict_sig": 4,
+            # "last_y_predict_perc": 0
         }
         
         self.load()
 
-    def set_avg_runtime(self, project, last_runtime):
-        last_runtime = float(last_runtime.total_seconds())
-        uc = self.ai_models[project]["predict_used_count"]
-        avgrt = self.ai_models[project]["predict_average_runtime"]
-        new_avg = ((uc * avgrt) + (1 * last_runtime)) / (uc + 1)
-        self.ai_models[project]["predict_average_runtime"] = new_avg
-        self.ai_models[project]["predict_used_count"] += 1
+    # def set_avg_runtime(self, project, last_runtime):
+    #     last_runtime = float(last_runtime.total_seconds())
+    #     uc = self.ai_models[project]["predict_used_count"]
+    #     avgrt = self.ai_models[project]["predict_average_runtime"]
+    #     new_avg = ((uc * avgrt) + (1 * last_runtime)) / (uc + 1)
+    #     self.ai_models[project]["predict_average_runtime"] = new_avg
+    #     self.ai_models[project]["predict_used_count"] += 1
         
     def save(self):
         with open(self.ndot_path + 'ai_settings.pickle', 'wb') as f:
@@ -249,10 +248,23 @@ class n_ai:
    
     def get_projects_by_symbol(self, symbol):
         if symbol in self.ai_settings:
-            return self.ai_settings[symbol].keys()
+            return list(self.ai_settings[symbol].keys())
         else:
             return ""
-        
+
+    def get_tf_update_first(self, symbol):
+        if symbol in self.ai_settings:
+            project = list(self.ai_settings[symbol].keys())
+            if len(project) > 0:
+                if project[0] in self.ai_models:
+                    return self.ai_models[project[0]]["tf_model_last_update"]
+                else:
+                    return ""
+            else:
+                return ""
+        else:
+            return ""
+
     def remove_symbol(self, symbol):
         try:
             del self.ai_settings[symbol]
@@ -320,31 +332,31 @@ class n_ai:
         y_predict_perc = np.take_along_axis(y_predict, np.expand_dims(y_predict_sig, axis=-1), axis=-1).squeeze(axis=-1)
         return y_predict, y_predict_sig, y_predict_perc
         
-    def predict(self, symbol, project, x, datetime):
-        i_start = datetime.now()
-        if self.ai_settings[symbol][project]["last_y_predict_datetime"] != datetime:
-            x = x.reshape(1, -1)  # tömbe teszem a tömböt
-            x_norm = self.ai_models[project]['MinMaxScaler'].transform(x)
-            if x_norm.max() > 1 or x_norm.min() < -1:
-                self.ai_log("MinMaxScaler out of rande (-1 , 1)")
-
-            x_nomr_reshaped = self.x_transform(use=int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"]),
-                                               x=x_norm,
-                                               time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
-                                               number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
-                                               )
-
-            y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped)
-            y_predict_sig = np.argmax(y_predict, axis=1)[0]
-            y_predict_perc = y_predict[0][y_predict_sig]
-            self.ai_settings[symbol][project]["last_y_predict_sig"] = y_predict_sig
-            self.ai_settings[symbol][project]["last_y_predict_perc"] = y_predict_perc
-            self.ai_settings[symbol][project]["last_y_predict_datetime"] = datetime
-            i_return = y_predict_sig, y_predict_perc
-        else:
-            i_return = self.ai_settings[symbol][project]["last_y_predict_sig"], self.ai_settings[symbol][project]["last_y_predict_perc"]
-        self.set_avg_runtime(project, datetime.now() - i_start)
-        return i_return
+    # def predict(self, symbol, project, x, datetime):
+    #     i_start = datetime.now()
+    #     if self.ai_settings[symbol][project]["last_y_predict_datetime"] != datetime:
+    #         x = x.reshape(1, -1)  # tömbe teszem a tömböt
+    #         x_norm = self.ai_models[project]['MinMaxScaler'].transform(x)
+    #         if x_norm.max() > 1 or x_norm.min() < -1:
+    #             self.ai_log("MinMaxScaler out of rande (-1 , 1)")
+    #
+    #         x_nomr_reshaped = self.x_transform(use=int(self.ai_settings[symbol][project]["dataset_config"]["x_tansform"]),
+    #                                            x=x_norm,
+    #                                            time_window_size=int(self.ai_settings[symbol][project]["dataset_config"]["time_window_size"]),
+    #                                            number_of_fields=int(self.ai_settings[symbol][project]["number_of_fields"])
+    #                                            )
+    #
+    #         y_predict = self.ai_models[project]['tf_model'].predict(x_nomr_reshaped)
+    #         y_predict_sig = np.argmax(y_predict, axis=1)[0]
+    #         y_predict_perc = y_predict[0][y_predict_sig]
+    #         self.ai_settings[symbol][project]["last_y_predict_sig"] = y_predict_sig
+    #         self.ai_settings[symbol][project]["last_y_predict_perc"] = y_predict_perc
+    #         self.ai_settings[symbol][project]["last_y_predict_datetime"] = datetime
+    #         i_return = y_predict_sig, y_predict_perc
+    #     else:
+    #         i_return = self.ai_settings[symbol][project]["last_y_predict_sig"], self.ai_settings[symbol][project]["last_y_predict_perc"]
+    #     self.set_avg_runtime(project, datetime.now() - i_start)
+    #     return i_return
         
     def ai_log(self, text, line=False):
         self.gui.ailog(text, line=line)
@@ -398,7 +410,7 @@ class n_ai:
             if allp not in used_projects:
                 del self.ai_models[allp]
                 
-        # print(self.ai_models)
+        self.gui.refresh_ui(mode="ai_info")
             
     def get_project_config(self, project):
         local_path = self.projects_path + project + "\\nDot_PRO_" + project + ".txt"
@@ -524,7 +536,6 @@ class n_ai:
         else:
             self.ai_log(f"{project_name} - Norm model downloaded.")
             self.ai_log(f"Last modified: {ctime(os_path.getmtime(from_path))}")
-
 
 if __name__ == "__main__":
     

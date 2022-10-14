@@ -12,8 +12,8 @@ output_file("bokeh_html/nchart.html")
 
 class n_chart:
 
-    def __init__(self, trade):
-        self.trade = trade
+    def __init__(self):
+        # self.trade = trade
         self.width = 1200
         self.toolbar_location = "left"
         self.tools = "xpan,xwheel_zoom,reset"

@@ -34,6 +34,7 @@ import threading  # info párhuzamosítva van illetve ndf.add
 import random  # a gambling módszerhez kell
 import pickle
 import hashlib
+import webbrowser
 # import pickle as pickle
 # import json  # dataset config beolvasóhoz kell
 # import re  # dataset config beolvasóhoz kell
@@ -46,8 +47,8 @@ lock = Lock()
 import asyncio
 
 # User nDot ------------------------------------------------------
-from n_dot.n_trade import n_trade
-from n_dot.n_market_data import n_market_data
+# from n_dot.n_trade import n_trade
+# from n_dot.n_market_data import n_market_data
 from n_dot.n_db import n_db
 from n_dot.n_chart import n_chart
 from n_dot.n_datasets import n_dataset
@@ -59,6 +60,7 @@ from n_dot.n_tech_mp import n_tech_mp
 from n_dot.n_calibrate_mp import n_calibrate_mp
 from n_dot.n_binance_trade import n_binance_trade
 from n_dot.n_dataset_constructor_mp import n_dataset_constructor_mp
+from n_dot.n_trade_server_connection import n_trade_server_connection
 
 # # Ai components
 import matplotlib.pyplot as plt
@@ -70,23 +72,19 @@ import tensorflow as tf
 # from tqdm import tqdm
 # import websocket
 
+stream_is_running = False
+
 class gui(QWidget, object):
 	# start_command = "ndf.images PLAY ICX1"
 
 	def __init__(self):
 		super(gui, self).__init__()
 		self.load_ui()
-		self.usd_huf = 0
-		# self.show_dialog_return = False
 		self.commands = self.load_commands()
-		# első alkalommal amikor megjelenik a trade frame akkor is újra kalkulálni
-		self.pause_trader_frame_calculation = True
-		# refresh_info párhuzamosítva van hogy ne kelljen várni a frissülésére--
-		# self.refresh_info_thread = ""
-		self.refresh_info_string = ""
 		self.command_line_history = []
 		self.command_line_history_position = 0
 		self.load_command_line_history()
+		self.server_status_dict = {}
 
 		# ablak beállítások ----------------------------------------------------
 		self.setWindowTitle("   nDot")
@@ -95,9 +93,8 @@ class gui(QWidget, object):
 		app.setWindowIcon(app_icon)
 
 	def closeEvent(self, event):
-		ntrade.monitor_stop()
-		ntrade.broker_stop()
-		md.stream_stop()
+		if stream_is_running:
+			stop_stream()
 		nddb.close()
 		print("Status: GUI Closed")
 
@@ -133,7 +130,7 @@ class gui(QWidget, object):
 			wl_btn_list = {}
 			i_n = prefix + "1"
 			wl_btn_list[i_n] = self.findChild(QToolButton, object_group_name)
-			for i_i in range(2, 13):
+			for i_i in range(2, 10):
 				i_n = prefix + str(i_i)
 				i_src = object_group_name + "_" + str(i_i)
 				wl_btn_list[i_n] = self.findChild(QToolButton, i_src)
@@ -145,15 +142,16 @@ class gui(QWidget, object):
 					object_group[i_o].clicked.connect(partial(wl_btn_chart, i + 1))
 				elif connect_function == "wl_btn_show":
 					object_group[i_o].clicked.connect(partial(wl_btn_show, i + 1))
-				elif connect_function == "wl_trade_short":
-					object_group[i_o].clicked.connect(partial(wl_trade_short, i + 1))
-				elif connect_function == "wl_trade_long":
-					object_group[i_o].clicked.connect(partial(wl_trade_long, i + 1))
-				elif connect_function == "tr_stop":
-					object_group[i_o].clicked.connect(partial(tr_stop, i + 1))
+				elif connect_function == "wl_btn_push":
+					object_group[i_o].clicked.connect(partial(wl_btn_push, i + 1))
+				elif connect_function == "wl_btn_start":
+					object_group[i_o].clicked.connect(partial(wl_btn_start, i + 1))
+				elif connect_function == "wl_btn_stop":
+					object_group[i_o].clicked.connect(partial(wl_btn_stop, i + 1))
+				elif connect_function == "wl_btn_tv":
+					object_group[i_o].clicked.connect(partial(wl_btn_tv, i + 1))
 
-		uic.loadUi("./qt_ui/form.ui", self)
-		# self.Command_Line.setText(self.start_command)
+		uic.loadUi("./qt_ui/form2.ui", self)
 
 		# Csoportos hozzárendelések ----------------------------------------------------------
 
@@ -163,45 +161,25 @@ class gui(QWidget, object):
 		wl_btn_show_list = get_similar_object_list("wls", "WL_btn_show")
 		connect_similar_object_list(wl_btn_show_list, "wl_btn_show")
 
-		wl_trade_short_list = get_similar_object_list("wlsl", "WL_trade_short")
-		connect_similar_object_list(wl_trade_short_list, "wl_trade_short")
+		wl_btn_show_list = get_similar_object_list("wlp", "WL_btn_push")
+		connect_similar_object_list(wl_btn_show_list, "wl_btn_push")
 
-		wl_trade_long_list = get_similar_object_list("wlll", "WL_trade_long")
-		connect_similar_object_list(wl_trade_long_list, "wl_trade_long")
+		wl_btn_show_list = get_similar_object_list("wlstr", "WL_btn_start")
+		connect_similar_object_list(wl_btn_show_list, "wl_btn_start")
 
-		wl_trade_stop_list = get_similar_object_list("wlst", "WL_trade_stop")
-		connect_similar_object_list(wl_trade_stop_list, "tr_stop")
+		wl_btn_show_list = get_similar_object_list("wlstp", "WL_btn_stop")
+		connect_similar_object_list(wl_btn_show_list, "wl_btn_stop")
+
+		wl_btn_show_list = get_similar_object_list("tv", "WL_btn_tv")
+		connect_similar_object_list(wl_btn_show_list, "wl_btn_tv")
 
 		# Command hozzárendelések ---------------------------------------------
-
-		# self.Run_Button.clicked.connect(self.run_button_action)
 		self.Command_Line.returnPressed.connect(self.run_button_action)
 		self.Command_Line.textChanged.connect(self.command_line_changed)
 
-		# Trade frame hozzárendelések ----------------------------------------
-		self.Tr_cancel.clicked.connect(self.tr_cancel)
-		self.Tr_qty.valueChanged.connect(self.tr_change_data)
-		self.Tr_set_order.clicked.connect(tr_set_order)
-		self.Tr_stop_all.clicked.connect(tr_stop_all)
-		self.Tr_frame.hide()
-
 		# watch list up area -------------------------------------------------
-		self.Tr_portfolio_monitor.stateChanged.connect(tr_portfolio_monitor)
-		self.Ndf_stream.stateChanged.connect(ndf_stream)
-		self.Tr_info_refresh.clicked.connect(tr_info_refresh)
-
-	# Date time setter ----------------------------------------
-	# i_now = datetime.now()
-	# self.From_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-	# self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-	# self.From_T.setTime(QTime(i_now.hour, i_now.minute))
-	# self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-	# self.Datetime_mod1.clicked.connect(partial(self.date_modifier, "hours", 6))
-	# self.Datetime_mod2.clicked.connect(partial(self.date_modifier, "days", 1))
-	# self.Datetime_mod3.clicked.connect(partial(self.date_modifier, "days", 2))
-	# self.Datetime_mod4.clicked.connect(partial(self.date_modifier, "days", 4))
-	# self.Datetime_mod5.clicked.connect(partial(self.date_modifier, "days", 30))
-	# self.Datetime_now.clicked.connect(self.date_now)
+		self.Tr_streaming.stateChanged.connect(tr_streaming)
+		self.Btn_Binance.clicked.connect(btn_binance)
 
 	def refresh_ui(self, mode="full"):
 
@@ -209,73 +187,65 @@ class gui(QWidget, object):
 			wl_frame_list = {}
 			i_n = prefix + "1"
 			wl_frame_list[i_n] = self.findChild(QFrame, object_group_name)
-			for i_i in range(2, 13):
+			for i_i in range(2, 10):
 				i_n = prefix + str(i_i)
 				i_src = object_group_name + "_" + str(i_i)
 				wl_frame_list[i_n] = self.findChild(QFrame, i_src)
 			return wl_frame_list
 
+		def get_button_objects_list(prefix, object_group_name):
+			wl_frame_list = {}
+			i_n = prefix + "1"
+			wl_frame_list[i_n] = self.findChild(QToolButton, object_group_name)
+			for i_i in range(2, 10):
+				i_n = prefix + str(i_i)
+				i_src = object_group_name + "_" + str(i_i)
+				wl_frame_list[i_n] = self.findChild(QToolButton, i_src)
+			return wl_frame_list
+
 		i_noid = ['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12']
 		if mode == "full":
 			i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
-			for i_obj in i_wl_frame_list:
-				i_wl_frame_list[i_obj].hide()
-			i_no = 0
-			for index, row in wl.wl_df.iterrows():
-				i_symbol = row['symbol']
+			wlkl = len(list(wl.wl_dict.keys()))
+			for ix, i_obj in enumerate(i_wl_frame_list):
+				if ix > wlkl - 1:
+					i_wl_frame_list[i_obj].hide()
+
+			i_wl_btn_push = get_button_objects_list("ptn_push", "WL_btn_push")
+			for i_obj in i_wl_btn_push:
+				i_wl_btn_push[i_obj].hide()
+
+			i_wl_btn_start = get_button_objects_list("ptn_start", "WL_btn_start")
+			for i_obj in i_wl_btn_start:
+				i_wl_btn_start[i_obj].hide()
+
+			i_wl_btn_stop = get_button_objects_list("ptn_stop", "WL_btn_stop")
+			for i_obj in i_wl_btn_stop:
+				i_wl_btn_stop[i_obj].hide()
+
+			for i_no, i_symbol in enumerate(wl.wl_dict):
 				f_id = "fr" + str(i_no + 1)
 				i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setText(i_symbol)
-				i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setToolTip(row['profil'])
+				# i_wl_frame_list[f_id].findChild(QLabel, "WL_symbol" + i_noid[i_no]).setToolTip(row['profil'])
 				# i_wl_frame_list[f_id].findChild(QProgressBar, "WL_bear" + i_noid[i_no]).setValue(
-				# 	int(row['snt_bearish'] * 100))
-				# i_info = self.get_monitor_info_by_symbol(i_symbol)
 				# i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
-				# i_pl = self.get_pl_by_symbol(i_symbol)
-				# i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
 
 				i_wl_frame_list[f_id].show()
-				i_no = i_no + 1
 				QApplication.processEvents()
-		if mode == "info" or mode == "full":
-			i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
-			i_no = 0
-			for index, row in wl.wl_df.iterrows():
-				i_symbol = row['symbol']
-				f_id = "fr" + str(i_no + 1)
 
-				# akkor frissítek ha volt változás
-				i_info = self.get_monitor_info_by_symbol(i_symbol)
-				i_info_now = i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).text()
-				if i_info != i_info_now:
-					i_wl_frame_list[f_id].findChild(QLabel, "WL_info" + i_noid[i_no]).setText(i_info)
-					QApplication.processEvents()
+			for i_no, i_symbol in enumerate(wl.wl_dict):
+				if wl.wl_dict[i_symbol]["slot"]:
+					i_wl_btn_push["ptn_push" + str(i_no + 1)].show()
+					i_wl_btn_start["ptn_start" + str(i_no + 1)].show()
+					i_wl_btn_stop["ptn_stop" + str(i_no + 1)].show()
 
-				# akkor frissítek ha volt változás
-				i_pl = self.get_pl_by_symbol(i_symbol)
-				i_pl_now = i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).text()
-				if i_pl != i_pl_now:
-					if i_symbol in tuple(ntrade.cp_df.index):
-						if float(ntrade.cp_df.loc[i_symbol, "unrealized_pl"]) > 0:
-							i_wl_frame_list[f_id].findChild(QToolButton,
-															"WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-								'color: #ffffff; background: #ff9100')
-						else:
-							i_wl_frame_list[f_id].findChild(QToolButton,
-															"WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-								'color: #000000; background: #ff9100; border-bottom-left-radius: 5px;')
-					else:
-						i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setStyleSheet(
-							'color: #ffffff; background: #ff9100; border-bottom-left-radius: 5px;')
-					i_wl_frame_list[f_id].findChild(QToolButton, "WL_trade_stop" + i_noid[i_no]).setText(i_pl)
-					QApplication.processEvents()
-				i_no = i_no + 1
+				QApplication.processEvents()
+
 		if mode == "ai_info" or mode == "full":
 			i_wl_frame_list = get_frame_objects_list("fr", "WL_frame")
 			i_no = 0
-			for index, row in wl.wl_df.iterrows():
-				i_symbol = row['symbol']
+			for i_symbol in wl.wl_dict:
 				f_id = "fr" + str(i_no + 1)
-
 				# akkor frissítek ha volt változás
 				i_info = self.get_ai_info_by_symbol(i_symbol)
 				i_info_now = i_wl_frame_list[f_id].findChild(QLabel, "WL_ai_info" + i_noid[i_no]).text()
@@ -284,60 +254,15 @@ class gui(QWidget, object):
 					QApplication.processEvents()
 				i_no = i_no + 1
 
-	# GUI - Trader Frame ----------------------------------------------------------------------------------------
-
-	def set_trade_frame(self):
-		self.pause_trader_frame_calculation = True
-		self.Tr_symbol.setText(ntrade.order["symbol"])
-
-		if ntrade.order["position"] == "SHORT":
-			self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
-										   'border-bottom-left-radius: 15px;' + \
-										   'color: #ff3333;')
-			self.Tr_set_order.setText("SET\nSHORT")
-		else:
-			self.Tr_position.setStyleSheet('background-color: #ffffff; ' + \
-										   'border-bottom-left-radius: 15px;' + \
-										   'color: #078F12;')
-			self.Tr_set_order.setText("SET\nLONG")
-		self.Tr_position.setText(ntrade.order["position"])
-		self.Tr_market_price.setText(str(ntrade.order["market_price"]))
-		# self.Tr_trailing_stop.setValue(True)
-		self.Tr_qty.setValue(ntrade.order["qty"])
-		self.pause_trader_frame_calculation = False
-		self.tr_change_data()
-		self.Tr_frame.show()
-		QApplication.processEvents()
-
-	def tr_cancel(self):
-		self.Tr_frame.hide()
-
-	def tr_change_data(self):
-		if not self.pause_trader_frame_calculation:
-			if self.usd_huf == 0:
-				self.usd_huf = md.get_usdhuf()
-			ntrade.order["qty"] = int(self.Tr_qty.value())
-			i_value_usd = round(ntrade.order["qty"] * ntrade.order["market_price"], 2)
-			i_value_huf = round(i_value_usd * self.usd_huf, 2)
-			i_value_text = '{0:,.2f}'.format(i_value_usd) + " USD\n" + '{0:,.2f}'.format(i_value_huf) + " HUF"
-			self.Tr_value.setText(i_value_text)
+		if mode == "stream" or mode == "full":
+			i_status = self.get_server_status_str()
+			self.Server_status.setText(i_status)
 			QApplication.processEvents()
-
-	# GUI - DateTime Block  -----------------------------------------------------------
-
-	# def date_now(self):
-	#     i_now = datetime.now()
-	#     self.To_D.setDate(QDate(i_now.year, i_now.month, i_now.day))
-	#     self.To_T.setTime(QTime(i_now.hour, i_now.minute))
-
-	# def date_modifier(self, interval_type, interval_num):
-	#     i_nowp = datetime.now() - timedelta(**{interval_type: interval_num})
-	#     self.From_D.setDate(QDate(i_nowp.year, i_nowp.month, i_nowp.day))
-	#     self.From_T.setTime(QTime(i_nowp.hour, i_nowp.minute))
 
 	# GUI - Commands -----------------------------------------------------------
 
-	def load_commands(self):
+	@staticmethod
+	def load_commands():
 		i_return = [
 			['help', 'help2', 'help - List of all commands!', 0],
 			['do', 'do', 'do', 0],
@@ -346,10 +271,9 @@ class gui(QWidget, object):
 			['wl.add', 'wl_add', 'wl.add <symbol> <year(s)>', 0],
 			['wl.add.crypto', 'wl_add_crypto', 'wl.add.crypto <symbol> <year(s)>', 0],
 			['wl.remove', 'wl_remove', 'wl.remove <symbol> ', 1],
-			# ['wl.refresh.close', 'wl_refresh_close', 'wl.refresh.close <> ', 0],
-			['wl.refresh.profile', 'wl_refresh_profile', 'wl.refresh.profile', 0],
-			['wl.refresh.sentiment', 'wl_refresh_sentiment', 'wl.refresh.sentiment', 0],
-			# ['wl.refresh.all', 'wl_refresh_all', 'wl.refresh.all <> ', 0],
+			['wl.slot', 'wl_slot', 'wl.slot', 0],
+			['wl.slot.add', 'wl_slot_add', 'wl.slot.add <symbol> ', 1],
+			['wl.slot.remove', 'wl_slot_remove', 'wl.slot.remove <symbol> ', 1],
 			['ndf.add', 'ndf_add', 'ndf.add <symbol> <year(s)>', 1],
 			['ndf.add.crypto', 'ndf_add_crypto', 'ndf.add.crypto <symbol> <year(s)>', 1],
 			['ndf.tech', 'ndf_tech', 'ndf.tech <symbol> <technical indicator> [params otional]', 2],
@@ -418,7 +342,7 @@ class gui(QWidget, object):
 
 			if i_params >= 1:
 				if len(command_partitioned) - 1 >= i_params:
-					if len(wl.wl_df.loc[wl.wl_df['symbol'] == command_partitioned[1]]) > 0:
+					if command_partitioned[1] in wl.wl_dict:
 						run_method(i_program, args)
 					else:
 						self.mark_command_line("Non listed Symbol!")
@@ -489,168 +413,104 @@ class gui(QWidget, object):
 
 	# GUI - Info text creators ------------------------------------------------
 
-	def get_pl_by_symbol(self, symbol):
-		if symbol in ntrade.cp_df.index:
-			i_p = float(ntrade.cp_df.loc[symbol, "unrealized_pl"])
-			i_return = f"STOP {i_p}$"
-		else:
-			i_return = "-"
-		return i_return
-
-	def create_tr_info_string(self):
-
-		def nbs(no):
-			return "&nbsp;" * no
-
-		def bnb(blocked):
-			if blocked:
-				i_return = "<b><font color='#ffffff'>Blocked</font></b>"
-			else:
-				i_return = "<b><font color='#999999'>Ready</font></b>"
-			return i_return
-
-		def yn(yes_no):
-			if yes_no:
-				i_return = "<b><font color='#ffffff'>Yes</font></b>"
-			else:
-				i_return = "<b><font color='#999999'>No</font></b>"
-			return i_return
-
-		def onf(on_off):
-			if on_off:
-				i_return = "<b><font color='#ffffff'>On</font></b>"
-			else:
-				i_return = "<b><font color='#999999'>Off</font></b>"
-			return i_return
-
-		def oc(open_close):
-			if open_close:
-				i_return = "<b><font color='#ffffff'>Open</font></b>"
-			else:
-				i_return = "<b><font color='#999999'>Closed</font></b>"
-			return i_return
-
-		def rq():
-			i_max_key = max(ntrade.request_count.keys())
-			return ntrade.request_count[i_max_key]
-
-		def get_dt(date_time_str):
-			date_time_str = date_time_str[:19]
-			hours_added = timedelta(hours=6)
-			date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S')
-			date_time_obj = date_time_obj + hours_added
-			return date_time_obj.strftime("%Y.%m.%d %H:%M:%S")
-
-		def ntofs(numb):
-			i_return = int(float(numb))
-			i_return = f"{i_return:,}"
-			return i_return
-
-		i_a = ntrade.get_account()
-		i_c = ntrade.get_clock()
-		if i_c.is_open:
-			i_cst = "Close:"
-			i_cs = get_dt(str(i_c.next_close))
-		else:
-			i_cst = "Open:"
-			i_cs = get_dt(str(i_c.next_open))
-
-		if self.usd_huf == 0:
-			self.usd_huf = md.get_usdhuf()
-
-		s = 10
-		i_return = f"""
-		<html><head/><body>
-		<table border="0" cellspacing="5" cellpadding="0">
-			<tr>
-				<td>Monitor: </td><td>{onf(ntrade.monitor_is_working)} - {ntrade.monitor_refresh_rate}</td><td>{nbs(s)}</td><td>Equity:</td><td>{ntofs(i_a.equity)} USD</td><td>{nbs(s)}</td><td>Market:</td><td>{oc(i_c.is_open)}</td>
-			</tr>
-			<tr>
-				<td>Broker:</td><td>{onf(ntrade.broker_is_working)}  - {ntrade.broker_refresh_rate}</td><td>{nbs(s)}</td><td>USD/HUF:</td><td>{self.usd_huf} HUF</td><td>{nbs(s)}</td><td>{i_cst}</td><td>{i_cs}</td>
-			</tr>
-			<tr>
-				<td>Reguests:</td><td>{rq()}/{ntrade.request_count_max}</td><td>{nbs(s)}</td><td>Cash / power:</td><td>{ntofs(i_a.cash)} / {ntofs(i_a.buying_power)} USD</td><td>{nbs(s)}</td><td>Status:</td><td>{bnb(i_a.trading_blocked)} - {i_a.status}</td>
-			</tr>
-			<tr>
-				<td></td><td></td><td>{nbs(s)}</td><td>Block size:</td><td>{int(ntrade.config["trade_block_size"])} USD</td><td>{nbs(s)}</td><td></td><td></td>
-			</tr>
-		</table>
-		</body></html>
-		"""
-		return i_return
-
-	def get_monitor_info_by_symbol(self, symbol):
-		# print("get_monitor_info_by_symbol\n", symbol)
-		# print("get_monitor_info_by_symbol\n", trade.tp_df)
-		if symbol in ntrade.tp_df.index:
-			i_qt = int(ntrade.tp_df.loc[symbol, "target_position"])
-		else:
-			i_qt = 0
-		# print("get_monitor_info_by_symbol\n", trade.cp_df)
-		if symbol in ntrade.cp_df.index:
-			i_qc = int(ntrade.cp_df.loc[symbol, "qty"])
-			i_p = float(ntrade.cp_df.loc[symbol, "current_price"])
-			i_v = float(ntrade.cp_df.loc[symbol, "market_value"])
-		else:
-			i_qc = 0
-			i_p = 0
-			i_v = 0
-		i_return = f"q: {i_qt} / {i_qc}\np: {i_p}$\nv: {i_v}$"
-		# print(i_return,"\n\n")
-		return i_return
-
 	def get_ai_info_by_symbol(self, symbol):
 		ai_projects = ai.get_projects_by_symbol(symbol)
-		i_return = f"""<html><head/><body>"""
-		for prj in ai_projects:
-			i_return = i_return + f"""
-		<div style="margin-top: 5px;">{prj}<br/>Silent</div>"""
-		i_return = i_return + "</body></html>"
-		# # print(i_return,"\n\n")
+		ai_tf_update = ai.get_tf_update_first(symbol)
+		if ai_tf_update != "":
+			ai_tf_update = time.strftime('%Y.%m.%d %H:%M:%S', time.gmtime(ai_tf_update))
+		if len(ai_projects) > 0:
+			i_return = f"""
+			<html><head/><body><p>
+			Model: {ai_projects[0]}<br/>
+			tf: {ai_tf_update}<br/>
+			Start: 10.11 14:00<br/>
+			Predict: 10.11 14:00<br/>
+			Trade: 10.11 14:20<br/>
+			24H: 13<br/>
+			Lot: 100 USD<br/>
+			Sloss: 10 USD<br/>
+			</p></body></html>
+			"""
+		else:
+			i_return = ""
 		return i_return
 
-	def tlog(self, add_text, line=False, indent=True, color="normal"):
-		i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
-		i_for_cut = i_for_cut.splitlines()
-		i_cut_html = self.Logs_Trade.text()
-		for i_c in i_for_cut:
-			i_cut_html = i_cut_html.replace(i_c, "")
+	def get_server_status_str(self):
+		if self.server_status_dict:
+			print(self.server_status_dict)
+			dt = str(self.server_status_dict['datetime'].strftime("%Y.%m.%d %H:%M:%S"))
+			cl = str(self.server_status_dict['clients'])
+			prc = str(self.server_status_dict['processors'])
+			vmt = round(int(self.server_status_dict['virtual_memory']['total']) / 2**30, 2)
+			vmpc = self.server_status_dict['virtual_memory']['percent']
+			du = round(int(self.server_status_dict['disk_usage']['total']) / 2**30, 2)
+			dupc = self.server_status_dict['disk_usage']['percent']
 
-		i_colors = {'long': "#078F12",
-					'short': "#ff3333",
-					'stop': "#ff9100",
-					'normal': "#333333"}
-		i_web_color = i_colors[color]
-
-		if indent:
-			i_ind = "│  "
+			ir = f"""
+			<html><head/><body><p>
+			{dt}<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - ON<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			Clients: {cl}<br/>
+			Processors: {prc}<br/>
+			Virtual memory: {vmt} GB / {vmpc}%<br/>
+			Disk usage: {du} GB / {dupc}%
+			</p></body></html>
+			"""
 		else:
-			i_ind = ""
-		i_log_text = "<html><head/><body>" + i_cut_html
-		if line:
-			i_log_text = i_log_text \
-						 + "<font color='#000000'>" \
-						 + "─" * 65 \
-						 + "</font>" \
-						 + "<br>"
+			ir = ""
 
-		lines = add_text.splitlines()
+		return ir
 
-		for one_line in lines:
-			i_log_text = i_log_text \
-						 + "<font color='#000000'>" \
-						 + time.strftime("%m-%d %H:%M:%S") + " > " \
-						 + i_ind \
-						 + "</font>" \
-						 + "<font color='" + i_web_color + "'>" \
-						 + one_line \
-						 + "</font>" \
-						 + "<br>"
-		i_log_text = i_log_text + "</body></html>"
-		self.Logs_Ai.setText(i_log_text)
-		i_vbar = self.LT_scrollArea.verticalScrollBar()
-		i_vbar.setValue(i_vbar.maximum())
-		QApplication.processEvents()
+
+	# def tlog(self, add_text, line=False, indent=True, color="normal"):
+	# 	i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
+	# 	i_for_cut = i_for_cut.splitlines()
+	# 	i_cut_html = self.Logs_Trade.text()
+	# 	for i_c in i_for_cut:
+	# 		i_cut_html = i_cut_html.replace(i_c, "")
+	#
+	# 	i_colors = {'long': "#078F12",
+	# 				'short': "#ff3333",
+	# 				'stop': "#ff9100",
+	# 				'normal': "#333333"}
+	# 	i_web_color = i_colors[color]
+	#
+	# 	if indent:
+	# 		i_ind = "│  "
+	# 	else:
+	# 		i_ind = ""
+	# 	i_log_text = "<html><head/><body>" + i_cut_html
+	# 	if line:
+	# 		i_log_text = i_log_text \
+	# 					 + "<font color='#000000'>" \
+	# 					 + "─" * 65 \
+	# 					 + "</font>" \
+	# 					 + "<br>"
+	#
+	# 	lines = add_text.splitlines()
+	#
+	# 	for one_line in lines:
+	# 		i_log_text = i_log_text \
+	# 					 + "<font color='#000000'>" \
+	# 					 + time.strftime("%m-%d %H:%M:%S") + " > " \
+	# 					 + i_ind \
+	# 					 + "</font>" \
+	# 					 + "<font color='" + i_web_color + "'>" \
+	# 					 + one_line \
+	# 					 + "</font>" \
+	# 					 + "<br>"
+	# 	i_log_text = i_log_text + "</body></html>"
+	# 	self.Logs_Ai.setText(i_log_text)
+	# 	i_vbar = self.LT_scrollArea.verticalScrollBar()
+	# 	i_vbar.setValue(i_vbar.maximum())
+	# 	QApplication.processEvents()
 
 	def ailog(self, add_text, line=False, indent=True, color="normal"):
 		i_for_cut = "<html>\n<head/>\n<body>\n<br/>\n<p>\n</p>\n</body>\n</html>"
@@ -697,20 +557,20 @@ class gui(QWidget, object):
 
 	# GUI - Tools ---------------------------------------------
 
-	def confirm(self, title, message):
-		msg = QMessageBox()
-		msg.setIcon(QMessageBox.Warning)
-		msg.setText("\n\t\t" + message + "\t\t\t\t\n")
-		# msg.setInformativeText("This is additional information")
-		msg.setWindowTitle(title)
-		# msg.setDetailedText("The details are as follows:")
-		msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-		bttn = msg.exec_()
-		if bttn == QMessageBox.Yes:
-			i_return = True
-		else:
-			i_return = False
-		return i_return
+	# def confirm(self, title, message):
+	# 	msg = QMessageBox()
+	# 	msg.setIcon(QMessageBox.Warning)
+	# 	msg.setText("\n\t\t" + message + "\t\t\t\t\n")
+	# 	# msg.setInformativeText("This is additional information")
+	# 	msg.setWindowTitle(title)
+	# 	# msg.setDetailedText("The details are as follows:")
+	# 	msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+	# 	bttn = msg.exec_()
+	# 	if bttn == QMessageBox.Yes:
+	# 		i_return = True
+	# 	else:
+	# 		i_return = False
+	# 	return i_return
 
 
 class n_date_frame2:
@@ -1699,8 +1559,6 @@ class n_date_frame2:
 		# print('s_array[1][100]', s_array[1][100][0:5])
 		# print('s_array[0][100]', s_array[0][100][0:5])
 
-
-
 		x_full = np.hstack(s_array)
 		# print("connected array")
 		# for ix, xf in enumerate(x_full[100]):
@@ -1718,22 +1576,27 @@ class n_date_frame2:
 		full_cache_name = str(depth) + str(time_window_size) + cstr + ostr + olen
 		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
 		log(f"Len chk: nddf.len: {nddf[symbol].shape[0]} dataset.len:{x_full.shape[0]}")
-
-		np.save(self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name, x_full)
+		full_cache_name = self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + ".npymemmap"
+		xshape = x_full.shape
+		fp = np.memmap(full_cache_name, dtype='float32', mode='w+', shape=xshape)
+		fp[:] = x_full[:]
+		fp.flush()
+		fp._mmap.close()
+		# np.save(self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name, x_full)
 		log(f"Cache dataset saved: {symbol}_DATASET_FULL_CACHE_2D_{full_cache_name}")
 		return x_full, norm_model
 
 	def get_dataset_full_stack_2d(self, symbol, project_name, nan_manager="leave"):
 		def get_bug_index(array):
-			i_inf = np.where(array == np.inf)[0]
-			i_nan = np.where(np.isnan(array))[0]
-			return np.unique(np.concatenate([i_inf, i_nan]))
+			x_inf_nan = np.where((array == np.inf) | np.isnan(array))[0]
+			return np.unique(x_inf_nan)
 
 		log(f"ndf-> get_dataset_full_stack: {symbol} {project_name}")
 		gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project_name)
 
 		time_window_size = int(dataset_config['time_window_size'])
 		depth = int(dataset_config['depth'])
+		array_len = time_window_size * (len(original_fields) + len(contras)) * depth
 
 		cstr = "".join(contras)
 		ostr = "".join(original_fields)
@@ -1743,9 +1606,12 @@ class n_date_frame2:
 		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
 
 		cache_path = ndf.cache_path
-		f_name = cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + '.npy'
+		f_name = cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + '.npymemmap'
 		if os.path.isfile(f_name):
-			x_array = np.load(f_name)
+			# x_array = np.load(f_name)
+			# print(x_array.shape)
+			x_array = np.memmap(f_name, dtype='float32', mode='r', shape=(nddf[symbol].shape[0], array_len))
+
 			fname = self.ndot_project_path + project_name + "\\"
 			fname += 'nDot_MinMaxScaler_' + project_name + ".pickle"
 			norm_model = pickle.load(open(fname, "rb"))
@@ -1760,14 +1626,17 @@ class n_date_frame2:
 		if nan_manager == "leave":
 			pass
 		elif nan_manager == "empty":
-			array_len = time_window_size * (len(original_fields) + len(contras)) * depth
 			x_array[bug_index] = np.array([0] * array_len)
 		elif nan_manager == "drop":
 			log(f"Delete bugs (Inf. Nan) from X: ")
 			# ez kevésbé használja a ramot mint a np.delete
-			r_index = np.arange(x_array.shape[0])
-			r_index = np.delete(r_index, bug_index, 0)
-			x_array = x_array[r_index]
+			mask = np.full(x_array.shape[0], True)
+			mask[bug_index] = False
+			x_array = x_array[mask]
+
+			# r_index = np.arange(x_array.shape[0])
+			# r_index = np.delete(r_index, bug_index, 0)
+			# x_array = x_array[r_index]
 		return x_array, bug_index, norm_model
 
 
@@ -3779,39 +3648,39 @@ class n_date_frame2:
 		nddb.remove(symbol)
 		ndf_meta.remove_meta(symbol)
 
-	def refresh(self, symbol, log_visible=True):
-		log("ndf-> refresh " + symbol, visible=log_visible)
-		log("Time frame (before refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
-			nddf[symbol]["Date"].max()), visible=log_visible)
-		num_of_rows_before = nddf[symbol].shape[0]
-		log("Number of rows (before refresh): " + str(num_of_rows_before), visible=log_visible)
-		to_dbdt = datetime.now() + timedelta(days=1)
-		to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
-		# print("to", to_dbdt)
-		from_dbdt = str(nddf[symbol]["Date"].max())
-		# print("from", from_dbdt)
-		i_tounix = n_tools.dbdt_to_unixdt(to_dbdt)
-		i_fromunix = n_tools.dbdt_to_unixdt(from_dbdt)
-		i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, log_visible)
-		# print(i_res)
-
-		# fast check result
-		i_array1 = np.array(i_res["Date"])
-		i_array2 = np.array(nddf[symbol]["Date"][-200:])
-		if len(i_array1) != sum(np.isin(i_array1, i_array2)):
-			nddf[symbol] = nddf[symbol].append(i_res)
-			# print(nddf[symbol].shape)
-			self.set_dt_order(symbol)
-			# print(nddf[symbol].shape)
-			num_of_rows_after = nddf[symbol].shape[0]
-			log("Time frame (after refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
-				nddf[symbol]["Date"].max()), visible=log_visible)
-			log("Number of rows (after refresh): " + str(num_of_rows_after), visible=log_visible)
-			nddb.write(symbol, log_visible=False)
-			return num_of_rows_after - num_of_rows_before
-		else:
-			log("There is no new data from: " + from_dbdt, visible=log_visible)
-			return 0
+	# def refresh(self, symbol, log_visible=True):
+	# 	log("ndf-> refresh " + symbol, visible=log_visible)
+	# 	log("Time frame (before refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
+	# 		nddf[symbol]["Date"].max()), visible=log_visible)
+	# 	num_of_rows_before = nddf[symbol].shape[0]
+	# 	log("Number of rows (before refresh): " + str(num_of_rows_before), visible=log_visible)
+	# 	to_dbdt = datetime.now() + timedelta(days=1)
+	# 	to_dbdt = to_dbdt.strftime('%Y-%m-%d %H:%M:%S')
+	# 	# print("to", to_dbdt)
+	# 	from_dbdt = str(nddf[symbol]["Date"].max())
+	# 	# print("from", from_dbdt)
+	# 	i_tounix = n_tools.dbdt_to_unixdt(to_dbdt)
+	# 	i_fromunix = n_tools.dbdt_to_unixdt(from_dbdt)
+	# 	i_res = md.get_stock_candles(symbol, "1", i_fromunix, i_tounix, True, log_visible)
+	# 	# print(i_res)
+	#
+	# 	# fast check result
+	# 	i_array1 = np.array(i_res["Date"])
+	# 	i_array2 = np.array(nddf[symbol]["Date"][-200:])
+	# 	if len(i_array1) != sum(np.isin(i_array1, i_array2)):
+	# 		nddf[symbol] = nddf[symbol].append(i_res)
+	# 		# print(nddf[symbol].shape)
+	# 		self.set_dt_order(symbol)
+	# 		# print(nddf[symbol].shape)
+	# 		num_of_rows_after = nddf[symbol].shape[0]
+	# 		log("Time frame (after refresh): " + str(nddf[symbol]["Date"].min()) + " - " + str(
+	# 			nddf[symbol]["Date"].max()), visible=log_visible)
+	# 		log("Number of rows (after refresh): " + str(num_of_rows_after), visible=log_visible)
+	# 		nddb.write(symbol, log_visible=False)
+	# 		return num_of_rows_after - num_of_rows_before
+	# 	else:
+	# 		log("There is no new data from: " + from_dbdt, visible=log_visible)
+	# 		return 0
 
 	def remove_columns(self, symbol, columns):
 		for i_c in columns:
@@ -3819,93 +3688,46 @@ class n_date_frame2:
 				nddf[symbol] = nddf[symbol].drop(i_c, axis=1, errors='ignore')
 
 
-class watch_list:
+class WatchList:
 
 	def __init__(self):
-		self.wl_df = self.read()
-
-	# self.refresh_sentiment()
+		self.wl_dict = {}
+		self.read()
 
 	def read(self):
-		i_df = pd.read_csv('wl.csv', sep=';')
-		return i_df
+		try:
+			self.wl_dict = pickle.load(open("nDot_wl.pickle", "rb"))
+		except:
+			pass
 
 	def write(self):
-		self.wl_df.to_csv('wl.csv', sep=';', index=False)
-		self.wl_df = self.read()
-		return
+		pickle.dump(self.wl_dict, open("nDot_wl.pickle", "wb"))
 
-	def refresh_profile(self, symbol="none"):
-		for index, row in self.wl_df.iterrows():
-			i_symbol = row['symbol']
-			if symbol == i_symbol or symbol == "none":
-				i_company_profile = md.company_profile(i_symbol)
-				if len(i_company_profile.keys()) == 0:
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'name'] = i_symbol
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'profil'] = i_symbol
-				else:
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'name'] = i_company_profile['name']
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'profil'] = "Web: " + i_company_profile['weburl']
-		self.write()
-		return
-
-	def refresh_sentiment(self, symbol="none"):
-		for index, row in self.wl_df.iterrows():
-			i_symbol = row['symbol']
-			if symbol == i_symbol or symbol == "none":
-				i_news_sentiment = md.news_sentiment(i_symbol)
-				if i_news_sentiment['sentiment']:
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bearish'] = i_news_sentiment['sentiment'][
-						'bearishPercent']
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bullish'] = i_news_sentiment['sentiment'][
-						'bullishPercent']
-				else:
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bearish'] = 0
-					self.wl_df.loc[self.wl_df['symbol'] == i_symbol, 'snt_bullish'] = 0
-		self.write()
-		return
-
-	def add(self, symbol, years=3):
-		self.remove(symbol)
-		new_row = {'symbol': symbol}
-		# print(new_row)
-		self.wl_df = self.wl_df.append(new_row, ignore_index=True)
-		self.refresh_profile(symbol)
-		# self.refresh_sentiment(symbol)
-		self.wl_df.loc[self.wl_df['symbol'] == symbol, 'ai_project1'] = ""
+	def add(self, symbol):
+		self.wl_dict[symbol] = {'symbol': symbol,
+								"slot": False}
 		self.write()
 		gui.refresh_ui()
-		ndf.add(symbol, years)
-		return
-
-	def add_crypto(self, symbol, years=3):
-		if symbol in nbt.crypto:
-			self.remove(symbol)
-			new_row = {'symbol': symbol}
-			self.wl_df = self.wl_df.append(new_row, ignore_index=True)
-			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'ai_project1'] = ""
-			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'name'] = "-"
-			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'profil'] = "-"
-			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'snt_bearish'] = 0
-			self.wl_df.loc[self.wl_df['symbol'] == symbol, 'snt_bullish'] = 0
-			self.write()
-			gui.refresh_ui()
-			ndf.add_crypto_multi2(symbol, years)
-		else:
-			log(symbol + " - non listed symbol on Binance.")
-		return
 
 	def remove(self, symbol):
-		self.wl_df.drop(self.wl_df.loc[self.wl_df['symbol'] == symbol].index, inplace=True)
+		del self.wl_dict[symbol]
+		# self.wl_df.drop(self.wl_df.loc[self.wl_df['symbol'] == symbol].index, inplace=True)
 		self.write()
-		return
 
-# def add_ai_project(self, symbol, project):
-#     self.wl_df.loc[self.wl_df['symbol'] == symbol, 'ai_project1'] = project
-#     self.wl_df['ai_project1'] = self.wl_df['ai_project1'].fillna("-")
-#     print(self.wl_df)
-#     self.write()
-#     return
+	def slot_add(self, symbol):
+		self.wl_dict[symbol]["slot"] = True
+		self.write()
+
+	def slot_remove(self, symbol):
+		self.wl_dict[symbol]["slot"] = False
+		self.write()
+
+	def get_stots(self):
+		iret = []
+		for sl in self.wl_dict:
+			if self.wl_dict[sl]["slot"]:
+				iret.append(sl)
+		return iret
 
 
 # PROGRAMS ----------------------------------------------------------------------------
@@ -3980,12 +3802,17 @@ def do(symbol="", p2="", p3=""):
 		gc.collect()
 
 		y_sig_all = np.array(nddf[symbol][y_field].values)
-		y_sig_all = np.delete(y_sig_all, bug_index, 0)
+
+		mask = np.full(y_sig_all.shape[0], True)
+		mask[bug_index] = False
+		y_sig_all = y_sig_all[mask]
+
+		# y_sig_all = np.delete(y_sig_all, bug_index, 0)
 
 		if dss == 0:
 			log("Number of deleted datapont with Nan Inf: " + str(len(bug_index)))
 
-		del bug_index
+		del bug_index, mask
 		gc.collect()
 
 		block_size = 1200000  # max  700000
@@ -4004,13 +3831,18 @@ def do(symbol="", p2="", p3=""):
 		gc.collect()
 
 		i_indexes_9_10 = np.where(y_sig_all >= 9)[0]
-		X_array_all = np.delete(X_array_all, i_indexes_9_10, 0)
-		y_sig_all = np.delete(y_sig_all, i_indexes_9_10, 0)
+		mask = np.full(y_sig_all.shape[0], True)
+		mask[i_indexes_9_10] = False
+		y_sig_all = y_sig_all[mask]
+		X_array_all = X_array_all[mask]
+
+		# X_array_all = np.delete(X_array_all, i_indexes_9_10, 0)
+		# y_sig_all = np.delete(y_sig_all, i_indexes_9_10, 0)
 
 		if dss == 0:
 			log("Number of deleted datapoint with (9,10): " + str(len(i_indexes_9_10)))
 
-		del i_indexes_9_10
+		del i_indexes_9_10, mask
 		gc.collect()
 
 		nd_dset.add_X(X_array_all)
@@ -4064,128 +3896,171 @@ def do(symbol="", p2="", p3=""):
 
 
 def do2(symbol="", p2="", p3=""):
-	def get_dataset_by_index(symbol, index, time_window_size, original_fields,
-							 contras, contra_copies_dt, nddf):
+	from paramiko import SSHClient
+	# import scp
+	import os
+	import paramiko
+	# from scp import SCPClient
 
-		i_int_to = int(index)
-		i_int_from = i_int_to - time_window_size + 1
-		# print(nddf[symbol]["Date"][i_int_to:i_int_to + 1])
-		# sys.exit(0)
-
-		i_data_array = np.array([])
-		if i_int_from > 0:
-			if len(original_fields) > 0:
-				for i_of in original_fields:
-					i_add = np.array(nddf[symbol][i_of][i_int_from:i_int_to + 1])
-					i_data_array = np.append(i_data_array, i_add)
-
-			if len(contras) > 0:
-				for i_con in contras:
-					contra_sep_pre = i_con.split('_')
-					con_sep = []
-					if len(contra_sep_pre) > 2:
-						con_sep.append(contra_sep_pre[0])
-						s = "_"
-						con_sep.append(s.join(contra_sep_pre[1:]))
-					else:
-						con_sep = contra_sep_pre
-
-					con_symbol = con_sep[0]
-					con_field = con_sep[1]
-
-					orig_date = nddf[symbol]["Date"][index:index + 1].values[0]
-					try:
-						i_int_to_contra = np.where(contra_copies_dt[con_symbol] == orig_date)[0][0]
-					except:
-						return np.array([])
-
-					i_int_from_contra = i_int_to_contra - time_window_size + 1
-					i_new = np.array(nddf[con_symbol][con_field][i_int_from_contra:i_int_to_contra + 1])
-					i_data_array = np.append(i_data_array, i_new)
-		return i_data_array
-
-	def roll_time_frame(array, time_window, data_window_back_shift=0):  # rolling time frame
-		a = np.array(array).astype(float)
-		stack_array = [0] * time_window
-		for i in range(time_window):
-			nprt = np.roll(a, (time_window - i - 1 + data_window_back_shift))
-			# print(nprt)
-			stack_array[i] = nprt
-			for n in range(time_window - i - 1 + data_window_back_shift):
-				stack_array[i][n] = np.NaN
-			# print(stack_array[i])
-
-		return np.vstack(stack_array).T
-
-	symbol = "BTCUSDT"
-	project = "BTCUSDT_P10INT"
-	gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
-	# print(contras)
-	time_window_size = int(dataset_config['time_window_size'])
-
-	hstack_array = []
-	for field in original_fields:
-		hstack_array.append(roll_time_frame(nddf[symbol][field], time_window_size))
-
-	# print(nddf[symbol].shape)
-
-	dataset_new = np.hstack(hstack_array)
-
-	for i in range(nddf[symbol].shape[0]):
-		if i % 1000 == 0:
-			print(i)
-		old_data = get_dataset_by_index(symbol, i, time_window_size, original_fields, contras, {}, nddf)
-		# print(old_data)
-		if len(old_data) == 0:
-			old_data = [np.NaN] * (time_window_size * len(original_fields))
-		# print(dataset_new[i])
-		# print(old_data)
-		dataset_new[i] = np.array(list(dataset_new[i])).astype(np.float64).round(5)
-		old_data = np.array(list(old_data)).astype(np.float64).round(5)
-		# print(dataset_new[i])
-		# print(old_data)
-
-		if not np.allclose(old_data, dataset_new[i]):
-			print(i, "eltérés")
-			# print(str(dataset_new[i]))
-			# print(str(old_data))
-			# i_int_to = int(i)
-			# i_int_from = i_int_to - time_window_size + 1
-			#
-			# for i_of in original_fields:
-			# 	print(nddf[symbol][i_of][i_int_from:i_int_to + 1])
+	# def createSSHClient(server, port, user, password):
+	# 	client = paramiko.SSHClient()
+	# 	client.load_system_host_keys()
+	# 	client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+	# 	client.connect(server, port, user, password)
+	# 	return client
+	#
+	# ssh = createSSHClient("198.13.38.150", 22, "root", "Cd}452M*xkUo=*P4")
+	# scp = scp.SCPClient(ssh.get_transport())
+	# try:
+	# 	scp.put("test.txt", r"test.txt")
+	# except:
+	# 	print("ez nem ment")
+	# scp.close()
+	#
+	# try:
+	# 	scp.put("test.txt", r"test2.txt")
+	# except:
+	# 	print("ez nem ment")
+	# scp.close()
+	#
+	#
+	# try:
+	# 	scp.put("test.txt", r"test3.txt")
+	# except:
+	# 	print("ez nem ment")
+	# scp.close()
+	#
+	# try:
+	# 	scp.remove(r"test2.txt")
+	# except:
+	# 	print("ez nem ment")
+	# scp.close()
 
 
-		# for dsx, dsn in enumerate(dataset_new[i]):
-			# 	if dsn != old_data[dsx]:
-			# 		print(dsn, old_data[dsx])
-			# 		time.sleep(1)
 
 
-def stream_job():
-	print("run outer job")
+	# def get_dataset_by_index(symbol, index, time_window_size, original_fields,
+	# 						 contras, contra_copies_dt, nddf):
+	#
+	# 	i_int_to = int(index)
+	# 	i_int_from = i_int_to - time_window_size + 1
+	# 	# print(nddf[symbol]["Date"][i_int_to:i_int_to + 1])
+	# 	# sys.exit(0)
+	#
+	# 	i_data_array = np.array([])
+	# 	if i_int_from > 0:
+	# 		if len(original_fields) > 0:
+	# 			for i_of in original_fields:
+	# 				i_add = np.array(nddf[symbol][i_of][i_int_from:i_int_to + 1])
+	# 				i_data_array = np.append(i_data_array, i_add)
+	#
+	# 		if len(contras) > 0:
+	# 			for i_con in contras:
+	# 				contra_sep_pre = i_con.split('_')
+	# 				con_sep = []
+	# 				if len(contra_sep_pre) > 2:
+	# 					con_sep.append(contra_sep_pre[0])
+	# 					s = "_"
+	# 					con_sep.append(s.join(contra_sep_pre[1:]))
+	# 				else:
+	# 					con_sep = contra_sep_pre
+	#
+	# 				con_symbol = con_sep[0]
+	# 				con_field = con_sep[1]
+	#
+	# 				orig_date = nddf[symbol]["Date"][index:index + 1].values[0]
+	# 				try:
+	# 					i_int_to_contra = np.where(contra_copies_dt[con_symbol] == orig_date)[0][0]
+	# 				except:
+	# 					return np.array([])
+	#
+	# 				i_int_from_contra = i_int_to_contra - time_window_size + 1
+	# 				i_new = np.array(nddf[con_symbol][con_field][i_int_from_contra:i_int_to_contra + 1])
+	# 				i_data_array = np.append(i_data_array, i_new)
+	# 	return i_data_array
+	#
+	# def roll_time_frame(array, time_window, data_window_back_shift=0):  # rolling time frame
+	# 	a = np.array(array).astype(float)
+	# 	stack_array = [0] * time_window
+	# 	for i in range(time_window):
+	# 		nprt = np.roll(a, (time_window - i - 1 + data_window_back_shift))
+	# 		# print(nprt)
+	# 		stack_array[i] = nprt
+	# 		for n in range(time_window - i - 1 + data_window_back_shift):
+	# 			stack_array[i][n] = np.NaN
+	# 		# print(stack_array[i])
+	#
+	# 	return np.vstack(stack_array).T
+	#
+	# symbol = "BTCUSDT"
+	# project = "BTCUSDT_P10INT"
+	# gdc_ok, description, dataset_config, original_fields, contras, indexes = ai.get_project_config(project)
+	# # print(contras)
+	# time_window_size = int(dataset_config['time_window_size'])
+	#
+	# hstack_array = []
+	# for field in original_fields:
+	# 	hstack_array.append(roll_time_frame(nddf[symbol][field], time_window_size))
+	#
+	# # print(nddf[symbol].shape)
+	#
+	# dataset_new = np.hstack(hstack_array)
+	#
+	# for i in range(nddf[symbol].shape[0]):
+	# 	if i % 1000 == 0:
+	# 		print(i)
+	# 	old_data = get_dataset_by_index(symbol, i, time_window_size, original_fields, contras, {}, nddf)
+	# 	# print(old_data)
+	# 	if len(old_data) == 0:
+	# 		old_data = [np.NaN] * (time_window_size * len(original_fields))
+	# 	# print(dataset_new[i])
+	# 	# print(old_data)
+	# 	dataset_new[i] = np.array(list(dataset_new[i])).astype(np.float64).round(5)
+	# 	old_data = np.array(list(old_data)).astype(np.float64).round(5)
+	# 	# print(dataset_new[i])
+	# 	# print(old_data)
+	#
+	# 	if not np.allclose(old_data, dataset_new[i]):
+	# 		print(i, "eltérés")
+	# 		# print(str(dataset_new[i]))
+	# 		# print(str(old_data))
+	# 		# i_int_to = int(i)
+	# 		# i_int_from = i_int_to - time_window_size + 1
+	# 		#
+	# 		# for i_of in original_fields:
+	# 		# 	print(nddf[symbol][i_of][i_int_from:i_int_to + 1])
+	#
+	#
+	# 	# for dsx, dsn in enumerate(dataset_new[i]):
+	# 		# 	if dsn != old_data[dsx]:
+	# 		# 		print(dsn, old_data[dsx])
+	# 		# 		time.sleep(1)
 
-	i_new_row_count = ndf.get_allrow_count()
-	indicators_by_symbols = ai.get_all_indicators_by_symbols()  # ez csak azokat adja vissza ami a projekt futtatásához kell
 
-	for smb in ndf.get_all_symbol():
-		if ndf.refresh(smb, log_visible=False) > 0:  # frissítem az adatokat
-			if smb in indicators_by_symbols:
-				for indicator in indicators_by_symbols[smb]:
-					ndf.refresh_tech(smb, indicator, log_vissible=False)
-
-	# for smb in ndf.get_all_symbol():
-
-	# ndf.get_dataset_by_index(symbol=symbol,
-	# 						 index=ix + x_from,
-	# 						 time_window_size=time_window_size,
-	# 						 original_fields=original_fields,
-	# 						 contras=contras,
-	# 						 contra_copies=contra_copies)
-
-	i_new_row_count = ndf.get_allrow_count() - i_new_row_count
-	if i_new_row_count > 0:  # csak akkor frissítünk ha van új sor
-		stream_last_refresh(time.strftime("%H:%M"))
+# def stream_job():
+# 	print("run outer job")
+#
+# 	i_new_row_count = ndf.get_allrow_count()
+# 	indicators_by_symbols = ai.get_all_indicators_by_symbols()  # ez csak azokat adja vissza ami a projekt futtatásához kell
+#
+# 	for smb in ndf.get_all_symbol():
+# 		if ndf.refresh(smb, log_visible=False) > 0:  # frissítem az adatokat
+# 			if smb in indicators_by_symbols:
+# 				for indicator in indicators_by_symbols[smb]:
+# 					ndf.refresh_tech(smb, indicator, log_vissible=False)
+#
+# 	# for smb in ndf.get_all_symbol():
+#
+# 	# ndf.get_dataset_by_index(symbol=symbol,
+# 	# 						 index=ix + x_from,
+# 	# 						 time_window_size=time_window_size,
+# 	# 						 original_fields=original_fields,
+# 	# 						 contras=contras,
+# 	# 						 contra_copies=contra_copies)
+#
+# 	i_new_row_count = ndf.get_allrow_count() - i_new_row_count
+# 	if i_new_row_count > 0:  # csak akkor frissítünk ha van új sor
+# 		stream_last_refresh(time.strftime("%H:%M"))
 
 
 def s(msg_str):
@@ -4340,12 +4215,22 @@ def ai_confusion(symbol, project):
 	gc.collect()
 	y_field = "y_" + dataset_config["sig_suffix"]
 	y_np = np.array(nddf[symbol][y_field].values)
-	y_np = np.delete(y_np, bug_index, 0)
+	mask = np.full(y_np.shape[0], True)
+	mask[bug_index] = False
+	y_np = y_np[mask]
+
+	# y_np = np.delete(y_np, bug_index, 0)
 
 	i_indexes_9_10 = np.where(y_np >= 9)[0]
-	y_np = np.delete(y_np, i_indexes_9_10, 0)
-	log(f"del 9_10")
-	cX_array = np.delete(cX_array, i_indexes_9_10, 0)
+	mask = np.full(y_np.shape[0], True)
+	mask[i_indexes_9_10] = False
+	y_np = y_np[mask]
+	cX_array = cX_array[mask]
+
+	# y_np = np.delete(y_np, i_indexes_9_10, 0)
+	log(f"deleted 9_10")
+	# cX_array = np.delete(cX_array, i_indexes_9_10, 0)
+	del mask, i_indexes_9_10
 	gc.collect()
 
 	ai.build()
@@ -5171,12 +5056,13 @@ def ai_build():
 def ndf_add(symbol="", years=1):
 	ndf.add(symbol, years)
 
+
 def ndf_add_crypto(symbol="", years=1):
 	ndf.add_crypto_multi2(symbol, years)
 
+
 def ndf_tech(symbol, tech_indicator, params=[]):
 	ndf.add_tech(symbol, tech_indicator, params)
-
 
 def ndf_tech_backtest(symbol, run_time_window, sig_field, start_position=0):
 	start_position = int(start_position)
@@ -5398,33 +5284,40 @@ def ndf_show_last(symbol=""):
 
 
 def md_check(symbol=""):
-	if md.check_finnhub_connection(symbol):
-		log("  FinnHub connection is OK.")
-	else:
-		log("  FinnHub connection ERROR.")
+	log("OFF")
+
+	# if md.check_finnhub_connection(symbol):
+	# 	log("  FinnHub connection is OK.")
+	# else:
+	# 	log("  FinnHub connection ERROR.")
 
 
 def md_symbols(market):
-	if market == "ALT":
-		for smb in nbt.get_all_symbols():
-			print(smb)
+	log("OFF")
 
-	else:
-		market_symbols = pd.DataFrame(md.stock_symbols(market))
-		print(market_symbols)
-
-
-
+	# if market == "ALT":
+	# 	for smb in nbt.get_all_symbols():
+	# 		print(smb)
+	# else:
+	# 	market_symbols = pd.DataFrame(md.stock_symbols(market))
+	# 	print(market_symbols)
 
 
 # wl programs -------------------------------------------------------------------------------------------------------
 
 
 def wl_add(symbol="", years=3):
-	wl.add(symbol, years)
+	log("Finnhub integration is paused.")
+	# wl.add(symbol, years)
+
 
 def wl_add_crypto(symbol="", years=3):
-	wl.add_crypto(symbol, years)
+	if symbol in nbt.crypto:
+		wl.add(symbol)
+		ndf.add_crypto_multi2(symbol, years)
+	else:
+		log(symbol + " - non listed symbol on Binance.")
+
 
 def wl_remove(symbol=""):
 	wl.remove(symbol)
@@ -5432,44 +5325,10 @@ def wl_remove(symbol=""):
 	ai.remove_symbol(symbol)
 	gui.refresh_ui()
 
-
-def wl_refresh_profile():
-	wl.refresh_profile()
-	gui.refresh_ui()
-
-
-def wl_refresh_sentiment():
-	wl.refresh_sentiment()
-	gui.refresh_ui()
-
-
 # PROGRAMS fo wl buttons----------------------------------------------------------------------------
 
-
-def wl_trade_short(btn_no):
-	symbol = wl.wl_df.loc[btn_no - 1]['symbol']
-	ntrade.order['symbol'] = symbol
-	ntrade.order['position'] = "SHORT"
-	i_market_price = ntrade.get_market_price_by_symbol(symbol)
-	ntrade.order['market_price'] = float(i_market_price)
-	ntrade.order['qty'] = int(ntrade.config["trade_block_size"] / ntrade.order['market_price'])
-	ntrade.order['stop_trailing'] = False
-	gui.set_trade_frame()
-
-
-def wl_trade_long(btn_no):
-	symbol = wl.wl_df.loc[btn_no - 1]['symbol']
-	ntrade.order['symbol'] = symbol
-	ntrade.order['position'] = "LONG"
-	i_market_price = ntrade.get_market_price_by_symbol(symbol)
-	ntrade.order['market_price'] = float(i_market_price)
-	ntrade.order['qty'] = int(ntrade.config["trade_block_size"] / ntrade.order['market_price'])
-	ntrade.order['stop_trailing'] = False
-	gui.set_trade_frame()
-
-
 def wl_btn_chart(btn_no):
-	symbol = wl.wl_df.loc[btn_no - 1]['symbol']
+	symbol = list(wl.wl_dict.keys())[btn_no]
 	log("start: nchart " + symbol, True, False)
 	i_indecators = ndf.get_added_indicators(symbol)
 	i_df = nddf[symbol].tail(60000).copy()
@@ -5478,105 +5337,149 @@ def wl_btn_chart(btn_no):
 
 
 def wl_btn_show(btn_no):
-	symbol = wl.wl_df.loc[btn_no - 1]['symbol']
+	symbol = list(wl.wl_dict.keys())[btn_no]
 	log("start: ndf.show.last " + symbol, True, False)
 	ndf_show_last(symbol)
 	log("ready.", False, False)
 
 
+def wl_btn_push(btn_no):
+	symbol = list(wl.wl_dict.keys())[btn_no]
+	log("start: push " + symbol, True, False)
+	log("ready.", False, False)
+
+
+def wl_btn_start(btn_no):
+	symbol = list(wl.wl_dict.keys())[btn_no]
+	log("start: start " + symbol, True, False)
+	log("ready.", False, False)
+
+
+def wl_btn_stop(btn_no):
+	symbol = list(wl.wl_dict.keys())[btn_no]
+	log("start: stop " + symbol, True, False)
+	log("ready.", False, False)
+
+
+def wl_btn_tv(btn_no):
+	symbol = list(wl.wl_dict.keys())[btn_no]
+	log("start: tv " + symbol, True, False)
+	webbrowser.open(f'https://www.tradingview.com/chart/nW9ArkAr/?symbol=BINANCE%3A{symbol.upper()}')
+	log("ready.", False, False)
+
+
+def wl_slot():
+	log(f"Active slots: {wl.get_stots()}")
+
+
+def wl_slot_add(symbol=""):
+	wl.slot_add(symbol)
+	log(f"Slots added: {symbol}")
+	log(f"Active slots: {wl.get_stots()}")
+	gui.refresh_ui()
+
+
+def wl_slot_remove(symbol=""):
+	wl.slot_remove(symbol)
+	log(f"Slots removed: {symbol}")
+	log(f"Active slots: {wl.get_stots()}")
+	gui.refresh_ui()
+
+
 # tr PROGRAMS ----------------------------------------------------------------------------
 
+#
+# def tr_stop_all():
+# 	gui.Tr_frame.hide()
+# 	QApplication.processEvents()
+# 	if gui.confirm("Stop all!", "Are you sure? Stop all position?"):
+# 		gui.tlog(f"Start: STOP ALL!", line=True, indent=False, color="normal")
+# 		i_open_orders = ntrade.get_all_open_orders()
+# 		i_symbol_dic = {}
+# 		for i_o1 in i_open_orders:
+# 			i_symbol_dic[i_o1.symbol] = 1
+# 		for i_o2 in i_symbol_dic:
+# 			gui.tlog(f"Clear orders: {i_o2}", line=False, indent=True, color="normal")
+# 			ntrade.cancel_orders_by_symbol(i_o2)
+#
+# 		for i_s in tuple(wl.wl_df["symbol"]):
+# 			ntrade.set_tp_position(i_s, 0)
+#
+# 		i_pos = ntrade.get_all_positions()
+# 		for i_s2 in i_pos:
+# 			if i_s2.symbol not in tuple(wl.wl_df["symbol"]):
+# 				ntrade.set_tp_position(i_s2.symbol, 0)
+#
+# 		gui.refresh_ui("info")
+# 		gui.tlog(f"Ready.", line=False, indent=False, color="normal")
+# 		ntrade.broker_run()
 
-def tr_set_order():
-	if ntrade.order["position"] == "LONG":
-		i_qty = int(ntrade.order["qty"])
+
+def btn_binance():
+	print("itt")
+	webbrowser.open(f'https://www.binance.com/en/my/dashboard')
+
+
+def tr_streaming():
+	if gui.Tr_streaming.checkState():
+		log("tr_streaming on")
+		strat_stream()
 	else:
-		i_qty = -1 * int(ntrade.order["qty"])
-	ntrade.set_tp_position(ntrade.order["symbol"], i_qty)
-	gui.Tr_frame.hide()
-	QApplication.processEvents()
-	gui.refresh_ui("info")
-	ntrade.broker_run()
+		log("tr_streaming off")
+		stop_stream()
 
 
-def tr_stop(btn_no):
-	symbol = wl.wl_df.loc[btn_no - 1]['symbol']
-	if gui.confirm("Stop " + symbol, "Are you sure? Stop " + symbol + " position?"):
-		ntrade.order["symbol"] = symbol
-		ntrade.order["position"] = "STOP"
-		ntrade.order["qty"] = 0
-		ntrade.order["stop_trailing"] = False
-		ntrade.set_tp_position(ntrade.order["symbol"], 0)
-		gui.Tr_frame.hide()
-		QApplication.processEvents()
-		gui.refresh_ui("info")
-		ntrade.broker_run()
+# def tr_portfolio_monitor():
+# 	if gui.Tr_portfolio_monitor.checkState():
+# 		ntrade.monitor_run()
+# 	else:
+# 		ntrade.monitor_stop()
 
 
-def tr_stop_all():
-	gui.Tr_frame.hide()
-	QApplication.processEvents()
-	if gui.confirm("Stop all!", "Are you sure? Stop all position?"):
-		gui.tlog(f"Start: STOP ALL!", line=True, indent=False, color="normal")
-		i_open_orders = ntrade.get_all_open_orders()
-		i_symbol_dic = {}
-		for i_o1 in i_open_orders:
-			i_symbol_dic[i_o1.symbol] = 1
-		for i_o2 in i_symbol_dic:
-			gui.tlog(f"Clear orders: {i_o2}", line=False, indent=True, color="normal")
-			ntrade.cancel_orders_by_symbol(i_o2)
+# stream  ------------------------------------------------------------------
 
-		for i_s in tuple(wl.wl_df["symbol"]):
-			ntrade.set_tp_position(i_s, 0)
+def stream_worker():
+	global stream_is_running
+	while stream_is_running:
+		tc.get_messages()
+		gui.server_status_dict = pickle.load(open("incoming/nDot_trade_server_status.pickle", "rb"))
+		gui.refresh_ui(mode="stream")
 
-		i_pos = ntrade.get_all_positions()
-		for i_s2 in i_pos:
-			if i_s2.symbol not in tuple(wl.wl_df["symbol"]):
-				ntrade.set_tp_position(i_s2.symbol, 0)
-
-		gui.refresh_ui("info")
-		gui.tlog(f"Ready.", line=False, indent=False, color="normal")
-		ntrade.broker_run()
+		time.sleep(30)
 
 
-def tr_portfolio_monitor():
-	if gui.Tr_portfolio_monitor.checkState():
-		ntrade.monitor_run()
-	else:
-		ntrade.monitor_stop()
+def strat_stream():
+	global stream_is_running
+	task = threading.Thread(target=stream_worker, args=[])
+	stream_is_running = True
+	task.start()
 
 
-def ndf_stream():
-	if gui.Ndf_stream.checkState():
-		md.stream_run()
-	else:
-		md.stream_stop()
-
-
-def tr_info_refresh():
-	ntrade.refresh_tr_info()
+def stop_stream():
+	global stream_is_running
+	stream_is_running = False
 
 
 if __name__ == "__main__":
 	print("Status: Start")
-	wl = watch_list()
+	wl = WatchList()
 	nddf = {}
 	nddb = n_db(nddf, log)
-
 
 	print("Status: GUI Loading...")
 	app = QApplication([])
 	gui = gui()
 	ai = n_ai(log, nddf, gui)
-	ntrade = n_trade(gui=gui)
-	nchart = n_chart(ntrade)
+	tc = n_trade_server_connection()
+	# ntrade = n_trade(gui=gui)
+	nchart = n_chart()
 	gui.refresh_ui()
 	gui.show()
 
 	ndf = n_date_frame2()
 	ndf_meta = n_date_frame_meta(log)
 	n_tools = n_tools(gui=gui)
-	md = n_market_data(log, s, n_tools, ndf, stream_job)
+	# md = n_market_data(log, s, n_tools, ndf, stream_job)
 	try:
 		nbt = n_binance_trade(log=log, s=s, tools=n_tools)
 	except:
@@ -5584,7 +5487,6 @@ if __name__ == "__main__":
 	mp_tech = n_tech_mp
 	mp_calibrate = n_calibrate_mp
 	mp_dataset_constructor = n_dataset_constructor_mp
-	# do2("BTCUSDT")
 	app.exec()
 
 

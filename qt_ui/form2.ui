@@ -10,6 +10,12 @@
     <height>720</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="minimumSize">
    <size>
     <width>800</width>
@@ -30,7 +36,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>nDot</string>
+   <string notr="true">nDot</string>
   </property>
   <property name="windowOpacity">
    <double>1.000000000000000</double>
@@ -56,11 +62,11 @@ border: none;
 background: #999999;
 }
 QProgressBar::chunk:horizontal {
-background: #ff9100;
+background: #E1B866;
 }</string>
    </property>
    <property name="value">
-    <number>24</number>
+    <number>17</number>
    </property>
    <property name="textVisible">
     <bool>false</bool>
@@ -216,11 +222,11 @@ background-color: none;</string>
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QLabel" name="logo1">
    <property name="geometry">
     <rect>
      <x>8</x>
-     <y>25</y>
+     <y>14</y>
      <width>111</width>
      <height>40</height>
     </rect>
@@ -244,7 +250,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>702</x>
-     <y>195</y>
+     <y>161</y>
      <width>1000</width>
      <height>20</height>
     </rect>
@@ -266,7 +272,7 @@ background-color: none;</string>
   <widget class="QLabel" name="label_4">
    <property name="geometry">
     <rect>
-     <x>712</x>
+     <x>715</x>
      <y>-2</y>
      <width>102</width>
      <height>37</height>
@@ -290,7 +296,7 @@ background:none;</string>
   <widget class="QLabel" name="label_5">
    <property name="geometry">
     <rect>
-     <x>714</x>
+     <x>717</x>
      <y>0</y>
      <width>102</width>
      <height>37</height>
@@ -314,7 +320,7 @@ background:none;</string>
   <widget class="QLabel" name="label_6">
    <property name="geometry">
     <rect>
-     <x>713</x>
+     <x>716</x>
      <y>-1</y>
      <width>102</width>
      <height>37</height>
@@ -339,7 +345,7 @@ background:none;</string>
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>197</y>
+     <y>163</y>
      <width>1000</width>
      <height>20</height>
     </rect>
@@ -362,7 +368,7 @@ background-color: none;</string>
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>192</y>
+     <y>158</y>
      <width>1000</width>
      <height>20</height>
     </rect>
@@ -430,9 +436,9 @@ background-color: none;</string>
   <widget class="QToolButton" name="Tr_stop_all">
    <property name="geometry">
     <rect>
-     <x>984</x>
+     <x>1064</x>
      <y>5</y>
-     <width>381</width>
+     <width>271</width>
      <height>25</height>
     </rect>
    </property>
@@ -444,13 +450,14 @@ background-color: none;</string>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background: #ff9100;
+    <string notr="true">background: #E1B866;
 color:#ffffff;
 border-top-left-radius: 5px;
 border-top-right-radius: 5px;
 border-bottom-right-radius: 5px;
 border-bottom-left-radius: 5px;
-border:1px solid #535353;
+border-left: 1px solid #888888;
+border-bottom: 1px solid #888888;
 border-top: 0;
 align: left;</string>
    </property>
@@ -482,7 +489,7 @@ background: none;</string>
     <string>nDataFrame logs:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_14">
+  <widget class="QLabel" name="Trade_log">
    <property name="geometry">
     <rect>
      <x>5</x>
@@ -503,7 +510,7 @@ background: none;</string>
 background: none;</string>
    </property>
    <property name="text">
-    <string>Trade logs:</string>
+    <string>Trade messages:</string>
    </property>
   </widget>
   <widget class="Line" name="line_17">
@@ -668,7 +675,7 @@ background: none;</string>
     <string>nDataFrame logs:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_16">
+  <widget class="QLabel" name="Trade_log2">
    <property name="geometry">
     <rect>
      <x>6</x>
@@ -689,15 +696,15 @@ background: none;</string>
 background: none;</string>
    </property>
    <property name="text">
-    <string>Trade logs:</string>
+    <string>Trade messages:</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="Tr_portfolio_monitor">
+  <widget class="QCheckBox" name="Tr_streaming">
    <property name="geometry">
     <rect>
-     <x>857</x>
+     <x>826</x>
      <y>7</y>
-     <width>101</width>
+     <width>122</width>
      <height>20</height>
     </rect>
    </property>
@@ -729,7 +736,7 @@ QCheckBox::indicator:checked {
 </string>
    </property>
    <property name="text">
-    <string>Monitor</string>
+    <string>Streaming</string>
    </property>
    <property name="iconSize">
     <size>
@@ -742,23 +749,7 @@ QCheckBox::indicator:checked {
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>453</y>
-     <width>691</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">background: none</string>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-  </widget>
-  <widget class="Line" name="line_23">
-   <property name="geometry">
-    <rect>
-     <x>705</x>
-     <y>582</y>
+     <y>526</y>
      <width>691</width>
      <height>21</height>
     </rect>
@@ -774,7 +765,7 @@ QCheckBox::indicator:checked {
    <property name="geometry">
     <rect>
      <x>705</x>
-     <y>326</y>
+     <y>342</y>
      <width>691</width>
      <height>21</height>
     </rect>
@@ -790,9 +781,9 @@ QCheckBox::indicator:checked {
    <property name="geometry">
     <rect>
      <x>918</x>
-     <y>206</y>
+     <y>172</y>
      <width>20</width>
-     <height>515</height>
+     <height>553</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -805,10 +796,10 @@ QCheckBox::indicator:checked {
   <widget class="Line" name="line_26">
    <property name="geometry">
     <rect>
-     <x>1140</x>
-     <y>206</y>
+     <x>1145</x>
+     <y>172</y>
      <width>20</width>
-     <height>515</height>
+     <height>553</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -816,38 +807,6 @@ QCheckBox::indicator:checked {
    </property>
    <property name="orientation">
     <enum>Qt::Vertical</enum>
-   </property>
-  </widget>
-  <widget class="QLabel" name="nTrade_info">
-   <property name="geometry">
-    <rect>
-     <x>720</x>
-     <y>40</y>
-     <width>641</width>
-     <height>151</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>9</pointsize>
-     <bold>false</bold>
-     <kerning>true</kerning>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true"/>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="textFormat">
-    <enum>Qt::RichText</enum>
-   </property>
-   <property name="margin">
-    <number>0</number>
-   </property>
-   <property name="indent">
-    <number>-1</number>
    </property>
   </widget>
   <widget class="Line" name="line_27">
@@ -866,49 +825,6 @@ QCheckBox::indicator:checked {
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QToolButton" name="Tr_info_refresh">
-   <property name="geometry">
-    <rect>
-     <x>822</x>
-     <y>6</y>
-     <width>20</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-     <bold>false</bold>
-     <kerning>true</kerning>
-    </font>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QToolButton {
-	padding: 3px;
-	border-radius:  8px;
-	border: 1px solid #dddddd;
-}
-QToolButton:pressed {
-	padding: 0px;
-	border-radius: 8px;
-	border: 1px solid #8888dd;
-	background: #8888dd;
-}</string>
-   </property>
-   <property name="text">
-    <string>Refresh nTrade Info</string>
-   </property>
-   <property name="icon">
-    <iconset>
-     <normaloff>../images/rf.png</normaloff>../images/rf.png</iconset>
-   </property>
-   <property name="iconSize">
-    <size>
-     <width>16</width>
-     <height>16</height>
-    </size>
-   </property>
-  </widget>
   <widget class="QScrollArea" name="LT_scrollArea_2">
    <property name="geometry">
     <rect>
@@ -919,7 +835,15 @@ QToolButton:pressed {
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color:#ffffff;</string>
+    <string notr="true">QScrollArea{
+    border: none;
+}
+QScrollBar:vertical {border-left: 1px solid #b5b5ac; 
+    background-color: #efefef;width: 15px;margin: 0 0 0 0;}
+    QScrollBar::handle:vertical {background-color:#b5b5ac ;min-height: 15px; border-radius: 4px; margin: 2px;}
+    QScrollBar::add-line:vertical {border: 0px solid #b5b5ac;background-color: #b5b5ac; height: 0px; subcontrol-position: bottom; subcontrol-origin: margin;}
+    QScrollBar::sub-line:vertical {border: 0px solid #c8c8be;background-color: #b5b5ac; height: 0px;subcontrol-position: top;subcontrol-origin: margin;}
+</string>
    </property>
    <property name="sizeAdjustPolicy">
     <enum>QAbstractScrollArea::AdjustIgnored</enum>
@@ -935,8 +859,8 @@ QToolButton:pressed {
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>701</width>
-      <height>294</height>
+      <width>703</width>
+      <height>296</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -964,7 +888,7 @@ QToolButton:pressed {
        </property>
        <property name="styleSheet">
         <string notr="true">background-color:#ffffff;
-color: #000000;
+color: #373B44;
 border: 1px solid #ffffff;
 padding-left: 10px;
 padding-right: 0px;
@@ -989,7 +913,7 @@ padding-bottom:5px;
   <widget class="Line" name="line_28">
    <property name="geometry">
     <rect>
-     <x>963</x>
+     <x>949</x>
      <y>-2</y>
      <width>3</width>
      <height>37</height>
@@ -1002,7 +926,7 @@ padding-bottom:5px;
   <widget class="Line" name="line_29">
    <property name="geometry">
     <rect>
-     <x>813</x>
+     <x>816</x>
      <y>-1</y>
      <width>3</width>
      <height>37</height>
@@ -1031,11 +955,19 @@ padding-bottom:5px;
      <x>-1</x>
      <y>443</y>
      <width>703</width>
-     <height>251</height>
+     <height>250</height>
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color:#ffffff</string>
+    <string notr="true">QScrollArea{
+    border: none;
+}
+QScrollBar:vertical {border-left: 1px solid #b5b5ac; 
+    background-color: #efefef;width: 15px;margin: 0 0 0 0;}
+    QScrollBar::handle:vertical {background-color:#b5b5ac ;min-height: 15px; border-radius: 4px; margin: 2px;}
+    QScrollBar::add-line:vertical {border: 0px solid #b5b5ac;background-color: #b5b5ac; height: 0px; subcontrol-position: bottom; subcontrol-origin: margin;}
+    QScrollBar::sub-line:vertical {border: 0px solid #c8c8be;background-color: #b5b5ac; height: 0px;subcontrol-position: top;subcontrol-origin: margin;}
+</string>
    </property>
    <property name="sizeAdjustPolicy">
     <enum>QAbstractScrollArea::AdjustIgnored</enum>
@@ -1051,8 +983,8 @@ padding-bottom:5px;
      <rect>
       <x>0</x>
       <y>0</y>
-      <width>701</width>
-      <height>249</height>
+      <width>703</width>
+      <height>250</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -1080,7 +1012,7 @@ padding-bottom:5px;
        </property>
        <property name="styleSheet">
         <string notr="true">background-color:#ffffff;
-color: #000000;
+color: #373B44;
 border: 1px solid #ffffff;
 padding-left: 10px;
 padding-right: 0px;
@@ -1108,10 +1040,10 @@ padding-bottom:5px;
    </property>
    <property name="geometry">
     <rect>
-     <x>707</x>
-     <y>210</y>
-     <width>220</width>
-     <height>125</height>
+     <x>708</x>
+     <y>180</y>
+     <width>216</width>
+     <height>167</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1123,41 +1055,12 @@ padding-bottom:5px;
    <property name="frameShadow">
     <enum>QFrame::Sunken</enum>
    </property>
-   <widget class="QToolButton" name="WL_btn_chart">
-    <property name="geometry">
-     <rect>
-      <x>174</x>
-      <y>5</y>
-      <width>40</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>7</pointsize>
-      <bold>false</bold>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">border: none;
-background-color:#111111;
-color:#ffffff;
-border-top-left-radius: 0px;
-border-top-right-radius: 5px;
-border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
-</string>
-    </property>
-    <property name="text">
-     <string>Chart</string>
-    </property>
-   </widget>
    <widget class="QLabel" name="WL_symbol">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>5</y>
-      <width>99</width>
+      <x>31</x>
+      <y>1</y>
+      <width>180</width>
       <height>25</height>
      </rect>
     </property>
@@ -1172,17 +1075,18 @@ border-bottom-left-radius: 0px;
      </font>
     </property>
     <property name="toolTip">
-     <string>1</string>
+     <string/>
     </property>
     <property name="styleSheet">
      <string notr="true">QLabel{
 border: none;
 background: #ffffff;
-color: #232323;
-border-top-left-radius: 5px;
-border-top-right-radius: 0px;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
 border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
 
 }
 
@@ -1197,7 +1101,7 @@ font: 10pt &quot;Arial&quot;;
 </string>
     </property>
     <property name="text">
-     <string>BTCUSDTX25</string>
+     <string>BTCUSDT</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
@@ -1206,10 +1110,10 @@ font: 10pt &quot;Arial&quot;;
    <widget class="QToolButton" name="WL_btn_show">
     <property name="geometry">
      <rect>
-      <x>131</x>
-      <y>5</y>
-      <width>42</width>
-      <height>25</height>
+      <x>4</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
      </rect>
     </property>
     <property name="font">
@@ -1218,32 +1122,49 @@ font: 10pt &quot;Arial&quot;;
       <bold>false</bold>
      </font>
     </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
     <property name="styleSheet">
      <string notr="true">border: none;
-background-color:#111111;
-color:#ffffff;
+background-color: #ffffff;
+color:#000000;
 border-top-left-radius: 0px;
 border-top-right-radius:0px;
 border-bottom-right-radius: 0px;
 border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;
 </string>
     </property>
     <property name="text">
-     <string>Show</string>
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
     </property>
    </widget>
    <widget class="QLabel" name="WL_ai_info">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>30</y>
-      <width>209</width>
-      <height>66</height>
+      <x>31</x>
+      <y>26</y>
+      <width>180</width>
+      <height>137</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>6</pointsize>
+      <pointsize>7</pointsize>
       <italic>false</italic>
       <bold>false</bold>
       <strikeout>false</strikeout>
@@ -1257,15 +1178,14 @@ border-bottom-left-radius: 0px;
     <property name="styleSheet">
      <string notr="true">border-left: 1px solid white;
 background: #ffffff;
-color: #232323;
+color: #373B44;
 border-top-left-radius: 0px;
 border-top-right-radius: 0px;
-border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
-</string>
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
     </property>
     <property name="text">
-     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;div style=&quot; border: 1px solid #000000;&quot;&gt;APA_SMA5813&lt;br/&gt;LONG 63,25%&lt;/div&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;alGO:&lt;br/&gt;&lt;/span&gt;LONG 300&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
     <property name="textFormat">
      <enum>Qt::RichText</enum>
@@ -1274,16 +1194,19 @@ border-bottom-left-radius: 0px;
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
     </property>
     <property name="margin">
-     <number>1</number>
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
     </property>
    </widget>
-   <widget class="QToolButton" name="WL_push">
+   <widget class="QToolButton" name="WL_btn_tv">
     <property name="geometry">
      <rect>
-      <x>57</x>
-      <y>96</y>
-      <width>51</width>
-      <height>25</height>
+      <x>4</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -1298,25 +1221,34 @@ border-bottom-left-radius: 0px;
       <bold>false</bold>
      </font>
     </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
     <property name="styleSheet">
-     <string notr="true">background-color:#8284ff;
-color:#ffffff;
-border-top-left-radius: 0px;
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
 border-top-right-radius:0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;</string>
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
     </property>
     <property name="text">
-     <string>Push</string>
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
     </property>
    </widget>
-   <widget class="QToolButton" name="WL_tv">
+   <widget class="QToolButton" name="WL_btn_start">
     <property name="geometry">
      <rect>
-      <x>104</x>
-      <y>5</y>
+      <x>4</x>
+      <y>109</y>
       <width>27</width>
-      <height>25</height>
+      <height>27</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -1338,23 +1270,30 @@ color:#000000;
 border-top-left-radius: 0px;
 border-top-right-radius:0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;</string>
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
     </property>
     <property name="text">
-     <string>Tv</string>
+     <string/>
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
     </property>
    </widget>
-   <widget class="QToolButton" name="WL_start">
+   <widget class="QToolButton" name="WL_btn_stop">
     <property name="geometry">
      <rect>
-      <x>109</x>
-      <y>96</y>
-      <width>51</width>
-      <height>25</height>
+      <x>4</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
      </rect>
     </property>
     <property name="maximumSize">
@@ -1370,31 +1309,40 @@ border-bottom-left-radius: 0px;</string>
      </font>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color:#8284ff;
-color:#ffffff;
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
 border-top-left-radius: 0px;
 border-top-right-radius:0px;
 border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;</string>
+border-bottom-left-radius: 5px;
+border-right: 1px solid #888888;</string>
     </property>
     <property name="text">
-     <string>Start</string>
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
     </property>
    </widget>
-   <widget class="QToolButton" name="WL_stop">
+   <widget class="QToolButton" name="WL_btn_chart">
     <property name="geometry">
      <rect>
-      <x>161</x>
-      <y>96</y>
-      <width>53</width>
-      <height>25</height>
+      <x>4</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
      </rect>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>16777206</width>
-      <height>16777215</height>
-     </size>
     </property>
     <property name="font">
      <font>
@@ -1402,66 +1350,121 @@ border-bottom-left-radius: 0px;</string>
       <bold>false</bold>
      </font>
     </property>
-    <property name="styleSheet">
-     <string notr="true">background-color:#8284ff;
-color:#ffffff;
-border-top-left-radius: 0px;
-border-top-right-radius:0px;
-border-bottom-right-radius: 5px;
-border-bottom-left-radius: 0px;</string>
-    </property>
-    <property name="text">
-     <string>Stop</string>
-    </property>
-   </widget>
-   <widget class="QToolButton" name="WL_reg">
-    <property name="geometry">
-     <rect>
-      <x>5</x>
-      <y>96</y>
-      <width>51</width>
-      <height>25</height>
-     </rect>
-    </property>
-    <property name="maximumSize">
-     <size>
-      <width>16777206</width>
-      <height>16777215</height>
-     </size>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>7</pointsize>
-      <bold>false</bold>
-     </font>
+    <property name="toolTip">
+     <string>Chart</string>
     </property>
     <property name="styleSheet">
-     <string notr="true">background-color:#8284ff;
-color:#ffffff;
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
 border-top-left-radius: 0px;
 border-top-right-radius:0px;
 border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push">
+    <property name="geometry">
+     <rect>
+      <x>4</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background">
+    <property name="geometry">
+     <rect>
+      <x>4</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
 border-bottom-left-radius: 5px;</string>
     </property>
-    <property name="text">
-     <string>Reg</string>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
     </property>
    </widget>
+   <zorder>slot_background</zorder>
    <zorder>WL_ai_info</zorder>
-   <zorder>WL_btn_chart</zorder>
    <zorder>WL_symbol</zorder>
    <zorder>WL_btn_show</zorder>
-   <zorder>WL_push</zorder>
-   <zorder>WL_tv</zorder>
-   <zorder>WL_start</zorder>
-   <zorder>WL_stop</zorder>
-   <zorder>WL_reg</zorder>
+   <zorder>WL_btn_tv</zorder>
+   <zorder>WL_btn_start</zorder>
+   <zorder>WL_btn_stop</zorder>
+   <zorder>WL_btn_chart</zorder>
+   <zorder>WL_btn_push</zorder>
   </widget>
-  <widget class="QLabel" name="label_3">
+  <widget class="QLabel" name="logo2">
    <property name="geometry">
     <rect>
      <x>8</x>
-     <y>24</y>
+     <y>13</y>
      <width>111</width>
      <height>40</height>
     </rect>
@@ -1481,11 +1484,11 @@ background:none;</string>
     <string>nDot</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_7">
+  <widget class="QLabel" name="logo3">
    <property name="geometry">
     <rect>
      <x>72</x>
-     <y>24</y>
+     <y>13</y>
      <width>41</width>
      <height>40</height>
     </rect>
@@ -1498,17 +1501,3866 @@ background:none;</string>
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">color:#ff9100;
+    <string notr="true">color:#E1B866;
 background:none;</string>
    </property>
    <property name="text">
     <string>.io</string>
    </property>
   </widget>
+  <widget class="QTableWidget" name="tableWidget">
+   <property name="geometry">
+    <rect>
+     <x>1063</x>
+     <y>37</y>
+     <width>317</width>
+     <height>131</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>-1</pointsize>
+     <italic>false</italic>
+     <bold>true</bold>
+     <kerning>true</kerning>
+    </font>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QScrollArea{
+    border: none;
+}
+QScrollBar:vertical {border-left: 1px solid #b5b5ac; 
+    background-color: #efefef;width: 15px;margin: 0 0 0 0;}
+    QScrollBar::handle:vertical {background-color:#b5b5ac ;min-height: 15px; border-radius: 4px; margin: 2px;}
+    QScrollBar::add-line:vertical {border: 0px solid #b5b5ac;background-color: #b5b5ac; height: 0px; subcontrol-position: bottom; subcontrol-origin: margin;}
+    QScrollBar::sub-line:vertical {border: 0px solid #c8c8be;background-color: #b5b5ac; height: 0px;subcontrol-position: top;subcontrol-origin: margin;}
+
+QTableWidget {
+    gridline-color: #999999;
+    font-size: 12px;
+	border: none;
+}
+
+QHeaderView::section{
+	background-color:#373B44;
+	color: #ffffff;
+	border: none;
+	margin: -6px 0 -6px 0;
+	padding: 0 0 0 5px;
+	font-size:12px;
+	font-weight: bold;
+	min-high: 5px}
+
+QTableView::item {
+	border: none;
+	background: #ffffff;
+	color: #000000;
+	padding: 0 0 0 15px;
+	margin:  0 0 0 0;
+	min-height: 0px;
+
+
+}
+</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="verticalScrollBarPolicy">
+    <enum>Qt::ScrollBarAsNeeded</enum>
+   </property>
+   <property name="autoScrollMargin">
+    <number>10</number>
+   </property>
+   <property name="showGrid">
+    <bool>true</bool>
+   </property>
+   <property name="cornerButtonEnabled">
+    <bool>true</bool>
+   </property>
+   <attribute name="horizontalHeaderVisible">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="horizontalHeaderCascadingSectionResizes">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="horizontalHeaderMinimumSectionSize">
+    <number>25</number>
+   </attribute>
+   <attribute name="horizontalHeaderDefaultSectionSize">
+    <number>80</number>
+   </attribute>
+   <attribute name="horizontalHeaderHighlightSections">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="horizontalHeaderStretchLastSection">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderCascadingSectionResizes">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderMinimumSectionSize">
+    <number>25</number>
+   </attribute>
+   <attribute name="verticalHeaderDefaultSectionSize">
+    <number>25</number>
+   </attribute>
+   <attribute name="verticalHeaderHighlightSections">
+    <bool>true</bool>
+   </attribute>
+   <attribute name="verticalHeaderShowSortIndicator" stdset="0">
+    <bool>false</bool>
+   </attribute>
+   <attribute name="verticalHeaderStretchLastSection">
+    <bool>false</bool>
+   </attribute>
+   <row>
+    <property name="text">
+     <string>TOTAL</string>
+    </property>
+    <property name="font">
+     <font>
+      <stylestrategy>PreferAntialias</stylestrategy>
+     </font>
+    </property>
+    <property name="textAlignment">
+     <set>AlignCenter</set>
+    </property>
+    <property name="foreground">
+     <brush brushstyle="NoBrush">
+      <color alpha="255">
+       <red>170</red>
+       <green>0</green>
+       <blue>0</blue>
+      </color>
+     </brush>
+    </property>
+   </row>
+   <row>
+    <property name="text">
+     <string>BTC</string>
+    </property>
+   </row>
+   <row>
+    <property name="text">
+     <string>ETH</string>
+    </property>
+   </row>
+   <row>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </row>
+   <row>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </row>
+   <row>
+    <property name="text">
+     <string>-</string>
+    </property>
+   </row>
+   <column>
+    <property name="text">
+     <string>QTY</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>BTC</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>USDT</string>
+    </property>
+   </column>
+   <item row="0" column="1">
+    <property name="text">
+     <string>0,23456</string>
+    </property>
+   </item>
+   <item row="0" column="2">
+    <property name="text">
+     <string>44,45</string>
+    </property>
+   </item>
+   <item row="1" column="0">
+    <property name="text">
+     <string>0,13456</string>
+    </property>
+   </item>
+   <item row="1" column="1">
+    <property name="text">
+     <string>0,123456</string>
+    </property>
+   </item>
+   <item row="1" column="2">
+    <property name="text">
+     <string>22,56</string>
+    </property>
+   </item>
+   <item row="2" column="0">
+    <property name="text">
+     <string>0,123465</string>
+    </property>
+   </item>
+   <item row="2" column="1">
+    <property name="text">
+     <string>0,123456</string>
+    </property>
+   </item>
+   <item row="2" column="2">
+    <property name="text">
+     <string>22,54</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QToolButton" name="Btn_Binance">
+   <property name="geometry">
+    <rect>
+     <x>1344</x>
+     <y>5</y>
+     <width>25</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>8</pointsize>
+     <bold>true</bold>
+     <kerning>true</kerning>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background: #ffffff;
+border: none;
+padding: 5px;
+margin: 0px;
+border-top-left-radius: 5px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 5px;
+border-left: 1px solid #888888;
+border-bottom: 1px solid #888888;
+
+</string>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="icon">
+    <iconset>
+     <normaloff>../images/Binance_logo_coin-700x700.png</normaloff>../images/Binance_logo_coin-700x700.png</iconset>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>100</width>
+     <height>100</height>
+    </size>
+   </property>
+  </widget>
+  <widget class="QLabel" name="version">
+   <property name="geometry">
+    <rect>
+     <x>1</x>
+     <y>46</y>
+     <width>111</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>6</pointsize>
+     <bold>false</bold>
+     <kerning>true</kerning>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #373B44;</string>
+   </property>
+   <property name="text">
+    <string>T2DSX_20121112_1424</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QScrollArea" name="Server_status_scrollArea">
+   <property name="geometry">
+    <rect>
+     <x>706</x>
+     <y>37</y>
+     <width>356</width>
+     <height>131</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QScrollArea{
+    border: none;
+}
+QScrollBar:vertical {border-left: 1px solid #b5b5ac; 
+    background-color: #efefef;width: 15px;margin: 0 0 0 0;}
+    QScrollBar::handle:vertical {background-color:#b5b5ac ;min-height: 15px; border-radius: 4px; margin: 2px;}
+    QScrollBar::add-line:vertical {border: 0px solid #b5b5ac;background-color: #b5b5ac; height: 0px; subcontrol-position: bottom; subcontrol-origin: margin;}
+    QScrollBar::sub-line:vertical {border: 0px solid #c8c8be;background-color: #b5b5ac; height: 0px;subcontrol-position: top;subcontrol-origin: margin;}
+</string>
+   </property>
+   <property name="sizeAdjustPolicy">
+    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+   </property>
+   <property name="widgetResizable">
+    <bool>true</bool>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+   </property>
+   <widget class="QWidget" name="scrollAreaWidgetContents_4">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>335</width>
+      <height>203</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout_4">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="Server_status">
+       <property name="font">
+        <font>
+         <pointsize>7</pointsize>
+        </font>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color:#ffffff;
+color: #373B44;
+border: none;
+padding-left: 8px;
+padding-right: 0px;
+padding-top: 0px;
+padding-bottom: 5px;
+</string>
+       </property>
+       <property name="text">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - ON&lt;br/&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF&lt;br/&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF&lt;br/&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF&lt;br/&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF&lt;br/&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF&lt;br/&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF&lt;br/&gt;BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF&lt;br/&gt;Clients: [1] [2] [x]&lt;br/&gt;Processors: [3,5%] [9,5%] [12,5%] [20,5%] [99,5%]&lt;br/&gt;Virtual memory: 65,12 GB / 45,12%&lt;br/&gt;Disk usage: 265,12 GB / 45,12%&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::RichText</enum>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="Line" name="line_11">
+   <property name="geometry">
+    <rect>
+     <x>-3</x>
+     <y>441</y>
+     <width>704</width>
+     <height>3</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">color: #aaaaaa</string>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Plain</enum>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QFrame" name="WL_frame_2">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>937</x>
+     <y>180</y>
+     <width>212</width>
+     <height>167</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_2">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_2">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_2">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_2</zorder>
+   <zorder>WL_symbol_2</zorder>
+   <zorder>WL_btn_show_2</zorder>
+   <zorder>WL_ai_info_2</zorder>
+   <zorder>WL_btn_tv_2</zorder>
+   <zorder>WL_btn_start_2</zorder>
+   <zorder>WL_btn_stop_2</zorder>
+   <zorder>WL_btn_chart_2</zorder>
+   <zorder>WL_btn_push_2</zorder>
+  </widget>
+  <widget class="QFrame" name="WL_frame_3">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1161</x>
+     <y>180</y>
+     <width>212</width>
+     <height>167</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_3">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_3">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_3">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_3</zorder>
+   <zorder>WL_symbol_3</zorder>
+   <zorder>WL_btn_show_3</zorder>
+   <zorder>WL_ai_info_3</zorder>
+   <zorder>WL_btn_tv_3</zorder>
+   <zorder>WL_btn_start_3</zorder>
+   <zorder>WL_btn_stop_3</zorder>
+   <zorder>WL_btn_chart_3</zorder>
+   <zorder>WL_btn_push_3</zorder>
+  </widget>
+  <widget class="QFrame" name="WL_frame_4">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>710</x>
+     <y>361</y>
+     <width>212</width>
+     <height>167</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_4">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_4">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_4">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_4">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_4">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_4">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_4">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_4">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_4">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_4</zorder>
+   <zorder>WL_symbol_4</zorder>
+   <zorder>WL_btn_show_4</zorder>
+   <zorder>WL_ai_info_4</zorder>
+   <zorder>WL_btn_tv_4</zorder>
+   <zorder>WL_btn_start_4</zorder>
+   <zorder>WL_btn_stop_4</zorder>
+   <zorder>WL_btn_chart_4</zorder>
+   <zorder>WL_btn_push_4</zorder>
+  </widget>
+  <widget class="QFrame" name="WL_frame_5">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>937</x>
+     <y>361</y>
+     <width>212</width>
+     <height>167</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_5">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_5">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_5">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_5">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_5">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_5">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_5">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_5">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_5">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_5</zorder>
+   <zorder>WL_symbol_5</zorder>
+   <zorder>WL_btn_show_5</zorder>
+   <zorder>WL_ai_info_5</zorder>
+   <zorder>WL_btn_tv_5</zorder>
+   <zorder>WL_btn_start_5</zorder>
+   <zorder>WL_btn_stop_5</zorder>
+   <zorder>WL_btn_chart_5</zorder>
+   <zorder>WL_btn_push_5</zorder>
+  </widget>
+  <widget class="QFrame" name="WL_frame_6">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1161</x>
+     <y>361</y>
+     <width>212</width>
+     <height>167</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_6">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_6">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_6">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_6">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_6">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_6">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_6">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_6">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_6">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_6</zorder>
+   <zorder>WL_symbol_6</zorder>
+   <zorder>WL_btn_show_6</zorder>
+   <zorder>WL_ai_info_6</zorder>
+   <zorder>WL_btn_tv_6</zorder>
+   <zorder>WL_btn_start_6</zorder>
+   <zorder>WL_btn_stop_6</zorder>
+   <zorder>WL_btn_chart_6</zorder>
+   <zorder>WL_btn_push_6</zorder>
+  </widget>
+  <widget class="QFrame" name="WL_frame_7">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>710</x>
+     <y>544</y>
+     <width>212</width>
+     <height>168</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_7">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_7">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_7">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_7">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_7">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_7">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_7">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_7">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_7">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_7</zorder>
+   <zorder>WL_symbol_7</zorder>
+   <zorder>WL_btn_show_7</zorder>
+   <zorder>WL_ai_info_7</zorder>
+   <zorder>WL_btn_tv_7</zorder>
+   <zorder>WL_btn_start_7</zorder>
+   <zorder>WL_btn_stop_7</zorder>
+   <zorder>WL_btn_chart_7</zorder>
+   <zorder>WL_btn_push_7</zorder>
+  </widget>
+  <widget class="QFrame" name="WL_frame_8">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>937</x>
+     <y>544</y>
+     <width>212</width>
+     <height>168</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_8">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_8">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_8">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_8">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_8">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_8">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_8">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_8">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_8">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_8</zorder>
+   <zorder>WL_symbol_8</zorder>
+   <zorder>WL_btn_show_8</zorder>
+   <zorder>WL_ai_info_8</zorder>
+   <zorder>WL_btn_tv_8</zorder>
+   <zorder>WL_btn_start_8</zorder>
+   <zorder>WL_btn_stop_8</zorder>
+   <zorder>WL_btn_chart_8</zorder>
+   <zorder>WL_btn_push_8</zorder>
+  </widget>
+  <widget class="QFrame" name="WL_frame_9">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>1161</x>
+     <y>544</y>
+     <width>212</width>
+     <height>168</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">border: none;</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::Box</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Sunken</enum>
+   </property>
+   <widget class="QLabel" name="WL_symbol_9">
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>1</y>
+      <width>171</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>8</pointsize>
+      <italic>false</italic>
+      <bold>true</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel{
+border: none;
+background: #ffffff;
+color: #333333;
+border-top-left-radius: 0px;
+border-top-right-radius: 5px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-bottom: 1px solid #888888;
+
+}
+
+QToolTip {
+margin: 10px;
+background-color: #333333; 
+color: white; 
+border: black solid 1px;
+border-radius: 25px;
+font: 10pt &quot;Arial&quot;;
+}
+</string>
+    </property>
+    <property name="text">
+     <string>BTCUSDT</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_show_9">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>28</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Show</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/832.png</normaloff>../images/832.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QLabel" name="WL_ai_info_9">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>36</x>
+      <y>26</y>
+      <width>171</width>
+      <height>137</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <italic>false</italic>
+      <bold>false</bold>
+      <strikeout>false</strikeout>
+      <stylestrategy>PreferAntialias</stylestrategy>
+      <kerning>true</kerning>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string/>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-left: 1px solid white;
+background: #ffffff;
+color: #373B44;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 5px;
+border-bottom-left-radius: 0px;</string>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model: BTCUSDT_P10INTX&lt;br/&gt;Model: 2021.12.12. 10:00&lt;br/&gt;Start: 10.11 14:00&lt;br/&gt;Predict: 10.11 14:00&lt;br/&gt;Trade: 10.11 14:20&lt;br/&gt;24H: 13&lt;br/&gt;Lot: 100 USD&lt;br/&gt;Sloss: 10 USD&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::RichText</enum>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+    </property>
+    <property name="margin">
+     <number>0</number>
+    </property>
+    <property name="indent">
+     <number>5</number>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_tv_9">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>1</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Tradingview</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color: #ffffff;
+color:#000000;
+border-top-left-radius: 5px;
+border-top-right-radius:0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string>Tv</string>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/tradingview.svg</normaloff>../images/tradingview.svg</iconset>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_start_9">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>109</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/981.png</normaloff>../images/981.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_stop_9">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>136</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 5px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/982.png</normaloff>../images/982.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+    <property name="shortcut">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_chart_9">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>55</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="toolTip">
+     <string>Chart</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;
+</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/554.png</normaloff>../images/554.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="QToolButton" name="WL_btn_push_9">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>16777206</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>7</pointsize>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: none;
+background-color:#ffffff;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+padding: 0px;
+margin: 0px;
+border-right: 1px solid #888888;</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>../images/869.png</normaloff>../images/869.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>32</width>
+      <height>32</height>
+     </size>
+    </property>
+   </widget>
+   <widget class="Line" name="slot_background_9">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>82</y>
+      <width>27</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: #cccccc;
+background-color: #cccccc;
+border-right: 1px solid #888888;
+border-bottom-left-radius: 5px;</string>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Plain</enum>
+    </property>
+    <property name="lineWidth">
+     <number>0</number>
+    </property>
+    <property name="midLineWidth">
+     <number>0</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <zorder>slot_background_9</zorder>
+   <zorder>WL_symbol_9</zorder>
+   <zorder>WL_btn_show_9</zorder>
+   <zorder>WL_ai_info_9</zorder>
+   <zorder>WL_btn_tv_9</zorder>
+   <zorder>WL_btn_start_9</zorder>
+   <zorder>WL_btn_stop_9</zorder>
+   <zorder>WL_btn_chart_9</zorder>
+   <zorder>WL_btn_push_9</zorder>
+  </widget>
+  <zorder>line_5</zorder>
+  <zorder>line_9</zorder>
   <zorder>LT_scrollArea_2</zorder>
-  <zorder>label_16</zorder>
+  <zorder>Trade_log2</zorder>
   <zorder>label_15</zorder>
-  <zorder>label_2</zorder>
+  <zorder>logo1</zorder>
   <zorder>Status</zorder>
   <zorder>Command_Hint</zorder>
   <zorder>Command_Line</zorder>
@@ -1520,35 +5372,43 @@ background:none;</string>
   <zorder>line_8</zorder>
   <zorder>Tr_stop_all</zorder>
   <zorder>label_13</zorder>
-  <zorder>label_14</zorder>
+  <zorder>Trade_log</zorder>
   <zorder>line_17</zorder>
   <zorder>line_18</zorder>
   <zorder>line_20</zorder>
   <zorder>line_22</zorder>
-  <zorder>Tr_portfolio_monitor</zorder>
+  <zorder>Tr_streaming</zorder>
   <zorder>line_4</zorder>
-  <zorder>line_23</zorder>
   <zorder>line_24</zorder>
   <zorder>line_25</zorder>
   <zorder>line_26</zorder>
-  <zorder>nTrade_info</zorder>
   <zorder>line_27</zorder>
-  <zorder>Tr_info_refresh</zorder>
   <zorder>line_28</zorder>
   <zorder>line_29</zorder>
   <zorder>line_31</zorder>
   <zorder>LT_scrollArea_3</zorder>
-  <zorder>line_5</zorder>
   <zorder>line</zorder>
   <zorder>line_7</zorder>
   <zorder>line_21</zorder>
   <zorder>line_19</zorder>
   <zorder>WL_frame</zorder>
   <zorder>line_6</zorder>
-  <zorder>line_9</zorder>
   <zorder>Progress_Bar</zorder>
-  <zorder>label_3</zorder>
-  <zorder>label_7</zorder>
+  <zorder>logo2</zorder>
+  <zorder>logo3</zorder>
+  <zorder>tableWidget</zorder>
+  <zorder>Btn_Binance</zorder>
+  <zorder>version</zorder>
+  <zorder>Server_status_scrollArea</zorder>
+  <zorder>line_11</zorder>
+  <zorder>WL_frame_2</zorder>
+  <zorder>WL_frame_3</zorder>
+  <zorder>WL_frame_4</zorder>
+  <zorder>WL_frame_5</zorder>
+  <zorder>WL_frame_6</zorder>
+  <zorder>WL_frame_7</zorder>
+  <zorder>WL_frame_8</zorder>
+  <zorder>WL_frame_9</zorder>
  </widget>
  <resources/>
  <connections/>
