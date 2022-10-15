@@ -180,8 +180,10 @@ class gui(QWidget, object):
 		# watch list up area -------------------------------------------------
 		self.Tr_streaming.stateChanged.connect(tr_streaming)
 		self.Btn_Binance.clicked.connect(btn_binance)
+		self.Tr_stop_all.clicked.connect(tr_stop_all)
 
 	def refresh_ui(self, mode="full"):
+		global stream_is_running
 
 		def get_frame_objects_list(prefix, object_group_name):
 			wl_frame_list = {}
@@ -202,6 +204,8 @@ class gui(QWidget, object):
 				i_src = object_group_name + "_" + str(i_i)
 				wl_frame_list[i_n] = self.findChild(QToolButton, i_src)
 			return wl_frame_list
+
+		# full refresh ------------------------------------------------------------------
 
 		i_noid = ['', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12']
 		if mode == "full":
@@ -234,9 +238,15 @@ class gui(QWidget, object):
 				QApplication.processEvents()
 
 			for i_no, i_symbol in enumerate(wl.wl_dict):
-				if wl.wl_dict[i_symbol]["slot"]:
+				if wl.wl_dict[i_symbol]["slot"] and stream_is_running:
+
 					i_wl_btn_push["ptn_push" + str(i_no + 1)].show()
 					i_wl_btn_start["ptn_start" + str(i_no + 1)].show()
+					if wl.wl_dict[i_symbol]["trade_right"]:
+						self.set_start_color(i_wl_btn_start["ptn_start" + str(i_no + 1)], "red")
+					else:
+						self.set_start_color(i_wl_btn_start["ptn_start" + str(i_no + 1)], "white")
+
 					i_wl_btn_stop["ptn_stop" + str(i_no + 1)].show()
 
 				QApplication.processEvents()
@@ -382,6 +392,26 @@ class gui(QWidget, object):
 		else:
 			self.mark_command_line("", False)
 
+	def set_start_color(self, iobj, color):
+		if color == "red":
+			iobj.setStyleSheet('''border: none;
+									background-color: #E1B866;
+									color:#000000;
+									border-top-left-radius: 0px;
+									border-top-right-radius:0px;
+									border-bottom-right-radius: 0px;
+									border-bottom-left-radius: 0px;
+									border-right: 1px solid #888888;''')
+		else:
+			iobj.setStyleSheet('''border: none;
+									background-color: #ffffff;
+									color:#000000;
+									border-top-left-radius: 0px;
+									border-top-right-radius:0px;
+									border-bottom-right-radius: 0px;
+									border-bottom-left-radius: 0px;
+									border-right: 1px solid #888888;''')
+
 	def mark_command_line(self, message, bug=True):
 		if bug:
 			self.Command_Line.setStyleSheet('''background-color: #ffaaaa;
@@ -436,8 +466,12 @@ class gui(QWidget, object):
 		return i_return
 
 	def get_server_status_str(self):
+		def ns(n):
+			return "&nbsp;" * n
+
 		if self.server_status_dict:
-			print(self.server_status_dict)
+			# print(self.server_status_dict)
+
 			dt = str(self.server_status_dict['datetime'].strftime("%Y.%m.%d %H:%M:%S"))
 			cl = str(self.server_status_dict['clients'])
 			prc = str(self.server_status_dict['processors'])
@@ -446,21 +480,28 @@ class gui(QWidget, object):
 			du = round(int(self.server_status_dict['disk_usage']['total']) / 2**30, 2)
 			dupc = self.server_status_dict['disk_usage']['percent']
 
+			slot_block = ""
+			for sl in self.server_status_dict['slots']:
+				sname = sl
+				sdt = time.strftime('%m.%d %H:%M', time.gmtime(self.server_status_dict['slots'][sl]['tf']))
+				tfs = "+" if self.server_status_dict['slots'][sl]['tf'] > 0 else "-"
+				mms = "+" if self.server_status_dict['slots'][sl]['minmax'] > 0 else "-"
+				cfs = "+" if self.server_status_dict['slots'][sl]['config'] > 0 else "-"
+				trs_dict = self.server_status_dict['trade_rights']
+				trs = "Suspended"
+				if sname in trs_dict:
+					if trs_dict[sname]:
+						trs = "TRADING"
+				slot_block += f"{sname}{ns(3)}({sdt}){ns(3)}[{tfs}{mms}{cfs}] -> {trs}<br/>"
+
 			ir = f"""
 			<html><head/><body><p>
-			{dt}<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - ON<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
-			BTCUSDT_P10INTX 2022.12.15. 20.13:15 - OFF<br/>
+			{slot_block}<br/>
 			Clients: {cl}<br/>
 			Processors: {prc}<br/>
 			Virtual memory: {vmt} GB / {vmpc}%<br/>
-			Disk usage: {du} GB / {dupc}%
+			Disk usage: {du} GB / {dupc}%<br/>
+			Last refresh: {dt} (+2H)
 			</p></body></html>
 			"""
 		else:
@@ -3705,7 +3746,8 @@ class WatchList:
 
 	def add(self, symbol):
 		self.wl_dict[symbol] = {'symbol': symbol,
-								"slot": False}
+								"slot": False,
+								"trade_right": False}
 		self.write()
 		gui.refresh_ui()
 
@@ -3722,12 +3764,33 @@ class WatchList:
 		self.wl_dict[symbol]["slot"] = False
 		self.write()
 
+	def trade_right_add(self, symbol):
+		self.wl_dict[symbol]["trade_right"] = True
+		self.write()
+
+	def trade_right_remove(self, symbol):
+		self.wl_dict[symbol]["trade_right"] = False
+		self.write()
+
 	def get_stots(self):
 		iret = []
 		for sl in self.wl_dict:
 			if self.wl_dict[sl]["slot"]:
 				iret.append(sl)
 		return iret
+
+	def get_trade_rights(self):
+		trs = {}
+		for sl in self.wl_dict:
+			if self.wl_dict[sl]["slot"]:
+				pr = ai.get_projects_by_symbol(sl)
+				if pr:
+					if self.wl_dict[sl]["trade_right"]:
+						trs[pr[0]] = True
+					else:
+						trs[pr[0]] = False
+		return trs
+
 
 
 # PROGRAMS ----------------------------------------------------------------------------
@@ -5328,7 +5391,7 @@ def wl_remove(symbol=""):
 # PROGRAMS fo wl buttons----------------------------------------------------------------------------
 
 def wl_btn_chart(btn_no):
-	symbol = list(wl.wl_dict.keys())[btn_no]
+	symbol = list(wl.wl_dict.keys())[btn_no - 1]
 	log("start: nchart " + symbol, True, False)
 	i_indecators = ndf.get_added_indicators(symbol)
 	i_df = nddf[symbol].tail(60000).copy()
@@ -5337,32 +5400,66 @@ def wl_btn_chart(btn_no):
 
 
 def wl_btn_show(btn_no):
-	symbol = list(wl.wl_dict.keys())[btn_no]
+	symbol = list(wl.wl_dict.keys())[btn_no - 1]
 	log("start: ndf.show.last " + symbol, True, False)
 	ndf_show_last(symbol)
 	log("ready.", False, False)
 
 
 def wl_btn_push(btn_no):
-	symbol = list(wl.wl_dict.keys())[btn_no]
-	log("start: push " + symbol, True, False)
-	log("ready.", False, False)
+	symbol = list(wl.wl_dict.keys())[btn_no - 1]
+	log(f"start: wl_btn_push {symbol}" + symbol)
+
+	sfn = tc.local_ountgoing + tc.push_fname
+	slots = wl.get_stots()
+	server_slots = []
+	for sl in slots:
+		pr = ai.get_projects_by_symbol(sl)
+		if pr:
+			server_slots.append(str(pr[0]))
+	server_slots = np.array(server_slots)
+	np.save(sfn, server_slots)
+
+	plist = ai.get_projects_by_symbol(symbol)
+	if plist:
+		log(f"Push project to server: {symbol} - {plist[0]}")
+		tc.push_project(plist[0])
+	else:
+		log(f"No added project to {symbol}")
+	log("ready.")
 
 
 def wl_btn_start(btn_no):
-	symbol = list(wl.wl_dict.keys())[btn_no]
+	symbol = list(wl.wl_dict.keys())[btn_no - 1]
 	log("start: start " + symbol, True, False)
+	# if wl.wl_dict[symbol]["slot"]:
+	wl.trade_right_add(symbol)
+	log(f"  {symbol} fist project HAS trade right")
+	tr = wl.get_trade_rights()
+	log(f"{tr}")
+	tfn = tc.local_ountgoing + tc.trade_fname
+	pickle.dump(tr, open(tfn, "wb"))
+	tc.set_trade()
+	gui.refresh_ui()
 	log("ready.", False, False)
 
 
 def wl_btn_stop(btn_no):
-	symbol = list(wl.wl_dict.keys())[btn_no]
+	symbol = list(wl.wl_dict.keys())[btn_no - 1]
 	log("start: stop " + symbol, True, False)
+	wl.trade_right_remove(symbol)
+	log(f"  {symbol} fist project has NO trade right")
+	tr = wl.get_trade_rights()
+	log(f"{tr}")
+	tfn = tc.local_ountgoing + tc.trade_fname
+	pickle.dump(tr, open(tfn, "wb"))
+	tc.set_trade()
+	gui.refresh_ui()
 	log("ready.", False, False)
 
 
 def wl_btn_tv(btn_no):
-	symbol = list(wl.wl_dict.keys())[btn_no]
+	symbol = list(wl.wl_dict.keys())[btn_no - 1]
 	log("start: tv " + symbol, True, False)
 	webbrowser.open(f'https://www.tradingview.com/chart/nW9ArkAr/?symbol=BINANCE%3A{symbol.upper()}')
 	log("ready.", False, False)
@@ -5389,44 +5486,37 @@ def wl_slot_remove(symbol=""):
 # tr PROGRAMS ----------------------------------------------------------------------------
 
 #
-# def tr_stop_all():
-# 	gui.Tr_frame.hide()
-# 	QApplication.processEvents()
-# 	if gui.confirm("Stop all!", "Are you sure? Stop all position?"):
-# 		gui.tlog(f"Start: STOP ALL!", line=True, indent=False, color="normal")
-# 		i_open_orders = ntrade.get_all_open_orders()
-# 		i_symbol_dic = {}
-# 		for i_o1 in i_open_orders:
-# 			i_symbol_dic[i_o1.symbol] = 1
-# 		for i_o2 in i_symbol_dic:
-# 			gui.tlog(f"Clear orders: {i_o2}", line=False, indent=True, color="normal")
-# 			ntrade.cancel_orders_by_symbol(i_o2)
-#
-# 		for i_s in tuple(wl.wl_df["symbol"]):
-# 			ntrade.set_tp_position(i_s, 0)
-#
-# 		i_pos = ntrade.get_all_positions()
-# 		for i_s2 in i_pos:
-# 			if i_s2.symbol not in tuple(wl.wl_df["symbol"]):
-# 				ntrade.set_tp_position(i_s2.symbol, 0)
-#
-# 		gui.refresh_ui("info")
-# 		gui.tlog(f"Ready.", line=False, indent=False, color="normal")
-# 		ntrade.broker_run()
+def tr_stop_all():
+	global stream_is_running
+	log("start: stop all trading.", True, False)
+	if stream_is_running:
+		for symbol in wl.wl_dict.keys():
+			wl.trade_right_remove(symbol)
+
+		tr = wl.get_trade_rights()
+		log(f"{tr}")
+		tfn = tc.local_ountgoing + tc.trade_fname
+		pickle.dump(tr, open(tfn, "wb"))
+		tc.set_trade()
+		gui.refresh_ui()
+	else:
+		log("YOU HAVE TO LOGIN BEFORE! !!TURN ON STREAMING!!")
+	log("ready.", False, False)
 
 
 def btn_binance():
-	print("itt")
 	webbrowser.open(f'https://www.binance.com/en/my/dashboard')
 
 
 def tr_streaming():
 	if gui.Tr_streaming.checkState():
-		log("tr_streaming on")
+		tc.open_connect()
 		strat_stream()
+		gui.refresh_ui()
 	else:
-		log("tr_streaming off")
+		tc.close_connect()
 		stop_stream()
+		gui.refresh_ui()
 
 
 # def tr_portfolio_monitor():
@@ -5438,14 +5528,14 @@ def tr_streaming():
 
 # stream  ------------------------------------------------------------------
 
+
 def stream_worker():
 	global stream_is_running
 	while stream_is_running:
 		tc.get_messages()
 		gui.server_status_dict = pickle.load(open("incoming/nDot_trade_server_status.pickle", "rb"))
 		gui.refresh_ui(mode="stream")
-
-		time.sleep(30)
+		time.sleep(15)
 
 
 def strat_stream():
@@ -5470,7 +5560,7 @@ if __name__ == "__main__":
 	app = QApplication([])
 	gui = gui()
 	ai = n_ai(log, nddf, gui)
-	tc = n_trade_server_connection()
+	tc = n_trade_server_connection(log)
 	# ntrade = n_trade(gui=gui)
 	nchart = n_chart()
 	gui.refresh_ui()

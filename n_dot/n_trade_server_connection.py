@@ -6,10 +6,12 @@ import numpy as np
 
 class n_trade_server_connection:
 
-    def __init__(self):
+    def __init__(self, log):
+        self.gui_log = log
+        self.sever_name = "Vultr - 2C; 2GB Ram"
         self.username = 'root'
-        self.password = '5X-mSxa5ZZ!%DD_b'
-        self.hostname = '207.148.91.200'
+        self.password = 'C7?dB#3#,KvQ7q+W'
+        self.hostname = '207.148.99.176'
         self.ports = 22
         # self.transport = ""
         # self.sftp = ""
@@ -20,7 +22,11 @@ class n_trade_server_connection:
         self.local_incoming = "incoming/"
         self.local_ountgoing = "outgoing/"
 
+    def log(self, text):
+        self.gui_log(text)
+
     def open_connect(self):
+        self.log(f"Login. nDot_trade_server: {self.hostname}")
         self.transport = paramiko.Transport((self.hostname, self.ports))
         self.transport.connect(username=self.username, password=self.password)
         self.sftp = paramiko.SFTPClient.from_transport(self.transport)
@@ -28,6 +34,7 @@ class n_trade_server_connection:
     def close_connect(self):
         self.sftp.close()
         self.transport.close()
+        self.log(f"Log Out nDot_trade_server")
 
     def put(self, remotepath, localpath):
         try:
@@ -58,47 +65,40 @@ class n_trade_server_connection:
     def set_trade(self):
         remote_fname = "CLIENTS/" + self.client + "/INCOMING/" + self.trade_fname
         local_fname = self.local_ountgoing + self.trade_fname
-        self.open_connect()
-        self.put(remotepath=remote_fname, localpath=local_fname)
-        self.close_connect()
+        if os.path.exists(local_fname):
+            self.put(remotepath=remote_fname, localpath=local_fname)
 
     def send_attachment(self, fname):
         remote_fname = "CLIENTS/" + self.client + "/INCOMING/ATTACHMENT/" + fname
-        self.open_connect()
         self.put(remotepath=remote_fname, localpath=fname)
-        self.close_connect()
 
     def get_messages(self):
         remote_fname = "CLIENTS/" + self.client + "/OUTGOING/"
-        # print(remote_fname)
-        self.open_connect()
         mlist = self.listdir(remote_fname)
-        # print(mlist)
         for ml in mlist:
             remote_fm = remote_fname + ml
             local_ml = self.local_incoming + ml
             self.get(remotepath=remote_fm, localpath=local_ml)
             self.remove(remotepath=remote_fm)
-        self.close_connect()
 
     def push_project(self, project):
         remote_dir = "CLIENTS/" + self.client + "/INCOMING/ATTACHMENT/"
         l_fname = [f"nDot_TF_MODEL_{project}.h5",
                    f"nDot_MinMaxScaler_{project}.pickle",
                    f"nDot_PRO_{project}.txt"]
-        self.open_connect()
         for lfn in l_fname:
             local_fn = f"{self.local_projects_dir}{project}/{lfn}"
             remote_fn = remote_dir + lfn
             # print(local_fn, remote_fn)
             if os.path.exists(local_fn):
                 self.put(remotepath=remote_fn, localpath=local_fn)
+                self.log(f"    push: {local_fn}")
 
         remote_fn = "CLIENTS/" + self.client + "/INCOMING/" + self.push_fname
         local_fn = self.local_ountgoing + self.push_fname
         if os.path.exists(local_fn):
             self.put(remotepath=remote_fn, localpath=local_fn)
-        self.close_connect()
+            self.log(f"    push: {local_fn}")
 
 
 if __name__ == '__main__':

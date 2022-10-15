@@ -247,10 +247,17 @@ class n_ai:
     #         return ""
    
     def get_projects_by_symbol(self, symbol):
+
+        def get_dict_list(idict):
+            ilist = []
+            for key in idict.keys():
+                ilist.append(key)
+            return ilist
+
         if symbol in self.ai_settings:
-            return list(self.ai_settings[symbol].keys())
+            return get_dict_list(self.ai_settings[symbol])
         else:
-            return ""
+            return []
 
     def get_tf_update_first(self, symbol):
         if symbol in self.ai_settings:
