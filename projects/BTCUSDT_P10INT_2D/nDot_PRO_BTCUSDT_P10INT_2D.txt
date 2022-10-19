@@ -79,3 +79,17 @@ Idea: 2D probabilistic dataset qualification 0,1,2
 "CCI21",
 "VWAP",
 ]
+
+;
+
+<--------------------------------------------------->
+<Steam config>
+<--------------------------------------------------->
+{
+"symbol":"BTCUSDT",         <symbol for socket>
+"max_amount": 30,           <maximális kötésméret egy dealhoz adott symbolban>
+"max_total_amount": 90,     <összesen ennyi pozíció lehet nyitva adott symbolban>
+"stop_loss": 10,            <stop loss limit>
+"trailer_delta": 0.10,      <trailer delta>
+"max_steps": 10             < amximum hány percig lehet nyitva a pozi>
+}

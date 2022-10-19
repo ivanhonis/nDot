@@ -1617,13 +1617,14 @@ class n_date_frame2:
 		full_cache_name = str(depth) + str(time_window_size) + cstr + ostr + olen
 		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
 		log(f"Len chk: nddf.len: {nddf[symbol].shape[0]} dataset.len:{x_full.shape[0]}")
-		full_cache_name = self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + ".npymemmap"
-		xshape = x_full.shape
-		fp = np.memmap(full_cache_name, dtype='float32', mode='w+', shape=xshape)
-		fp[:] = x_full[:]
-		fp.flush()
-		fp._mmap.close()
-		# np.save(self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name, x_full)
+		# full_cache_name = self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + ".npymemmap"
+		# xshape = x_full.shape
+		# fp = np.memmap(full_cache_name, dtype='float32', mode='w+', shape=xshape)
+		# fp[:] = x_full[:]
+		# fp.flush()
+		# fp._mmap.close()
+		print(x_full.shape)
+		np.save(self.cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name, x_full)
 		log(f"Cache dataset saved: {symbol}_DATASET_FULL_CACHE_2D_{full_cache_name}")
 		return x_full, norm_model
 
@@ -1647,11 +1648,11 @@ class n_date_frame2:
 		full_cache_name = hashlib.md5(full_cache_name.encode('utf-8')).hexdigest()
 
 		cache_path = ndf.cache_path
-		f_name = cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + '.npymemmap'
+		f_name = cache_path + symbol + "_DATASET_FULL_CACHE_2D_" + full_cache_name + '.npy'
 		if os.path.isfile(f_name):
-			# x_array = np.load(f_name)
+			x_array = np.load(f_name)
 			# print(x_array.shape)
-			x_array = np.memmap(f_name, dtype='float32', mode='r', shape=(nddf[symbol].shape[0], array_len))
+			# x_array = np.memmap(f_name, dtype='float32', mode='r', shape=(nddf[symbol].shape[0], array_len))
 
 			fname = self.ndot_project_path + project_name + "\\"
 			fname += 'nDot_MinMaxScaler_' + project_name + ".pickle"
@@ -3262,6 +3263,7 @@ class n_date_frame2:
 				log("  Price slices: " + str(price_slices))
 
 				used_cores = cpu_count()
+				# used_cores -= 1
 				mp_params = []
 
 				runing_processes = [None] * used_cores
@@ -3801,8 +3803,8 @@ def help2():
 
 
 def do(symbol="", p2="", p3=""):
-	project_name = "BTCUSDT_P10INT_2D"
-	symbol = "BTCUSDT"
+	project_name = "ETHUSDT_P10INTX"
+	symbol = "ETHUSDT"
 
 	config_file_path = "projects/" + project_name + "/nDot_PRO_" + project_name + ".txt"
 	file = pathlib.Path(config_file_path)
@@ -3873,16 +3875,15 @@ def do(symbol="", p2="", p3=""):
 		# y_sig_all = np.delete(y_sig_all, bug_index, 0)
 
 		if dss == 0:
-			log("Number of deleted datapont with Nan Inf: " + str(len(bug_index)))
+			log("Number of deleted dataponts (Nan Inf): " + str(len(bug_index)))
 
 		del bug_index, mask
 		gc.collect()
 
-		block_size = 1200000  # max  700000
-		r_indexes = np.arange(X_array_all.shape[0])
+		block_size = 1500000  # max  700000
+		r_indexes = np.arange(block_size)
 		np.random.seed(100)
-		np.random.shuffle(r_indexes,)
-		r_indexes = r_indexes[0: block_size]
+		np.random.shuffle(r_indexes)
 
 		X_array_all = X_array_all[r_indexes]
 		y_sig_all = y_sig_all[r_indexes]
@@ -5552,6 +5553,22 @@ def stop_stream():
 
 if __name__ == "__main__":
 	print("Status: Start")
+	print(os.getcwd())
+
+	# from gtts import gTTS  # pip install gtts
+	# import playsound  # pip install playsound
+	# import os
+	# def action_sound():
+	# 	my_aud = gTTS("hey brother, Action!", lang='en', tld='co.uk')  # converts the text into speech
+	# 	fname = str(os.getcwd() + '/last_speach.mp3')
+	# 	my_aud.save(fname)  # save the file with .mp3 extension
+	# 	playsound.playsound(fname)  # to play it
+	# 	os.remove(fname)
+	#
+	# action_sound()
+	#
+	# sys.exit()
+
 	wl = WatchList()
 	nddf = {}
 	nddb = n_db(nddf, log)

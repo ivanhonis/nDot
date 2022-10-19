@@ -17,7 +17,7 @@ class n_calibrate_mp:
 
     def __init__(self, param_mp):
         self.s = param_mp
-        self.temp_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\temp\\"
+        self.temp_path = "X:\\Apa\\coder\\nDot\\temp\\"
         self.cores = self.s['cores']  # összesen hány process van
         self.process = self.s['process']  # én hanyadik process vagyok
         self.mpi = str(self.process + 1) + "/" + str(self.cores) + " core ->"

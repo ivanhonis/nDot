@@ -6,7 +6,7 @@ import numpy as np
 class n_dataset_constructor_mp:
     
     def __init__(self, param_mp):
-        self.temp_path = "C:\\Users\\ivanh\\PycharmProjects\\nDot\\temp\\"
+        self.temp_path = "X:\\Apa\\coder\\nDot\\temp\\"
         self.cores = param_mp['cores']  # összesen hány process van
         self.process = param_mp['process']  # én hanyadik process vagyok
         self.mpi = str(self.process + 1) + "/" + str(self.cores) + " core ->"

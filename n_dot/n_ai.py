@@ -214,7 +214,7 @@ class n_ai:
         local_path_minmax = self.is_file_exist(self.projects_path + project + "\\nDot_MinMaxScaler_" + project + ".pickle")
         local_path_tf = self.is_file_exist(self.projects_path + project + '\\nDot_TF_MODEL_' + project + '.h5')
         
-        if local_path_pro and local_path_minmax and local_path_tf:
+        if local_path_pro: #  and local_path_minmax and local_path_tf:
             
             try:
                 del self.ai_settings[symbol][project]
