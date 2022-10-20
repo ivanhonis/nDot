@@ -261,7 +261,7 @@ class n_algo_trade:
         return round(self.deal_count / len(self.trading_days.keys()), 2)
 
     def trailer(self):
-        self.act_profit = int((self.actual_ohlc4 - self.avg_income_price) * self.actual_qt)
+        self.act_profit = int((self.price_dict['next_high'] - self.avg_income_price) * self.actual_qt)
 
         if self.actual_qt != 0 and self.act_profit != self.trailer_profit:
             

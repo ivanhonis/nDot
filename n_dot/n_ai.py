@@ -402,7 +402,7 @@ class n_ai:
                 # init tf_model fromlocl drive
                 local_path = self.projects_path + i_project + '\\nDot_TF_MODEL_' + i_project + '.h5'
                 # print('TFLMUP: ',self.ai_models[i_project]["tf_model_last_update"], os_path.getmtime(local_path))
-                if self.ai_models[i_project]["tf_model_last_update"] != os_path.getmtime(local_path):
+                if self.ai_models[i_project]["tf_model_last_update"] != os_path.getmtime(local_path) or 1 == 1:
                     self.ai_log(f"tf_model has been set: {i_project}")
                     # self.ai_models[i_project]["tf_model"] = load_model(local_path, custom_objects={'TSClusteringLayer': TSClusteringLayer})
                     self.ai_models[i_project]["tf_model"] = load_model(local_path)

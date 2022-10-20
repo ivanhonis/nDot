@@ -134,6 +134,15 @@ class n_dataset:
         self.log('  Historic max shape: ' + str(self.data['historic_max'].shape))
         self.log('  Historic min shape: ' + str(self.data['historic_min'].shape))
         self.data['data_fields'] = tuple(self.fields_dict.keys())
+        np.save(self.project_path + self.data['name'] + "_X", self.data['X'])
+        np.save(self.project_path + self.data['name'] + "_y", self.data['y'])
+
+        np.save(self.gdrive_path + self.data['name'] + "_X", self.data['X'])
+        np.save(self.gdrive_path + self.data['name'] + "_y", self.data['y'])
+
+        self.data['X'] = self.data['name'] + "_X"
+        self.data['y'] = self.data['name'] + "_y"
+
         pickle.dump(self.data, open(self.gdrive_path+self.data['name']+".pickle", "wb"))
         pickle.dump(self.data, open(self.project_path+self.data['name']+".pickle", "wb"))
         self.log('n_dataset-> saved: ' + str(self.gdrive_path+self.data['name']+".pickle"))

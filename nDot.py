@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta  # , time as dt_time  # a log ban használom
 # detect is it a local running environment or a cloud running environment
 # import random
 import gc
+
 # This Python file uses the following encoding: utf-8
 # GUI -----------------------------------------------
 # from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QScrollArea, QProgressBar, QToolButton, QMessageBox, \
@@ -11,7 +13,6 @@ from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QProgressBar, QToolBu
 # from PyQt5 import QtGui, QtCore, QtWebEngineWidgets, uic
 from PyQt5 import QtGui, QtCore, uic
 # from PyQt5.QtCore import QTime, QDate
-
 from tkinter import *  # ez a show table hoz kell.
 
 import psutil  # for test command
@@ -26,7 +27,6 @@ import numpy as np
 import os  # for test command
 import os.path
 import pandas_ta as ta  # technical indicators for ndf.tech
-from datetime import datetime, timedelta  # , time as dt_time  # a log ban használom
 import time
 import sys  # a test parancs használja hdd szabad hely kiíratására
 # from multiprocessing import Process
@@ -43,7 +43,6 @@ from sklearn import preprocessing
 
 from multiprocessing import shared_memory, Lock, Pool, cpu_count, Process
 lock = Lock()
-
 import asyncio
 
 # User nDot ------------------------------------------------------
@@ -3880,8 +3879,12 @@ def do(symbol="", p2="", p3=""):
 		del bug_index, mask
 		gc.collect()
 
+		tlen = nddf[symbol].shape[0]
+		tlen = tlen - 80000
+
 		block_size = 1500000  # max  700000
-		r_indexes = np.arange(block_size)
+		r_indexes = np.arange(tlen - block_size, tlen)
+		print(r_indexes[0], r_indexes[-1])
 		np.random.seed(100)
 		np.random.shuffle(r_indexes)
 
@@ -3916,42 +3919,42 @@ def do(symbol="", p2="", p3=""):
 
 		# historic max and min ---------------------------------
 
-		i_historic_max = np.array([])
-		i_historic_min = np.array([])
-		if len(orig_fields) > 0:
-			for i_of in orig_fields:
-				nd_dset.add_field(i_of)
-				i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
-				i_conc = np.full(time_window_size, i_conc)
-				i_historic_max = np.concatenate((i_historic_max, i_conc))
-
-				i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
-				i_conc = np.full(time_window_size, i_conc)
-				i_historic_min = np.concatenate((i_historic_min, i_conc))
-
-		for i_con in contras:
-			nd_dset.add_field(i_con)
-			contra_sep_pre = i_con.split('_')
-			con_sep = []
-			if len(contra_sep_pre) > 2:
-				con_sep.append(contra_sep_pre[0])
-				s = "_"
-				con_sep.append(s.join(contra_sep_pre[1:]))
-			else:
-				con_sep = contra_sep_pre
-
-			con_symbol = con_sep[0]
-			con_field = con_sep[1]
-			i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
-			i_conc = np.full(time_window_size, i_conc)
-			i_historic_max = np.concatenate((i_historic_max, i_conc))
-
-			i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
-			i_conc = np.full(time_window_size, i_conc)
-			i_historic_min = np.concatenate((i_historic_min, i_conc))
-		nd_dset.set_historic_max(i_historic_max)
-		nd_dset.set_historic_min(i_historic_min)
-		nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
+		# i_historic_max = np.array([])
+		# i_historic_min = np.array([])
+		# if len(orig_fields) > 0:
+		# 	for i_of in orig_fields:
+		# 		nd_dset.add_field(i_of)
+		# 		i_conc = float(np.nanmax(tuple(nddf[symbol][i_of])))
+		# 		i_conc = np.full(time_window_size, i_conc)
+		# 		i_historic_max = np.concatenate((i_historic_max, i_conc))
+		#
+		# 		i_conc = float(np.nanmin(tuple(nddf[symbol][i_of])))
+		# 		i_conc = np.full(time_window_size, i_conc)
+		# 		i_historic_min = np.concatenate((i_historic_min, i_conc))
+		#
+		# for i_con in contras:
+		# 	nd_dset.add_field(i_con)
+		# 	contra_sep_pre = i_con.split('_')
+		# 	con_sep = []
+		# 	if len(contra_sep_pre) > 2:
+		# 		con_sep.append(contra_sep_pre[0])
+		# 		s = "_"
+		# 		con_sep.append(s.join(contra_sep_pre[1:]))
+		# 	else:
+		# 		con_sep = contra_sep_pre
+		#
+		# 	con_symbol = con_sep[0]
+		# 	con_field = con_sep[1]
+		# 	i_conc = float(np.nanmax(tuple(nddf[con_symbol][con_field])))
+		# 	i_conc = np.full(time_window_size, i_conc)
+		# 	i_historic_max = np.concatenate((i_historic_max, i_conc))
+		#
+		# 	i_conc = float(np.nanmin(tuple(nddf[con_symbol][con_field])))
+		# 	i_conc = np.full(time_window_size, i_conc)
+		# 	i_historic_min = np.concatenate((i_historic_min, i_conc))
+		# nd_dset.set_historic_max(i_historic_max)
+		# nd_dset.set_historic_min(i_historic_min)
+		# nd_dset.set_meta(ndf_meta.get_all_meta_key(symbol))
 		nd_dset.save()
 		nd_dset.save_norm_model(norm_model)
 
@@ -4582,21 +4585,21 @@ def ai_clibrate_mp(symbol, run_time_window, project, start_position=0):
 	# log(f'y: {np.unique(y_predict_sig, return_counts=True)}')
 	# y_predict_strength *= 10
 
-	a_strength_filter = np.arange(0.8, 1, 0.0001)
+	a_strength_filter = np.arange(0.75, 1, 0.001)
 	l1 = a_strength_filter.shape[0]
-	a_monitor_window_size = np.arange(1, 2, 1)
+	a_monitor_window_size = np.arange(1, 2, 1)  # 96 nem használja
 	l2 = a_monitor_window_size.shape[0]
-	a_monitor_profitx = np.arange(0.1, 0.2, 0.1) # ezt minusszá teszi
+	a_monitor_profitx = np.arange(0.1, 0.2, 0.1)  # 96 nem használja
 	l3 = a_monitor_profitx.shape[0]
-	a_monitor_std = np.arange(5, 6, 1)
+	a_monitor_std = np.arange(5, 6, 1)  # 96 nem használja
 	l4 = a_monitor_std.shape[0]
-	a_steps_limit = np.arange(8, 15, 1)
+	a_steps_limit = np.arange(2, 20, 1)
 	l5 = a_steps_limit.shape[0]
-	a_trailer_stop = np.arange(0.1, 0.35, 0.05)
+	a_trailer_stop = np.arange(0.05, 0.45, 0.05)
 	l6 = a_trailer_stop.shape[0]
-	a_stop_loss_limit = np.arange(0.05, 0.15, 0.05)
+	a_stop_loss_limit = np.arange(0.05, 0.35, 0.05)
 	# l7 = a_stop_loss_limit.shape[0]
-	a_trailer_min_profit = np.arange(2, 15, 1)
+	a_trailer_min_profit = np.arange(1, 2, 1)
 	# l8 = a_trailer_min_profit.shape[0]
 
 	all_setings = []
@@ -4620,8 +4623,7 @@ def ai_clibrate_mp(symbol, run_time_window, project, start_position=0):
 											   "p_steps_limit": p_steps_limit,
 											   "p_trailer_stop": p_trailer_stop,
 											   "p_stop_loss_limit": p_stop_loss_limit,
-											   "p_trailer_min_profit": p_trailer_min_profit,
-											   }
+											   "p_trailer_min_profit": p_trailer_min_profit}
 
 									all_setings.append(setings)
 							s2(recalc=2000)
@@ -5553,7 +5555,6 @@ def stop_stream():
 
 if __name__ == "__main__":
 	print("Status: Start")
-	print(os.getcwd())
 
 	# from gtts import gTTS  # pip install gtts
 	# import playsound  # pip install playsound
@@ -5570,6 +5571,7 @@ if __name__ == "__main__":
 	# sys.exit()
 
 	wl = WatchList()
+
 	nddf = {}
 	nddb = n_db(nddf, log)
 
